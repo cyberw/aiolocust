@@ -37,14 +37,6 @@ class LocustClientSession(ClientSession):
         return WrappedResponseManager(super().get(url, **kwargs))
 
 
-async def on_request_end(session, trace_config_ctx, params):  # noqa: ARG001
-    trace_config_ctx.elapsed = time.perf_counter() - trace_config_ctx.start
-
-
-async def on_request_start(session, trace_config_ctx, params):  # noqa: ARG001
-    trace_config_ctx.start = time.perf_counter()
-
-
 async def user(client: ClientSession):
     await fetch(client)
 
@@ -56,14 +48,8 @@ async def fetch(client: ClientSession):
 
 
 async def main():
-    trace_config = aiohttp.TraceConfig()
-    trace_config.on_request_start.append(on_request_start)
-    trace_config.on_request_end.append(on_request_end)
-
     while True:
-        async with LocustClientSession(
-            "https://www.locust.cloud", trace_configs=[trace_config]
-        ) as client:
+        async with LocustClientSession("https://www.locust.cloud") as client:
             await user(client)
         await asyncio.sleep(1)
 
