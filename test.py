@@ -1,24 +1,12 @@
 import asyncio
 import time
-from collections.abc import Awaitable
-from contextlib import AbstractAsyncContextManager
-from typing import Protocol
 
-import aiohttp
 from aiohttp import ClientSession
-
-
-class ResponseContextManagerProtocol(
-    Awaitable[aiohttp.ClientResponse],
-    AbstractAsyncContextManager[aiohttp.ClientResponse],
-    Protocol,
-): ...
 
 
 class WrappedResponseManager:
     def __init__(self, response_cm):
         self.response_cm = response_cm
-        self.start_time = None
 
     async def __aenter__(self):
         self.start_time = time.perf_counter()
@@ -33,15 +21,15 @@ class WrappedResponseManager:
 
 
 class LocustClientSession(ClientSession):
-    def get(self, url, **kwargs):
+    async def __aenter__(self) -> LocustClientSession:
+        await super().__aenter__()
+        return self
+
+    def get(self, url, **kwargs) -> WrappedResponseManager:
         return WrappedResponseManager(super().get(url, **kwargs))
 
 
-async def user(client: ClientSession):
-    await fetch(client)
-
-
-async def fetch(client: ClientSession):
+async def user(client: LocustClientSession):
     async with client.get("/") as resp:
         assert resp.status == 200
         return await resp.text()
