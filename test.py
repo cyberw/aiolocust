@@ -43,7 +43,6 @@ class LocustClientSession(ClientSession):
 async def user(client: LocustClientSession):
     async with client.get("/charts.webp") as resp:
         assert resp.status == 200
-        return await resp.read()
 
 
 async def main():
