@@ -1,0 +1,32 @@
+{
+  "editor.formatOnSave": true,
+  "files.exclude": {
+    "locust_cloud.egg-info/**": true,
+    "dist/**": true,
+    "**/.tox/": true,
+    "**/__pycache__": true,
+    ".mypy_cache/**/*": true,
+    ".ruff_cache/**/*": true,
+    ".venv/": true,
+    "locust_cloud/webui/**/__pycache__": true,
+    "locust_cloud/webui/**/node_modules": true,
+    "locust_cloud/webui/**/tsconfig.tsbuildinfo": true,
+    "locust_cloud/webui/dist/**": true,
+    ".chalice": true,
+    "**/.eggs": true,
+    "**_cache": true
+},
+  "[python]": {
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "source.fixAll": "explicit",
+      "source.organizeImports": "explicit"
+    },
+    "editor.defaultFormatter": "charliermarsh.ruff"
+},
+"python.testing.pytestArgs": [
+    "tests"
+],
+"python.testing.unittestEnabled": false,
+"python.testing.pytestEnabled": true
+}
