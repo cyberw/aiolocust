@@ -2,27 +2,38 @@ import asyncio
 import time
 
 from aiohttp import ClientSession
+from aiohttp.client import _RequestContextManager
 
 
 class WrappedResponseManager:
-    def __init__(self, response_cm):
+    def __init__(self, response_cm: _RequestContextManager):
         self.response_cm = response_cm
 
     async def __aenter__(self):
         self.start_time = time.perf_counter()
         resp = await self.response_cm.__aenter__()
-        self.elapsed = time.perf_counter() - self.start_time
+        self.ttfb = time.perf_counter() - self.start_time
+        await resp.read()
+        self.ttlb = time.perf_counter() - self.start_time
         return resp
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         suppress = await self.response_cm.__aexit__(exc_type, exc_val, exc_tb)
-        print(self.elapsed)
+        print(self.ttlb)
+        if exc_type is not None:
+            import traceback
+
+            traceback.print_exception(exc_type, exc_val, exc_tb)
+            # Suppress exceptions raised inside the `async with` block so
+            # callers of `LocustClientSession.get()` don't see them.
+            return True
+
         return suppress
 
 
 class LocustClientSession(ClientSession):
+    # explicitly declare this to get the correct return type
     async def __aenter__(self) -> LocustClientSession:
-        await super().__aenter__()
         return self
 
     def get(self, url, **kwargs) -> WrappedResponseManager:
@@ -30,9 +41,9 @@ class LocustClientSession(ClientSession):
 
 
 async def user(client: LocustClientSession):
-    async with client.get("/") as resp:
+    async with client.get("/charts.webp") as resp:
         assert resp.status == 200
-        return await resp.text()
+        return await resp.read()
 
 
 async def main():
