@@ -40,6 +40,8 @@ class LocustRequestContextManager:
 
 
 class LocustClientSession(ClientSession):
+    iteration = 0
+
     # explicitly declare this to get the correct return type
     async def __aenter__(self) -> LocustClientSession:
         return self
@@ -55,6 +57,7 @@ async def user_loop(user):
     async with LocustClientSession() as client:
         while True:
             await user(client)
+            client.iteration += 1
 
 
 async def user_runner(user, count):
