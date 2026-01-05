@@ -1,18 +1,25 @@
 import asyncio
-import random
+import time
 
 from aiolocust import LocustClientSession, main
 
 
+def busy_loop(seconds: float):
+    end = time.perf_counter() + seconds
+    while time.perf_counter() < end:
+        pass
+
+
 async def user(client: LocustClientSession):
-    for i in range(20000000):
-        _ = i + 1  # use some cpu!
     async with client.get("https://locust.io/static/img/screenshot_2.31.3-dev_dark.png") as resp:
         assert resp.status == 200
-    await asyncio.sleep(random.uniform(0.1, 1.0))
+    async with client.get("https://locust.io/") as resp:
+        assert resp.status == 200
+    busy_loop(1)
+    await asyncio.sleep(1)
 
 
-asyncio.run(main(user, 16))
+asyncio.run(main(user, 8))
 
 # limited to 1 thread, note the difference in performance:
 # asyncio.run(main(user, 16, 1))

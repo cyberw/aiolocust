@@ -11,6 +11,38 @@ from aiohttp.client import _RequestContextManager
 if sys._is_gil_enabled():
     raise RuntimeError("aiolocust requires a freethreading Python build")
 
+requests = {}
+
+
+def log_request(url: str, ttfb: float, ttlb: float, success: bool):
+    if url not in requests:
+        requests[url] = 1, ttfb, ttlb
+    else:
+        count, total_ttfb, total_ttlb = requests[url]
+        requests[url] = (
+            count + 1,
+            total_ttfb + ttfb,
+            total_ttlb + ttlb,
+        )
+    # print(f"URL: {url}, TTFB: {ttfb:.4f}s, TTLB: {ttlb:.4f}s")
+
+
+async def stats_printer():
+    start_time = time.perf_counter()
+    while True:
+        await asyncio.sleep(2)
+        print("-------------------------------------------------------------------------")
+        requests_copy = requests.copy()  # avoid mutation during iteration
+        elapsed = time.perf_counter() - start_time
+        total_count = 0
+        for url, (count, total_ttfb, total_ttlb) in requests_copy.items():
+            formatted_url = f"{url:<20}" if len(url) < 20 else url[:17] + "..."
+            print(
+                f"{formatted_url}: Count: {count}, TTFB: {total_ttfb / count:.2f}s, TTLB: {total_ttlb / count:.2f}s, rate {count / elapsed:.2f} req/s"
+            )
+            total_count += count
+        print(f"Total requests: {total_count}, Overall rate: {total_count / elapsed:.2f} req/s")
+
 
 class LocustRequestContextManager:
     def __init__(self, response_cm: _RequestContextManager):
@@ -27,8 +59,9 @@ class LocustRequestContextManager:
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         suppress = await self.response_cm.__aexit__(exc_type, exc_val, exc_tb)
-        print(self.url, self.ttfb, self.ttlb)
-        if exc_type is not None:
+        success = exc_type is None
+        log_request(str(self.url), self.ttfb, self.ttlb, success)
+        if not success:
             import traceback
 
             traceback.print_exception(exc_type, exc_val, exc_tb)
@@ -60,14 +93,16 @@ async def user_loop(user):
             client.iteration += 1
 
 
-async def user_runner(user, count):
+async def user_runner(user, count, printer):
     async with asyncio.TaskGroup() as tg:
+        if printer:
+            tg.create_task(stats_printer())
         for _ in range(count):
             tg.create_task(user_loop(user))
 
 
-def thread_worker(user, count):
-    return asyncio.run(user_runner(user, count))
+def thread_worker(user, count, printer):
+    return asyncio.run(user_runner(user, count, printer))
 
 
 def distribute_evenly(total, num_buckets):
@@ -87,7 +122,11 @@ async def main(user: Callable, user_count: int, concurrency: int | None = None):
     for i in distribute_evenly(user_count, concurrency):
         t = threading.Thread(
             target=thread_worker,
-            args=(user, i),
+            args=(
+                user,
+                i,
+                not threads,  # first thread prints stats
+            ),
         )
         threads.append(t)
         t.start()
