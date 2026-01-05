@@ -53,11 +53,20 @@ async def user_runner(user, count):
     async with asyncio.TaskGroup() as tg:
         for _ in range(count):
             tg.create_task(user_loop(user))
-    print("All done!")
 
 
 def thread_worker(user, count):
     return asyncio.run(user_runner(user, count))
+
+
+def distribute_evenly(total, num_buckets):
+    # Calculate the base amount for every bucket
+    base = total // num_buckets
+    # Calculate how many buckets need an extra +1
+    remainder = total % num_buckets
+
+    # Create the list: add 1 to the first 'remainder' buckets
+    return [base + 1 if i < remainder else base for i in range(num_buckets)]
 
 
 async def main(user, count, concurrency=None):
@@ -65,13 +74,10 @@ async def main(user, count, concurrency=None):
         concurrency = os.cpu_count() or 1
 
     threads = []
-    for i in range(concurrency):
+    for i in distribute_evenly(count, concurrency):
         t = threading.Thread(
             target=thread_worker,
-            args=(
-                user,
-                count,
-            ),
+            args=(user, i),
             name=f"WorkerThread-{i}",
         )
         threads.append(t)
