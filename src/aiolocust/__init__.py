@@ -39,3 +39,10 @@ class LocustClientSession(ClientSession):
 
     def get(self, url, **kwargs) -> LocustRequestContextManager:
         return LocustRequestContextManager(super().get(url, **kwargs))
+
+
+async def main(user):
+    while True:
+        async with LocustClientSession() as client:
+            await user(client)
+        await asyncio.sleep(1)

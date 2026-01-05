@@ -1,18 +1,11 @@
 import asyncio
 
-from aiolocust import LocustClientSession
+from aiolocust import LocustClientSession, main
 
 
 async def user(client: LocustClientSession):
-    async with client.get("/charts.webp") as resp:
+    async with client.get("https://locust.io/static/img/screenshot_2.31.3-dev_dark.png") as resp:
         assert resp.status == 200
 
 
-async def main():
-    while True:
-        async with LocustClientSession("https://www.locust.cloud") as client:
-            await user(client)
-        await asyncio.sleep(1)
-
-
-asyncio.run(main())
+asyncio.run(main(user))
