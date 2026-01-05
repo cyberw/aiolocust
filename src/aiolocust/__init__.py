@@ -43,6 +43,9 @@ class LocustClientSession(ClientSession):
     def get(self, url, **kwargs) -> LocustRequestContextManager:
         return LocustRequestContextManager(super().get(url, **kwargs))
 
+    def post(self, url, **kwargs) -> LocustRequestContextManager:
+        return LocustRequestContextManager(super().post(url, **kwargs))
+
 
 async def user_loop(user):
     async with LocustClientSession() as client:
