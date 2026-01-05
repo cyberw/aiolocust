@@ -1,4 +1,5 @@
 import asyncio
+import os
 import threading
 import time
 
@@ -42,20 +43,37 @@ class LocustClientSession(ClientSession):
         return LocustRequestContextManager(super().get(url, **kwargs))
 
 
-async def user_runner(user):
+async def user_loop(user):
     async with LocustClientSession() as client:
         while True:
             await user(client)
 
 
-def thread_worker(user):
-    return asyncio.run(user_runner(user))
+async def user_runner(user, count):
+    async with asyncio.TaskGroup() as tg:
+        for _ in range(count):
+            tg.create_task(user_loop(user))
+    print("All done!")
 
 
-async def main(user, concurrency=1):
+def thread_worker(user, count):
+    return asyncio.run(user_runner(user, count))
+
+
+async def main(user, count, concurrency=None):
+    if concurrency is None:
+        concurrency = os.cpu_count() or 1
+
     threads = []
     for i in range(concurrency):
-        t = threading.Thread(target=thread_worker, args=(user,), name=f"WorkerThread-{i}")
+        t = threading.Thread(
+            target=thread_worker,
+            args=(
+                user,
+                count,
+            ),
+            name=f"WorkerThread-{i}",
+        )
         threads.append(t)
         t.start()
 
