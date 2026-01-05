@@ -44,8 +44,8 @@ class LocustClientSession(ClientSession):
 
 
 async def user_runner(user):
-    while True:
-        async with LocustClientSession() as client:
+    async with LocustClientSession() as client:
+        while True:
             await user(client)
 
 
