@@ -2,6 +2,7 @@ import asyncio
 import os
 import threading
 import time
+from collections.abc import Callable
 
 from aiohttp import ClientSession
 from aiohttp.client import _RequestContextManager
@@ -64,21 +65,19 @@ def distribute_evenly(total, num_buckets):
     base = total // num_buckets
     # Calculate how many buckets need an extra +1
     remainder = total % num_buckets
-
     # Create the list: add 1 to the first 'remainder' buckets
     return [base + 1 if i < remainder else base for i in range(num_buckets)]
 
 
-async def main(user, count, concurrency=None):
+async def main(user: Callable, user_count: int, concurrency: int | None = None):
     if concurrency is None:
         concurrency = os.cpu_count() or 1
 
     threads = []
-    for i in distribute_evenly(count, concurrency):
+    for i in distribute_evenly(user_count, concurrency):
         t = threading.Thread(
             target=thread_worker,
             args=(user, i),
-            name=f"WorkerThread-{i}",
         )
         threads.append(t)
         t.start()
