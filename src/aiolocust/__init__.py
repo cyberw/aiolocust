@@ -1,11 +1,15 @@
 import asyncio
 import os
+import sys
 import threading
 import time
 from collections.abc import Callable
 
 from aiohttp import ClientSession
 from aiohttp.client import _RequestContextManager
+
+if sys._is_gil_enabled():
+    raise RuntimeError("aiolocust requires a freethreading Python build")
 
 
 class LocustRequestContextManager:
