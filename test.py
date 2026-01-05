@@ -14,5 +14,5 @@ async def user(client: LocustClientSession):
 
 asyncio.run(main(user, 16))
 
-# limited to 1 thread, note the difference:
+# limited to 1 thread, note the difference in performance:
 # asyncio.run(main(user, 16, 1))
