@@ -15,23 +15,13 @@ dependencies = [
 requires = ["uv_build>=0.9.7,<0.10.0"]
 build-backend = "uv_build"
 
-[project.scripts]
-
-[tool.uv]
-dev-dependencies = [
-    "ruff>=0.6.4",
-    "types-boto3>=1.0.2",
-    "pytest==8.3.4",
-    "requests-mock==1.12.1",
-    "pytest-asyncio>=0.25.0",
-    
-]
-python-version = "3.14t"
-python-preference = "only-managed"
-
 [tool.ruff]
 target-version = "py314"
 line-length = 100
 # lint.ignore = ["E402", "E501", "E713", "E731"]
 lint.select = ["E", "F", "W", "UP", "I001", "ARG001"]
-# lint.dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?)|resp)$"
+
+[dependency-groups]
+dev = [
+    "ruff>=0.14.10",
+]
