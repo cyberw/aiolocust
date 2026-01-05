@@ -5,13 +5,14 @@ from aiohttp import ClientSession
 from aiohttp.client import _RequestContextManager
 
 
-class WrappedResponseManager:
+class LocustRequestContextManager:
     def __init__(self, response_cm: _RequestContextManager):
         self.response_cm = response_cm
 
     async def __aenter__(self):
         self.start_time = time.perf_counter()
         resp = await self.response_cm.__aenter__()
+        self.url = self.response_cm._resp.url
         self.ttfb = time.perf_counter() - self.start_time
         await resp.read()
         self.ttlb = time.perf_counter() - self.start_time
@@ -19,7 +20,7 @@ class WrappedResponseManager:
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         suppress = await self.response_cm.__aexit__(exc_type, exc_val, exc_tb)
-        print(self.ttlb)
+        print(self.url, self.ttfb, self.ttlb)
         if exc_type is not None:
             import traceback
 
@@ -36,8 +37,8 @@ class LocustClientSession(ClientSession):
     async def __aenter__(self) -> LocustClientSession:
         return self
 
-    def get(self, url, **kwargs) -> WrappedResponseManager:
-        return WrappedResponseManager(super().get(url, **kwargs))
+    def get(self, url, **kwargs) -> LocustRequestContextManager:
+        return LocustRequestContextManager(super().get(url, **kwargs))
 
 
 async def user(client: LocustClientSession):
