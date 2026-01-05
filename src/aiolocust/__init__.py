@@ -1,4 +1,6 @@
 import asyncio
+import concurrent.futures
+import threading
 import time
 
 from aiohttp import ClientSession
@@ -41,8 +43,22 @@ class LocustClientSession(ClientSession):
         return LocustRequestContextManager(super().get(url, **kwargs))
 
 
-async def main(user):
+async def user_runner(user):
     while True:
         async with LocustClientSession() as client:
             await user(client)
-        await asyncio.sleep(1)
+
+
+def thread_worker(user):
+    return asyncio.run(user_runner(user))
+
+
+async def main(user, concurrency=1):
+    threads = []
+    for i in range(concurrency):
+        t = threading.Thread(target=thread_worker, args=(user,), name=f"WorkerThread-{i}")
+        threads.append(t)
+        t.start()
+
+    for t in threads:
+        t.join()
