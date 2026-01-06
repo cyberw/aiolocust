@@ -1,23 +1,35 @@
-name: Example
+name: Tests
+
+on:
+    push:
+        branches:
+            - master
+        tags:
+            - "*"
+        paths-ignore:
+            - "**.md"
+    pull_request:
+        paths-ignore:
+            - "**.md"
 
 jobs:
-  uv-example:
-    name: python
-    runs-on: ubuntu-latest
+    uv-example:
+        name: python
+        runs-on: ubuntu-latest
 
-    steps:
-      - uses: actions/checkout@v6
+        steps:
+            - uses: actions/checkout@v6
 
-      - name: set up python
-        uses: actions/setup-python@v6
-        with:
-          python-version-file: ".python-version"
+            - name: set up python
+              uses: actions/setup-python@v6
+              with:
+                  python-version-file: ".python-version"
 
-      - name: setup uv
-        uses: astral-sh/setup-uv@v7
+            - name: setup uv
+              uses: astral-sh/setup-uv@v7
 
-      - name: uv sync
-        run: uv sync --locked --all-extras --dev
+            - name: uv sync
+              run: uv sync --locked --all-extras --dev
 
-      - name: pytest
-        run: uv run pytest tests
+            - name: pytest
+              run: uv run pytest tests
