@@ -35,14 +35,14 @@ async def stats_printer():
     start_time = time.perf_counter()
     while True:
         await asyncio.sleep(2)
-        print("-------------------------------------------------------------------------")
+        print("-----------------------------------------------------------------------------------")
         requests_copy = requests.copy()  # avoid mutation during iteration
         elapsed = time.perf_counter() - start_time
         total_count = 0
         for url, (count, total_ttfb, total_ttlb) in requests_copy.items():
-            formatted_url = f"{url:<20}" if len(url) < 20 else url[:17] + "..."
+            formatted_url = f"{url:<22}" if len(url) < 22 else url[:19] + "..."
             print(
-                f"{formatted_url}: Count: {count}, TTFB: {total_ttfb / count:.2f}s, TTLB: {total_ttlb / count:.2f}s, rate {count / elapsed:.2f} req/s"
+                f"{formatted_url}: Count: {count}, TTFB: {total_ttfb / count:.3f}s, TTLB: {total_ttlb / count:.3f}s, rate {count / elapsed:.2f} req/s"
             )
             total_count += count
         print(f"Total requests: {total_count}, Overall rate: {total_count / elapsed:.2f} req/s")
