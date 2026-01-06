@@ -16,36 +16,68 @@ if sys._is_gil_enabled():
 
 
 requests = {}
+running = True
+
+from rich.console import Console
+from rich.table import Table
+
+console = Console()
 
 
 def log_request(url: str, ttfb: float, ttlb: float, success: bool):
     if url not in requests:
-        requests[url] = 1, ttfb, ttlb
+        requests[url] = 1, ttfb, ttlb, ttlb
     else:
-        count, total_ttfb, total_ttlb = requests[url]
+        count, sum_ttfb, sum_ttlb, max_ttlb = requests[url]
         requests[url] = (
             count + 1,
-            total_ttfb + ttfb,
-            total_ttlb + ttlb,
+            sum_ttfb + ttfb,
+            sum_ttlb + ttlb,
+            max(max_ttlb, ttlb),
         )
     # print(f"URL: {url}, TTFB: {ttfb:.4f}s, TTLB: {ttlb:.4f}s")
 
 
 async def stats_printer():
+    global running
     start_time = time.perf_counter()
-    while True:
+    while running:
         await asyncio.sleep(2)
-        print("-----------------------------------------------------------------------------------")
-        requests_copy = requests.copy()  # avoid mutation during iteration
+        requests_copy = requests.copy()  # avoid mutation during print
         elapsed = time.perf_counter() - start_time
+        total_ttlb = 0
+        total_max_ttlb = 0
         total_count = 0
-        for url, (count, total_ttfb, total_ttlb) in requests_copy.items():
-            formatted_url = f"{url:<22}" if len(url) < 22 else url[:19] + "..."
-            print(
-                f"{formatted_url}: Count: {count}, TTFB: {total_ttfb / count:.3f}s, TTLB: {total_ttlb / count:.3f}s, rate {count / elapsed:.2f} req/s"
+        table = Table(show_edge=False)
+        table.add_column("Name", max_width=30)
+        table.add_column("Avg", justify="right")
+        table.add_column("Max", justify="right")
+        table.add_column("Count", justify="right")
+        table.add_column("Rate", justify="right")
+        for url, (count, ttfb, ttlb, max_ttlb) in requests_copy.items():
+            table.add_row(
+                url,
+                f"{1000 * ttlb / count:4.1f}ms",
+                f"{1000 * max_ttlb:4.1f}ms",
+                str(count),
+                f"{count / elapsed:.2f}/s",
             )
+            total_ttlb += ttlb
+            total_max_ttlb = max(total_max_ttlb, max_ttlb)
             total_count += count
-        print(f"Total requests: {total_count}, Overall rate: {total_count / elapsed:.2f} req/s")
+        table.add_section()
+        table.add_row(
+            "Total",
+            f"{1000 * total_ttlb / total_count:4.1f}ms",
+            f"{1000 * total_max_ttlb:4.1f}ms",
+            str(total_count),
+            f"{total_count / elapsed:.2f}/s",
+        )
+        print()
+        console.print(table)
+
+        if elapsed > 30:
+            running = False
 
 
 class LocustRequestContextManager:
@@ -92,7 +124,7 @@ class LocustClientSession(ClientSession):
 
 async def user_loop(user):
     async with LocustClientSession() as client:
-        while True:
+        while running:
             await user(client)
             client.iteration += 1
 
