@@ -6,8 +6,14 @@ import time
 from collections.abc import Callable
 
 # uvloop is faster than the default pure-python asyncio event loop
-# so we're going to be using that one
-import uvloop
+# so if it is installed, we're going to be using that one
+try:
+    import uvloop
+
+    new_event_loop = uvloop.new_event_loop
+except ImportError:
+    new_event_loop = None
+
 from aiohttp import ClientSession
 from aiohttp.client import _RequestContextManager
 
@@ -138,8 +144,7 @@ async def user_runner(user, count, printer):
 
 
 def thread_worker(user, count, printer):
-    run = asyncio.run(user_runner(user, count, printer), loop_factory=uvloop.new_event_loop)
-    return run
+    return asyncio.run(user_runner(user, count, printer), loop_factory=new_event_loop)
 
 
 def distribute_evenly(total, num_buckets):
