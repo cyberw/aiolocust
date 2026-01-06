@@ -139,7 +139,6 @@ async def user_runner(user, count, printer):
 
 def thread_worker(user, count, printer):
     run = asyncio.run(user_runner(user, count, printer), loop_factory=uvloop.new_event_loop)
-    asyncio.get_event_loop().set_debug(False)
     return run
 
 
