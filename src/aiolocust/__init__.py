@@ -5,11 +5,15 @@ import threading
 import time
 from collections.abc import Callable
 
+# uvloop is faster than the default pure-python asyncio event loop
+# so we're going to be using that one
+import uvloop
 from aiohttp import ClientSession
 from aiohttp.client import _RequestContextManager
 
 if sys._is_gil_enabled():
     raise RuntimeError("aiolocust requires a freethreading Python build")
+
 
 requests = {}
 
@@ -102,7 +106,9 @@ async def user_runner(user, count, printer):
 
 
 def thread_worker(user, count, printer):
-    return asyncio.run(user_runner(user, count, printer))
+    run = asyncio.run(user_runner(user, count, printer), loop_factory=uvloop.new_event_loop)
+    asyncio.get_event_loop().set_debug(False)
+    return run
 
 
 def distribute_evenly(total, num_buckets):
@@ -114,12 +120,17 @@ def distribute_evenly(total, num_buckets):
     return [base + 1 if i < remainder else base for i in range(num_buckets)]
 
 
-async def main(user: Callable, user_count: int, concurrency: int | None = None):
-    if concurrency is None:
-        concurrency = os.cpu_count() or 1
+async def main(user: Callable, user_count: int, event_loops: int | None = None):
+    if event_loops is None:
+        if cpu_count := os.cpu_count():
+            # for heavy calculations this may need to be increased,
+            # but for I/O bound tasks 1/2 of CPU cores seems to be the most efficient
+            event_loops = max(cpu_count // 2, 1)
+        else:
+            event_loops = 1
 
     threads = []
-    for i in distribute_evenly(user_count, concurrency):
+    for i in distribute_evenly(user_count, event_loops):
         t = threading.Thread(
             target=thread_worker,
             args=(

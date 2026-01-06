@@ -5,14 +5,14 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Current File",
+            "name": "test.py",
             "type": "debugpy",
             "request": "launch",
-            "program": "${file}",
+            "program": "test.py",
             "console": "integratedTerminal",
             "env": {
             },
-            "justMyCode": false
+            "justMyCode": true
         }
     ]
 }

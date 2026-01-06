@@ -4,6 +4,7 @@ import time
 from aiolocust import LocustClientSession, main
 
 
+# this is for simulating CPU work
 def busy_loop(seconds: float):
     end = time.perf_counter() + seconds
     while time.perf_counter() < end:
@@ -11,15 +12,14 @@ def busy_loop(seconds: float):
 
 
 async def user(client: LocustClientSession):
-    async with client.get("https://locust.io/static/img/screenshot_2.31.3-dev_dark.png") as resp:
+    async with client.get("http://localhost/README.md") as resp:
         assert resp.status == 200
-    async with client.get("https://locust.io/") as resp:
-        assert resp.status == 200
-    busy_loop(1)
-    await asyncio.sleep(1)
+    async with client.get("http://localhost/uv.lock") as resp:
+        # idk exactly how big uv.lock is, but its gotta be big
+        assert resp.content_length and resp.content_length > 10000
+    # If you want to make things slower/experiment with loadgen performance:
+    # busy_loop(0.1)
+    # await asyncio.sleep(0.1)
 
 
-asyncio.run(main(user, 8))
-
-# limited to 1 thread, note the difference in performance:
-# asyncio.run(main(user, 16, 1))
+asyncio.run(main(user, 60))
