@@ -2,6 +2,7 @@ import pytest
 from aiohttp.client_exceptions import ClientResponseError
 
 from aiolocust import LocustClientSession
+from aiolocust.datatypes import Request
 
 
 @pytest.mark.asyncio
@@ -51,14 +52,14 @@ async def test_handler(httpserver):
         async with client.post(httpserver.url_for("/")) as resp:
             assert resp.status == 200
 
-    requests = []
+    requests: list[Request] = []
 
-    def request(url: str, ttfb: float, ttlb: float, success: bool):
-        requests.append((url, ttfb, ttlb, success))
+    def request(req: Request):
+        requests.append(req)
 
     async with LocustClientSession(None, request_handler=request) as client:
         await _(client)
 
     assert len(requests) == 2
-    assert requests[0][3] is True
-    assert requests[1][3] is False  # POST is not allowed
+    assert requests[0].success is True
+    assert requests[1].success is False  # POST is not allowed

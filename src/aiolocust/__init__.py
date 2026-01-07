@@ -13,6 +13,7 @@ from rich.console import Console
 from rich.table import Table
 
 from . import event_handlers
+from .datatypes import Request, RequestEntry
 
 # uvloop is faster than the default pure-python asyncio event loop
 # so if it is installed, we're going to be using that one
@@ -54,28 +55,33 @@ async def stats_printer():
     start_time = time.perf_counter()
     while running:
         await asyncio.sleep(2)
-        requests_copy = event_handlers.requests.copy()  # avoid mutation during print
+        requests_copy: dict[str, RequestEntry] = (
+            event_handlers.requests.copy()
+        )  # avoid mutation during print
         elapsed = time.perf_counter() - start_time
         total_ttlb = 0
         total_max_ttlb = 0
         total_count = 0
         table = Table(show_edge=False)
         table.add_column("Name", max_width=30)
+        table.add_column("Count", justify="right")
+        table.add_column("Failures", justify="right")
         table.add_column("Avg", justify="right")
         table.add_column("Max", justify="right")
-        table.add_column("Count", justify="right")
         table.add_column("Rate", justify="right")
-        for url, (count, ttfb, ttlb, max_ttlb) in requests_copy.items():
+
+        for url, re in requests_copy.items():
             table.add_row(
                 url,
-                f"{1000 * ttlb / count:4.1f}ms",
-                f"{1000 * max_ttlb:4.1f}ms",
-                str(count),
-                f"{count / elapsed:.2f}/s",
+                str(re.count),
+                f"{re.errorcount} ({100 * re.errorcount / re.count:2.1f}%)",
+                f"{1000 * re.sum_ttlb / re.count:4.1f}ms",
+                f"{1000 * re.max_ttlb:4.1f}ms",
+                f"{re.count / elapsed:.2f}/s",
             )
-            total_ttlb += ttlb
-            total_max_ttlb = max(total_max_ttlb, max_ttlb)
-            total_count += count
+            total_ttlb += re.sum_ttlb
+            total_max_ttlb = max(total_max_ttlb, re.max_ttlb)
+            total_count += re.count
         table.add_section()
         table.add_row(
             "Total",
@@ -108,7 +114,7 @@ class LocustRequestContextManager(_RequestContextManager):
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         suppress = await super().__aexit__(exc_type, exc_val, exc_tb)
         success = exc_type is None
-        self.request_handler(str(self.url), self.ttfb, self.ttlb, success)
+        self.request_handler(Request(str(self.url), self.ttfb, self.ttlb, success))
         if not success:
             import traceback
 

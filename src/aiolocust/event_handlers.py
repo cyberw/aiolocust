@@ -1,14 +1,14 @@
-requests = {}
+from .datatypes import Request, RequestEntry
+
+requests: dict[str, RequestEntry] = {}
 
 
-def request(url: str, ttfb: float, ttlb: float, success: bool):
-    if url not in requests:
-        requests[url] = 1, ttfb, ttlb, ttlb
+def request(req: Request):
+    if req.url not in requests:
+        requests[req.url] = RequestEntry(1, 0 if req.success else 1, req.ttfb, req.ttlb, req.ttlb)
     else:
-        count, sum_ttfb, sum_ttlb, max_ttlb = requests[url]
-        requests[url] = (
-            count + 1,
-            sum_ttfb + ttfb,
-            sum_ttlb + ttlb,
-            max(max_ttlb, ttlb),
-        )
+        re = requests[req.url]
+        re.count += 1
+        re.sum_ttfb += req.ttfb
+        re.sum_ttlb += req.ttlb
+        re.max_ttlb = max(re.max_ttlb, req.ttlb)
