@@ -14,7 +14,6 @@ on:
 
 jobs:
     linux:
-        name: python
         runs-on: ubuntu-latest
 
         steps:
@@ -34,7 +33,6 @@ jobs:
             - name: pytest
               run: uv run pytest tests
     windows:
-        name: python
         runs-on: windows-latest
 
         steps:
@@ -55,7 +53,6 @@ jobs:
               run: uv run pytest tests
 
     macos:
-        name: python
         runs-on: macos-latest
 
         steps:
