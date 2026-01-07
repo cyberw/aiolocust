@@ -13,9 +13,50 @@ on:
             - "**.md"
 
 jobs:
-    uv-example:
+    linux:
         name: python
         runs-on: ubuntu-latest
+
+        steps:
+            - uses: actions/checkout@v6
+
+            - name: set up python
+              uses: actions/setup-python@v6
+              with:
+                  python-version-file: ".python-version"
+
+            - name: setup uv
+              uses: astral-sh/setup-uv@v7
+
+            - name: uv sync
+              run: uv sync --locked --all-extras --dev
+
+            - name: pytest
+              run: uv run pytest tests
+    windows:
+        name: python
+        runs-on: windows-latest
+
+        steps:
+            - uses: actions/checkout@v6
+
+            - name: set up python
+              uses: actions/setup-python@v6
+              with:
+                  python-version-file: ".python-version"
+
+            - name: setup uv
+              uses: astral-sh/setup-uv@v7
+
+            - name: uv sync
+              run: uv sync --locked --all-extras --dev
+
+            - name: pytest
+              run: uv run pytest tests
+
+    macos:
+        name: python
+        runs-on: macos-latest
 
         steps:
             - uses: actions/checkout@v6
