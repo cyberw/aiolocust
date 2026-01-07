@@ -4,7 +4,6 @@ import signal
 import sys
 import threading
 import time
-import typing
 import warnings
 from collections.abc import Callable
 
@@ -12,6 +11,8 @@ from aiohttp import ClientSession
 from aiohttp.client import _RequestContextManager
 from rich.console import Console
 from rich.table import Table
+
+from . import event_handlers
 
 # uvloop is faster than the default pure-python asyncio event loop
 # so if it is installed, we're going to be using that one
@@ -34,7 +35,7 @@ warnings.filterwarnings(
 if sys._is_gil_enabled():
     raise RuntimeError("aiolocust requires a freethreading Python build")
 
-requests = {}
+
 running = True
 console = Console()
 
@@ -48,26 +49,12 @@ def signal_handler(_sig, _frame):
 signal.signal(signal.SIGINT, signal_handler)
 
 
-def log_request(url: str, ttfb: float, ttlb: float, success: bool):
-    if url not in requests:
-        requests[url] = 1, ttfb, ttlb, ttlb
-    else:
-        count, sum_ttfb, sum_ttlb, max_ttlb = requests[url]
-        requests[url] = (
-            count + 1,
-            sum_ttfb + ttfb,
-            sum_ttlb + ttlb,
-            max(max_ttlb, ttlb),
-        )
-    # print(f"URL: {url}, TTFB: {ttfb:.4f}s, TTLB: {ttlb:.4f}s")
-
-
 async def stats_printer():
     global running
     start_time = time.perf_counter()
     while running:
         await asyncio.sleep(2)
-        requests_copy = requests.copy()  # avoid mutation during print
+        requests_copy = event_handlers.requests.copy()  # avoid mutation during print
         elapsed = time.perf_counter() - start_time
         total_ttlb = 0
         total_max_ttlb = 0
@@ -105,6 +92,10 @@ async def stats_printer():
 
 
 class LocustRequestContextManager(_RequestContextManager):
+    def __init__(self, request_handler: Callable, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.request_handler = request_handler
+
     async def __aenter__(self):
         self.start_time = time.perf_counter()
         resp = await super().__aenter__()
@@ -117,7 +108,7 @@ class LocustRequestContextManager(_RequestContextManager):
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         suppress = await super().__aexit__(exc_type, exc_val, exc_tb)
         success = exc_type is None
-        log_request(str(self.url), self.ttfb, self.ttlb, success)
+        self.request_handler(str(self.url), self.ttfb, self.ttlb, success)
         if not success:
             import traceback
 
@@ -132,15 +123,19 @@ class LocustRequestContextManager(_RequestContextManager):
 class LocustClientSession(ClientSession):
     iteration = 0
 
+    def __init__(self, base_url=None, request_handler: Callable | None = None, **kwargs):
+        super().__init__(base_url=base_url, **kwargs)
+        self.request_handler = request_handler or event_handlers.request
+
     # explicitly declare this to get the correct return type
     async def __aenter__(self) -> LocustClientSession:
         return self
 
     def get(self, url, **kwargs) -> LocustRequestContextManager:
-        return LocustRequestContextManager(super().get(url, **kwargs))
+        return LocustRequestContextManager(self.request_handler, super().get(url, **kwargs))
 
     def post(self, url, **kwargs) -> LocustRequestContextManager:
-        return LocustRequestContextManager(super().post(url, **kwargs))
+        return LocustRequestContextManager(self.request_handler, super().post(url, **kwargs))
 
 
 async def user_loop(user):
