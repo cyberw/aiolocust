@@ -1,9 +1,17 @@
 import asyncio
 import os
+import signal
 import sys
 import threading
 import time
+import typing
+import warnings
 from collections.abc import Callable
+
+from aiohttp import ClientSession
+from aiohttp.client import _RequestContextManager
+from rich.console import Console
+from rich.table import Table
 
 # uvloop is faster than the default pure-python asyncio event loop
 # so if it is installed, we're going to be using that one
@@ -14,20 +22,30 @@ try:
 except ImportError:
     new_event_loop = None
 
-from aiohttp import ClientSession
-from aiohttp.client import _RequestContextManager
+# We're going to inherit from ClientSession, even though it is considered internal,
+# Because we dont want to take the performance hit and typing issues of wrapping every method
+warnings.filterwarnings(
+    action="ignore",
+    message=".*Inheritance .* from ClientSession is discouraged.*",
+    category=DeprecationWarning,
+    module="aiolocust",
+)
 
 if sys._is_gil_enabled():
     raise RuntimeError("aiolocust requires a freethreading Python build")
 
-
 requests = {}
 running = True
-
-from rich.console import Console
-from rich.table import Table
-
 console = Console()
+
+
+def signal_handler(_sig, _frame):
+    print("Stopping...")
+    global running
+    running = False
+
+
+signal.signal(signal.SIGINT, signal_handler)
 
 
 def log_request(url: str, ttfb: float, ttlb: float, success: bool):
@@ -86,21 +104,18 @@ async def stats_printer():
             running = False
 
 
-class LocustRequestContextManager:
-    def __init__(self, response_cm: _RequestContextManager):
-        self.response_cm = response_cm
-
+class LocustRequestContextManager(_RequestContextManager):
     async def __aenter__(self):
         self.start_time = time.perf_counter()
-        resp = await self.response_cm.__aenter__()
-        self.url = self.response_cm._resp.url
+        resp = await super().__aenter__()
+        self.url = super()._resp.url
         self.ttfb = time.perf_counter() - self.start_time
         await resp.read()
         self.ttlb = time.perf_counter() - self.start_time
         return resp
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
-        suppress = await self.response_cm.__aexit__(exc_type, exc_val, exc_tb)
+        suppress = await super().__aexit__(exc_type, exc_val, exc_tb)
         success = exc_type is None
         log_request(str(self.url), self.ttfb, self.ttlb, success)
         if not success:
