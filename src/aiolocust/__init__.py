@@ -4,7 +4,10 @@ import sys
 import threading
 import time
 from collections.abc import Callable
+from typing import Any, Concatenate, cast
 
+from aiohttp import ClientSession
+from aiohttp.client import _RequestContextManager
 # uvloop is faster than the default pure-python asyncio event loop
 # so if it is installed, we're going to be using that one
 try:
@@ -14,8 +17,7 @@ try:
 except ImportError:
     new_event_loop = None
 
-from aiohttp import ClientSession
-from aiohttp.client import _RequestContextManager
+
 
 if sys._is_gil_enabled():
     raise RuntimeError("aiolocust requires a freethreading Python build")
@@ -113,19 +115,46 @@ class LocustRequestContextManager:
 
         return suppress
 
+def copy_method_params[**Param, Arg1, RV](
+    source_method: Callable[Concatenate[Any, Param], Any]
+) -> Callable[
+    [Callable[Concatenate[Arg1, ...], RV]],
+    Callable[Concatenate[Arg1, Param], RV]
+]:
+    """Cast the decorated method's call signature to the source_method's.
+    Same as :func:`copy_func_params` but intended to be used with methods.
+    It keeps the first argument (``self``/``cls``) of the decorated method.
+    """
 
-class LocustClientSession(ClientSession):
-    iteration = 0
+    def return_func(
+        func: Callable[Concatenate[Arg1, ...], RV]
+    ) -> Callable[Concatenate[Arg1, Param], RV]:
+        return cast(Callable[Concatenate[Arg1, Param], RV], func)
 
+    return return_func
+
+class LocustClientSession():
+    @copy_method_params(ClientSession.__init__)
+    def __init__(self, base_url=None, **kwargs):
+        self.base_url = base_url
+        self._session: ClientSession = None # type: ignore
+        self.iteration = 0
+            
     # explicitly declare this to get the correct return type
     async def __aenter__(self) -> LocustClientSession:
+        self._session = ClientSession(base_url=self.base_url)
         return self
 
-    def get(self, url, **kwargs) -> LocustRequestContextManager:
-        return LocustRequestContextManager(super().get(url, **kwargs))
+    async def __aexit__(self, exc_type, exc_val, exc_tb):
+        await self._session.close()
 
+    @copy_method_params(ClientSession.get)
+    def get(self, url, **kwargs) -> LocustRequestContextManager:
+        return LocustRequestContextManager(self._session.get(url, **kwargs))
+
+    @copy_method_params(ClientSession.post)
     def post(self, url, **kwargs) -> LocustRequestContextManager:
-        return LocustRequestContextManager(super().post(url, **kwargs))
+        return LocustRequestContextManager(self._session.post(url, **kwargs))
 
 
 async def user_loop(user):
