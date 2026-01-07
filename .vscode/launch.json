@@ -8,7 +8,7 @@
             "name": "test.py",
             "type": "debugpy",
             "request": "launch",
-            "program": "test.py",
+            "program": "locustfile.py",
             "console": "integratedTerminal",
             "env": {
             },
