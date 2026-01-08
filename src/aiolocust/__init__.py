@@ -152,6 +152,7 @@ async def user_loop(user):
 
 
 async def user_runner(user, count, printer):
+    event_handlers.requests = {}
     async with asyncio.TaskGroup() as tg:
         if printer:
             tg.create_task(stats_printer())
