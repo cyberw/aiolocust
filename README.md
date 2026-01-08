@@ -1,8 +1,8 @@
 # AIOLocust
 
-This is a reimagining of [Locust](https://github.com/locustio/locust/). It is possible that we may merge the projects at some point, but for now it is a separate library.
+This is a 2026 reimagining of [Locust](https://github.com/locustio/locust/). It is possible that we may merge the projects at some point, but for now it is a separate library.
 
-## Simpler and more consistent syntax than Locust
+## Simpler and more consistent syntax than Locust, leveraging asyncio
 
 ```python
 import asyncio
@@ -13,6 +13,10 @@ async def user(client: LocustClientSession):
         assert resp.status == 200
     asyncio.sleep(0.1)
 ```
+
+Locust was created in 2011, and while it has gone through several major overhauls, it has accumulated too much non-core functionality and design choices that don't make a lot of sense. Making significant updates to the existing 10000+ lines of code is messy at best and downright impossible at worst.
+
+AIOLocust is built to be a be a more focused tool, that takes a lot of the learnings from Locust, but uses modern, explicitly asyncronous, Python code (instead of gevent/monkey patching) and modern tooling.
 
 ## High performance
 
