@@ -32,6 +32,33 @@ jobs:
 
             - name: pytest
               run: uv run pytest tests
+    linux-perf:
+        runs-on: ubuntu-latest
+        timeout-minutes: 4
+        steps:
+            - uses: actions/checkout@v6
+
+            - name: set up python
+              uses: actions/setup-python@v6
+              with:
+                  python-version-file: ".python-version"
+
+            - name: setup uv
+              uses: astral-sh/setup-uv@v7
+
+            - name: uv sync
+              run: uv sync --locked --all-extras --dev
+
+            - name: Start Server
+              run: |
+                  cd tests/performance && nginx -p $PWD -c $PWD/nginx.conf
+                  timeout 10s sh -c 'until curl -s localhost:8080; do sleep 1; done'
+
+            - name: Run Tests
+              run: |
+                  uv run python locustfile.py | tee locust_output.txt
+                  grep -E 'Total.*[0-9]{5}.[0-9]{2}/s' locust_output.txt # ensure >10000 RPS
+                  bash -ec '! grep Traceback locust_output.txt' # ensure no callstacks
     windows:
         runs-on: windows-latest
 
