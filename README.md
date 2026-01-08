@@ -16,9 +16,9 @@ async def user(client: LocustClientSession):
 
 Locust was created in 2011, and while it has gone through several major overhauls, it has accumulated too much non-core functionality and design choices that make it very hard to maintain and improve. It's 10000+ lines of code using a mix of procedural, object oriented and functional programming.
 
-AIOLocust is built to be smaller in scope, but capture the learnings from Locust. It uses modern, explicitly asyncronous, Python code (instead of gevent/monkey patching). 
+AIOLocust is built to be smaller in scope, but capture the learnings from Locust. It uses modern, explicitly asyncronous, Python code (instead of gevent/monkey patching).
 
-It also further emphasizes the "It's just Python"-approach. If you, for example, want to take precise control of the ramp up and ramp down of a test, you shouldn't need to read the documentation, you should only need to know how to write code.
+It also further emphasizes the "It's just Python"-approach. If you, for example, want to take precise control of the ramp up and ramp down of a test, you shouldn't need to read the documentation, you should only need to know how to write code. We'll still provide the option of using prebuilt features too of course, but we'll try not to "build our users into a box".
 
 ## High performance
 
