@@ -93,7 +93,7 @@ async def stats_printer():
         print()
         console.print(table)
 
-        if elapsed > 30:
+        if elapsed > 10:
             running = False
 
 
