@@ -14,9 +14,11 @@ async def user(client: LocustClientSession):
     asyncio.sleep(0.1)
 ```
 
-Locust was created in 2011, and while it has gone through several major overhauls, it has accumulated too much non-core functionality and design choices that don't make a lot of sense. Making significant updates to the existing 10000+ lines of code is messy at best and downright impossible at worst.
+Locust was created in 2011, and while it has gone through several major overhauls, it has accumulated too much non-core functionality and design choices that make it very hard to maintain and improve. It's 10000+ lines of code using a mix of procedural, object oriented and functional programming.
 
-AIOLocust is built to be a be a more focused tool, that takes a lot of the learnings from Locust, but uses modern, explicitly asyncronous, Python code (instead of gevent/monkey patching) and modern tooling.
+AIOLocust is built to be smaller in scope, but capture the learnings from Locust. It uses modern, explicitly asyncronous, Python code (instead of gevent/monkey patching). 
+
+It also further emphasizes the "It's just Python"-approach. If you, for example, want to take precise control of the ramp up and ramp down of a test, you shouldn't need to read the documentation, you should only need to know how to write code.
 
 ## High performance
 
@@ -36,9 +38,9 @@ Users/threads can also communicate easily with eachother, as they share memory w
 
 ### Some actual numbers
 
-A single aiolocust process can do almost 70k requests/s on, for example a MacBook Pro M3. It is also significantly faster to start, and has no issues spawning a lot of new users in a short interval.
+For example, aiolocust can do almost 70k requests/s on a MacBook Pro M3. It is also much faster to start than regular Locust, and has no issues spawning a lot of new users in a short interval.
 
-```
+```text
   Name                   ┃   Count ┃ Failures ┃     Avg ┃        Max ┃       Rate
  ━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━╇━━━━━━━━━━╇━━━━━━━━━╇━━━━━━━━━━━━╇━━━━━━━━━━━━
   http://localhost:8080/ │ 2032741 │ 0 (0.0%) │   2.8ms │     35.8ms │ 67659.22/s
@@ -48,12 +50,13 @@ A single aiolocust process can do almost 70k requests/s on, for example a MacBoo
 
 ## Things this doesn't have compared do Locust (at least not yet)
 
-* a WebUI
-* support for distributed tests
+* A WebUI
+* Support for distributed tests
+* Polish. This is not ready for production use yet.
 
 ## How to run the example
 
-```
+```text
 git clone https://github.com/cyberw/aiolocust.git
 cd aiolocust
 uv run python locustfile.py
