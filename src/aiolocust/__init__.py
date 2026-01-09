@@ -41,10 +41,15 @@ running = True
 console = Console()
 
 
+original_sigint_handler = signal.getsignal(signal.SIGINT)
+
+
 def signal_handler(_sig, _frame):
     print("Stopping...")
     global running
     running = False
+    # stop everything immediately on second Ctrl-C
+    signal.signal(signal.SIGINT, original_sigint_handler)
 
 
 signal.signal(signal.SIGINT, signal_handler)
