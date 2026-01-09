@@ -14,7 +14,7 @@ async def user(client: LocustClientSession):
     asyncio.sleep(0.1)
 ```
 
-Locust was created in 2011, and while it has gone through several major overhauls, it has accumulated too much non-core functionality and design choices that make it very hard to maintain and improve. It's 10000+ lines of code using a mix of procedural, object oriented and functional programming.
+Locust was created in 2011, and while it has gone through several major overhauls, it still has a fair amount of legacy style code, and has accumulated a lot of non-core functionality that make it very hard to maintain and improve. It's 10000+ lines of code using a mix of procedural, object oriented and functional programming, with several confusing abstractions.
 
 AIOLocust is built to be smaller in scope, but capture the learnings from Locust. It uses modern, explicitly asyncronous, Python code (instead of gevent/monkey patching).
 
