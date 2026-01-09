@@ -37,9 +37,35 @@ async def test_raise_for_status(httpserver):
         async with client.get(httpserver.url_for("/README2.md"), raise_for_status=True) as resp:
             pass
 
-    with pytest.raises(ClientResponseError):
-        async with LocustClientSession() as client:
+    async with LocustClientSession() as client:
+        with pytest.raises(ClientResponseError):
             await _(client)
+
+
+@pytest.mark.asyncio
+async def test_assert(httpserver):
+    httpserver.expect_request("/").respond_with_data("")
+
+    async def _(client: LocustClientSession):
+        async with client.get(httpserver.url_for("/")) as resp:
+            text = await resp.text()
+            assert text == "this text isn't there"
+        async with client.get(httpserver.url_for("/this_must_not_be_reached")) as resp:
+            pass
+
+    requests: list[Request] = []
+
+    def request(req: Request):
+        requests.append(req)
+
+    async with LocustClientSession(None, request_handler=request) as client:
+        try:
+            await _(client)
+        except AssertionError:
+            pass
+
+    assert len(requests) == 1
+    assert requests[0].success is False
 
 
 @pytest.mark.asyncio
@@ -58,7 +84,10 @@ async def test_handler(httpserver):
         requests.append(req)
 
     async with LocustClientSession(None, request_handler=request) as client:
-        await _(client)
+        try:
+            await _(client)
+        except AssertionError:
+            pass
 
     assert len(requests) == 2
     assert requests[0].success is True

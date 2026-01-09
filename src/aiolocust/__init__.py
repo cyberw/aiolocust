@@ -7,7 +7,7 @@ import time
 import warnings
 from collections.abc import Callable
 
-from aiohttp import ClientSession
+from aiohttp import ClientResponseError, ClientSession
 from aiohttp.client import _RequestContextManager
 from rich.console import Console
 from rich.table import Table
@@ -62,6 +62,7 @@ async def stats_printer():
         total_ttlb = 0
         total_max_ttlb = 0
         total_count = 0
+        total_errorcount = 0
         table = Table(show_edge=False)
         table.add_column("Name", max_width=30)
         table.add_column("Count", justify="right")
@@ -82,12 +83,14 @@ async def stats_printer():
             total_ttlb += re.sum_ttlb
             total_max_ttlb = max(total_max_ttlb, re.max_ttlb)
             total_count += re.count
+            total_errorcount += re.errorcount
         table.add_section()
         table.add_row(
             "Total",
+            str(total_count),
+            f"{total_errorcount} ({100 * total_errorcount / total_count:2.1f}%)",
             f"{1000 * total_ttlb / total_count:4.1f}ms",
             f"{1000 * total_max_ttlb:4.1f}ms",
-            str(total_count),
             f"{total_count / elapsed:.2f}/s",
         )
         print()
@@ -101,27 +104,28 @@ class LocustRequestContextManager(_RequestContextManager):
     def __init__(self, request_handler: Callable, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.request_handler = request_handler
+        self.force_success = False
 
     async def __aenter__(self):
         self.start_time = time.perf_counter()
         resp = await super().__aenter__()
         self.url = super()._resp.url
         self.ttfb = time.perf_counter() - self.start_time
+        self.resp = resp
         await resp.read()
         self.ttlb = time.perf_counter() - self.start_time
         return resp
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
+    async def __aexit__(self, exc_type, exc_val, exc_tb) -> bool | None:
         suppress = await super().__aexit__(exc_type, exc_val, exc_tb)
-        success = exc_type is None
-        self.request_handler(Request(str(self.url), self.ttfb, self.ttlb, success))
-        if not success:
-            import traceback
-
-            traceback.print_exception(exc_type, exc_val, exc_tb)
-            # Suppress exceptions raised inside the `async with` block so
-            # callers of `LocustClientSession.get()` don't see them.
-            return True
+        self.request_handler(
+            Request(
+                str(self.url),
+                self.ttfb,
+                self.ttlb,
+                self.force_success or exc_val is None and not self.resp.status >= 400,
+            )
+        )
 
         return suppress
 
@@ -133,7 +137,7 @@ class LocustClientSession(ClientSession):
         super().__init__(base_url=base_url, **kwargs)
         self.request_handler = request_handler or event_handlers.request
 
-    # explicitly declare this to get the correct return type
+    # explicitly declare this to get the correct return type and enter session
     async def __aenter__(self) -> LocustClientSession:
         return self
 
@@ -147,7 +151,10 @@ class LocustClientSession(ClientSession):
 async def user_loop(user):
     async with LocustClientSession() as client:
         while running:
-            await user(client)
+            try:
+                await user(client)
+            except (ClientResponseError, AssertionError):
+                pass
             client.iteration += 1
 
 

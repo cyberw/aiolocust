@@ -9,6 +9,8 @@ def request(req: Request):
     else:
         re = requests[req.url]
         re.count += 1
+        if not req.success:
+            re.errorcount += 1
         re.sum_ttfb += req.ttfb
         re.sum_ttlb += req.ttlb
         re.max_ttlb = max(re.max_ttlb, req.ttlb)
