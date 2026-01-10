@@ -6,6 +6,7 @@ import threading
 import time
 import warnings
 from collections.abc import Callable
+from typing import cast
 
 from aiohttp import ClientConnectorError, ClientResponse, ClientResponseError, ClientSession
 from aiohttp.client import _RequestContextManager
