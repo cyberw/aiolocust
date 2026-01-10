@@ -60,9 +60,7 @@ async def stats_printer():
     start_time = time.perf_counter()
     while running:
         await asyncio.sleep(2)
-        requests_copy: dict[str, RequestEntry] = (
-            event_handlers.requests.copy()
-        )  # avoid mutation during print
+        requests_copy: dict[str, RequestEntry] = event_handlers.requests.copy()  # avoid mutation during print
         elapsed = time.perf_counter() - start_time
         total_ttlb = 0
         total_max_ttlb = 0
@@ -105,6 +103,19 @@ async def stats_printer():
             running = False
 
 
+class LocustResponse(ClientResponse):
+    error: Exception | bool | None = None
+
+    def __init__(self, *args, **kwargs):
+        raise NotImplementedError()  # use wrap_response
+
+    @classmethod
+    def wrap_response(cls, resp: ClientResponse) -> LocustResponse:
+        new = cast(LocustResponse, resp)
+        new.error = None
+        return new
+
+
 class LocustRequestContextManager(_RequestContextManager):
     def __init__(self, request_handler: Callable, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -112,9 +123,9 @@ class LocustRequestContextManager(_RequestContextManager):
         # and it is only used for connection errors where the exception doesn't contain URL
         self.str_or_url = args[0]._coro.cr_frame.f_locals["str_or_url"]
         self.request_handler = request_handler
-        self.force_success = False
+        self._resp: LocustResponse
 
-    async def __aenter__(self):
+    async def __aenter__(self) -> LocustResponse:
         self.start_time = time.perf_counter()
         try:
             await super().__aenter__()
@@ -124,27 +135,29 @@ class LocustRequestContextManager(_RequestContextManager):
                 url = request_info.url
             else:
                 url = self.str_or_url
-            self.request_handler(Request(url, elapsed, elapsed, False))
+            self.request_handler(Request(url, elapsed, elapsed, e))
             raise
         except ClientResponseError as e:
             elapsed = self.ttlb = time.perf_counter() - self.start_time
-            self.request_handler(Request(str(e.request_info.url), elapsed, elapsed, False))
+            self.request_handler(Request(str(e.request_info.url), elapsed, elapsed, e))
             raise
         else:
             self.url = super()._resp.url
             self.ttfb = time.perf_counter() - self.start_time
             await self._resp.read()
             self.ttlb = time.perf_counter() - self.start_time
-        return self._resp
+        return LocustResponse.wrap_response(self._resp)
 
     async def __aexit__(self, exc_type, exc_val, exc_tb) -> bool | None:
         suppress = await super().__aexit__(exc_type, exc_val, exc_tb)
+        if self._resp.error is None:  # no explicit value set in with-block
+            self._resp.error = exc_val or self._resp.status >= 400
         self.request_handler(
             Request(
                 str(self.url),
                 self.ttfb,
                 self.ttlb,
-                self.force_success or exc_val is None and not self._resp.status >= 400,
+                self._resp.error,
             )
         )
 

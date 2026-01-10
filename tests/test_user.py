@@ -36,7 +36,7 @@ async def test_hard_fails_raise_and_log():
         await _(client)
 
     assert len(requests) == 1
-    assert requests[0].success is False
+    assert isinstance(requests[0].error, ClientConnectorError)
 
 
 @pytest.mark.asyncio
@@ -57,7 +57,7 @@ async def test_raise_for_status(httpserver):
             await _(client)
 
     assert len(requests) == 1
-    assert requests[0].success is False
+    assert isinstance(requests[0].error, ClientResponseError)
 
 
 @pytest.mark.asyncio
@@ -83,7 +83,7 @@ async def test_assert(httpserver):
             pass
 
     assert len(requests) == 1
-    assert requests[0].success is False
+    assert isinstance(requests[0].error, AssertionError)
 
 
 @pytest.mark.asyncio
@@ -92,8 +92,13 @@ async def test_handler(httpserver):
 
     async def _(client: LocustClientSession):
         async with client.get(httpserver.url_for("/")) as resp:
-            assert resp.status == 200
+            pass
         # POST is not allowed
+        async with client.post(httpserver.url_for("/")) as resp:
+            pass
+        async with client.post(httpserver.url_for("/")) as resp:
+            resp.error = False
+        # assertion failure
         async with client.post(httpserver.url_for("/")) as resp:
             assert resp.status == 200
 
@@ -108,6 +113,8 @@ async def test_handler(httpserver):
         except AssertionError:
             pass
 
-    assert len(requests) == 2
-    assert requests[0].success is True
-    assert requests[1].success is False
+    assert len(requests) == 4
+    assert not requests[0].error
+    assert requests[1].error  # bad response code => error = True
+    assert not requests[2].error  # error explicitly set to False
+    assert isinstance(requests[3].error, AssertionError)  # assertion failure overwrites bad response code
