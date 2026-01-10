@@ -1,4 +1,5 @@
 import pytest
+from aiohttp import ClientConnectorError
 from aiohttp.client_exceptions import ClientResponseError
 
 from aiolocust import LocustClientSession
@@ -6,11 +7,13 @@ from aiolocust.datatypes import Request
 
 
 @pytest.mark.asyncio
-async def test_get(httpserver):
+async def test_basic(httpserver):
     httpserver.expect_request("/").respond_with_data("")
 
     async def _(client: LocustClientSession):
         async with client.get(httpserver.url_for("/")) as resp:
+            assert resp.status == 200
+        async with client.post(httpserver.url_for("/")) as resp:
             assert resp.status == 200
 
     async with LocustClientSession() as client:
@@ -18,15 +21,22 @@ async def test_get(httpserver):
 
 
 @pytest.mark.asyncio
-async def test_post(httpserver):
-    httpserver.expect_request("/", method="POST").respond_with_data("")
-
+async def test_hard_fails_raise_and_log():
     async def _(client: LocustClientSession):
-        async with client.get(httpserver.url_for("/")) as resp:
-            assert resp.status == 200
+        with pytest.raises(ClientConnectorError):
+            async with client.get("http://localhost:6666") as resp:
+                raise Exception("This will never be reached")
 
-    async with LocustClientSession() as client:
+    requests: list[Request] = []
+
+    def request(req: Request):
+        requests.append(req)
+
+    async with LocustClientSession(request_handler=request) as client:
         await _(client)
+
+    assert len(requests) == 1
+    assert requests[0].success is False
 
 
 @pytest.mark.asyncio
@@ -37,9 +47,17 @@ async def test_raise_for_status(httpserver):
         async with client.get(httpserver.url_for("/README2.md"), raise_for_status=True) as resp:
             pass
 
-    async with LocustClientSession() as client:
+    requests: list[Request] = []
+
+    def request(req: Request):
+        requests.append(req)
+
+    async with LocustClientSession(None, request_handler=request) as client:
         with pytest.raises(ClientResponseError):
             await _(client)
+
+    assert len(requests) == 1
+    assert requests[0].success is False
 
 
 @pytest.mark.asyncio
@@ -75,6 +93,7 @@ async def test_handler(httpserver):
     async def _(client: LocustClientSession):
         async with client.get(httpserver.url_for("/")) as resp:
             assert resp.status == 200
+        # POST is not allowed
         async with client.post(httpserver.url_for("/")) as resp:
             assert resp.status == 200
 
@@ -91,4 +110,4 @@ async def test_handler(httpserver):
 
     assert len(requests) == 2
     assert requests[0].success is True
-    assert requests[1].success is False  # POST is not allowed
+    assert requests[1].success is False
