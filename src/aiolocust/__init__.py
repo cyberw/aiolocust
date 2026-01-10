@@ -124,7 +124,7 @@ class LocustRequestContextManager(_RequestContextManager):
         # and it is only used for connection errors where the exception doesn't contain URL
         self.str_or_url = args[0]._coro.cr_frame.f_locals["str_or_url"]
         self.request_handler = request_handler
-        self._resp: LocustResponse
+        self._resp: LocustResponse  # type: ignore
 
     async def __aenter__(self) -> LocustResponse:
         self.start_time = time.perf_counter()
@@ -149,8 +149,8 @@ class LocustRequestContextManager(_RequestContextManager):
             self.ttlb = time.perf_counter() - self.start_time
         return LocustResponse.wrap_response(self._resp)
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb) -> bool | None:
-        suppress = await super().__aexit__(exc_type, exc_val, exc_tb)
+    async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
+        await super().__aexit__(exc_type, exc_val, exc_tb)
         if self._resp.error is None:  # no explicit value set in with-block
             self._resp.error = exc_val or self._resp.status >= 400
         self.request_handler(
@@ -161,8 +161,6 @@ class LocustRequestContextManager(_RequestContextManager):
                 self._resp.error,
             )
         )
-
-        return suppress
 
 
 class LocustClientSession(ClientSession):

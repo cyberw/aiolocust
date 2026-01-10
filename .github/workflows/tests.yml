@@ -30,6 +30,12 @@ jobs:
             - name: uv sync
               run: uv sync --locked --all-extras --dev
 
+            - name: lint, format and typecheck
+              run: |
+                  uv run ruff check
+                  uv run ruff format --check
+                  uv run pyright
+
             - name: pytest
               run: uv run pytest tests
     perftest:
