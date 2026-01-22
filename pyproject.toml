@@ -6,6 +6,16 @@ readme = "README.md"
 authors = [
     { name = "Lars Holmberg", email = "lars.holmberg@redshirt.se" }
 ]
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Intended Audience :: Developers",
+    "Intended Audience :: System Administrators",
+    "Topic :: Software Development :: Testing",
+    "Topic :: Software Development :: Testing :: Traffic Generation",
+]
 requires-python = ">=3.14"
 dependencies = [
     "aiohttp>=3.13.3",
