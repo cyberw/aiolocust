@@ -20,9 +20,9 @@ async def user(client: LocustClientSession):
 
 ### 1. Create a project, request freethreading Python build
 
-We recommend using [uv](https://docs.astral.sh/uv/getting-started/installation/) 
+We recommend using [uv](https://docs.astral.sh/uv/getting-started/installation/)
 
-```sh
+```text
 uv init myproject
 cd myproject
 uv python pin 3.14t
@@ -30,7 +30,7 @@ uv python pin 3.14t
 
 ### 2. Install this package
 
-```sh
+```text
 uv add aiolocust
 ```
 
@@ -38,7 +38,7 @@ uv add aiolocust
 
 ### 4. Run it
 
-```sh
+```text
 uv run python locustfile.py
 ```
 
