@@ -106,3 +106,23 @@ jobs:
 
             - name: pytest
               run: uv run pytest tests
+
+    publish_pypi:
+        name: Publish to PyPI
+        needs: [linux, windows, macos]
+        if: github.repository_owner == 'cyberw' && ( github.ref == 'refs/heads/master' || startsWith(github.event.ref, 'refs/tags') )
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v6
+
+            - name: Install uv
+              uses: astral-sh/setup-uv@v5
+              with:
+                  version: "latest"
+
+            - name: Build package
+              run: uv build
+
+            - name: Publish to PyPI
+              run: uv publish
