@@ -27,9 +27,6 @@ jobs:
             - name: setup uv
               uses: astral-sh/setup-uv@v7
 
-            - name: uv sync
-              run: uv sync --locked --all-extras --dev
-
             - name: lint, format and typecheck
               run: |
                   uv run ruff check
@@ -59,9 +56,6 @@ jobs:
               with:
                   enable-cache: true
 
-            - name: uv sync
-              run: uv sync --locked --all-extras --dev
-
             - name: Run Tests
               run: |
                   uv run python locustfile.py | tee locust_output.txt
@@ -81,9 +75,6 @@ jobs:
             - name: setup uv
               uses: astral-sh/setup-uv@v7
 
-            - name: uv sync
-              run: uv sync --locked --all-extras --dev
-
             - name: pytest
               run: uv run pytest tests
 
@@ -100,9 +91,6 @@ jobs:
 
             - name: setup uv
               uses: astral-sh/setup-uv@v7
-
-            - name: uv sync
-              run: uv sync --locked --all-extras --dev
 
             - name: pytest
               run: uv run pytest tests
