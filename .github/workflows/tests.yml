@@ -110,7 +110,7 @@ jobs:
     publish_pypi:
         name: Publish to PyPI
         needs: [linux, windows, macos]
-        if: github.repository_owner == 'cyberw' && ( github.ref == 'refs/heads/master' || startsWith(github.event.ref, 'refs/tags') )
+        if: github.repository_owner == 'cyberw' && startsWith(github.event.ref, 'refs/tags')
         runs-on: ubuntu-latest
 
         permissions:
