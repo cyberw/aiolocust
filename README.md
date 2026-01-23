@@ -10,7 +10,7 @@ This is a 2026 reimagining of [Locust](https://github.com/locustio/locust/). It 
 import asyncio
 from aiolocust import LocustClientSession
 
-async def user(client: LocustClientSession):
+async def run(client: LocustClientSession):
     async with client.get("http://example.com/") as resp:
         assert resp.status == 200
     asyncio.sleep(0.1)
@@ -28,10 +28,11 @@ cd myproject
 uv python pin 3.14t
 ```
 
-### 2. Install this package
+### 2. Add the package, test installation
 
 ```text
 uv add aiolocust
+uv run aiolocust --help
 ```
 
 ### 3. Create your locustfile (have a look at [locustfile.py](locustfile.py))
@@ -39,7 +40,7 @@ uv add aiolocust
 ### 4. Run it
 
 ```text
-uv run python locustfile.py
+uv run aiolocust --run-time 5 --users 20
 ```
 
 ## Or install for development/run latest from git
@@ -47,7 +48,7 @@ uv run python locustfile.py
 ```text
 git clone https://github.com/cyberw/aiolocust.git
 cd aiolocust
-uv run python locustfile.py
+uv run aiolocust locustfile.py
 ```
 
 ## Why?

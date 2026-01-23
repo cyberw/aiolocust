@@ -22,6 +22,7 @@ dependencies = [
     "rich>=14.2.0",
     "uvloop>=0.22.1 ; sys_platform == 'linux'",
     "uvloop>=0.22.1 ; sys_platform == 'darwin'",
+    "click>=8.3.0",
 ]
 
 [tool.uv]
@@ -47,3 +48,5 @@ dev = [
     "ruff>=0.14.10",
 ]
 
+[project.scripts]
+aiolocust = "aiolocust.cli:cli"

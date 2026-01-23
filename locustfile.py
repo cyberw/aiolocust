@@ -1,7 +1,6 @@
-import asyncio
 import time
 
-from aiolocust import LocustClientSession, main
+from aiolocust import LocustClientSession
 
 
 # this is for simulating CPU work
@@ -11,9 +10,12 @@ def busy_loop(seconds: float):
         pass
 
 
-async def user(client: LocustClientSession):
-    async with client.get("http://localhost:8080/index.html") as resp:
-        assert resp.status == 200
+async def run(client: LocustClientSession):
+    async with client.get("http://localhost:8080/") as resp:
+        pass
+    async with client.get("http://localhost:8080/doesnt_exist", raise_for_status=True) as resp:
+        pass
+
     # # raise exception (interrupt user) on bad status
     # async with client.get("http://localhost/README2.md", raise_for_status=True) as resp:
     #     pass
@@ -23,6 +25,3 @@ async def user(client: LocustClientSession):
     # If you want to make things slower/experiment with loadgen performance:
     # busy_loop(0.1)
     # await asyncio.sleep(0.1)
-
-
-asyncio.run(main(user, 60))

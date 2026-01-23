@@ -56,7 +56,7 @@ def signal_handler(_sig, _frame):
 signal.signal(signal.SIGINT, signal_handler)
 
 
-async def stats_printer():
+async def stats_printer(run_time: int | None = None):
     global running
     start_time = time.perf_counter()
     while running:
@@ -100,7 +100,7 @@ async def stats_printer():
         print()
         console.print(table)
 
-        if elapsed > 30:
+        if run_time and elapsed > run_time:
             running = False
 
 
@@ -191,17 +191,17 @@ async def user_loop(user):
             client.iteration += 1
 
 
-async def user_runner(user, count, printer):
+async def user_runner(user, count, run_time, printer):
     event_handlers.requests = {}
     async with asyncio.TaskGroup() as tg:
         if printer:
-            tg.create_task(stats_printer())
+            tg.create_task(stats_printer(run_time))
         for _ in range(count):
             tg.create_task(user_loop(user))
 
 
-def thread_worker(user, count, printer):
-    return asyncio.run(user_runner(user, count, printer), loop_factory=new_event_loop)
+def thread_worker(user, count, run_time, printer):
+    return asyncio.run(user_runner(user, count, run_time, printer), loop_factory=new_event_loop)
 
 
 def distribute_evenly(total, num_buckets):
@@ -213,7 +213,7 @@ def distribute_evenly(total, num_buckets):
     return [base + 1 if i < remainder else base for i in range(num_buckets)]
 
 
-async def main(user: Callable, user_count: int, event_loops: int | None = None):
+async def main(user: Callable, user_count: int, event_loops: int | None = None, run_time: int | None = None):
     if event_loops is None:
         if cpu_count := os.cpu_count():
             # for heavy calculations this may need to be increased,
@@ -229,6 +229,7 @@ async def main(user: Callable, user_count: int, event_loops: int | None = None):
             args=(
                 user,
                 i,
+                run_time,
                 not threads,  # first thread prints stats
             ),
         )
