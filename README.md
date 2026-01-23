@@ -55,11 +55,9 @@ aiolocust's performance is *much* better than HttpUser (based on Requests), and 
 
 #### Leveraging Python in its [freethreading/no-GIL](https://docs.python.org/3/howto/free-threading-python.html) form
 
-This means that you dont need to launch one locust process per core! Even if your load tests are doing some heavy computations, they are unlikely to impact eachother, as one thread will not block Python from running another one.
+This means that you dont need to launch one Locust process per core! And even if your load tests are doing some heavy computations, they are less likely to impact eachother, as one thread will not block Python from concurrently working on another one.
 
-In fact, you can still use syncronous libraries, (without gevent monkey patching), just increase the number of threads.
-
-Users/threads can also communicate easily with eachother, as they share memory with eachother, unlike in the old Locust implementation where you were forced to use zmq messaging between master and worker processes.
+Users/threads can also communicate easily with eachother, as they are in the same process, unlike in the old Locust implementation where you were forced to use zmq messaging between master and worker processes and worker-to-worker communication was nearly impossible.
 
 ## Some actual numbers
 
