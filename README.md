@@ -48,7 +48,7 @@ uv run aiolocust --run-time 5 --users 20
 ```text
 git clone https://github.com/cyberw/aiolocust.git
 cd aiolocust
-uv run aiolocust locustfile.py
+uv run aiolocust --run-time 5 --users 20
 ```
 
 ## Why?
