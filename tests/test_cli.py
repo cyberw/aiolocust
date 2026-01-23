@@ -3,14 +3,13 @@ from click.testing import CliRunner
 from aiolocust.cli import cli
 
 
-def test_cli_run():
-    # don't forget to start nginx first
+def test_cli_run(http_server):  # noqa: ARG001
     runner = CliRunner()
     with runner.isolated_filesystem():
         with open("my_locustfile.py", "w") as f:
             f.write("""
 async def run(client: LocustClientSession):
-    async with client.get("http://localhost:8080/") as resp:
+    async with client.get("http://localhost:8081/") as resp:
         pass
 """)
 
