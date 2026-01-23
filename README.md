@@ -13,7 +13,7 @@ from aiolocust import LocustClientSession
 async def run(client: LocustClientSession):
     async with client.get("http://example.com/") as resp:
         assert resp.status == 200
-    asyncio.sleep(0.1)
+    await asyncio.sleep(0.1)
 ```
 
 ## Installation
