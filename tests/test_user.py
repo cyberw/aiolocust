@@ -1,13 +1,14 @@
 import pytest
 from aiohttp import ClientConnectorError
 from aiohttp.client_exceptions import ClientResponseError
+from pytest_httpserver import HTTPServer
 
 from aiolocust import LocustClientSession
 from aiolocust.datatypes import Request
 
 
 @pytest.mark.asyncio
-async def test_basic(httpserver):
+async def test_basic(httpserver: HTTPServer):
     httpserver.expect_request("/").respond_with_data("")
 
     async def _(client: LocustClientSession):
@@ -40,7 +41,7 @@ async def test_hard_fails_raise_and_log():
 
 
 @pytest.mark.asyncio
-async def test_raise_for_status(httpserver):
+async def test_raise_for_status(httpserver: HTTPServer):
     httpserver.expect_request("/README2.md").respond_with_data("", status=404)
 
     async def _(client: LocustClientSession):
@@ -61,7 +62,7 @@ async def test_raise_for_status(httpserver):
 
 
 @pytest.mark.asyncio
-async def test_assert(httpserver):
+async def test_assert(httpserver: HTTPServer):
     httpserver.expect_request("/").respond_with_data("")
 
     async def _(client: LocustClientSession):
@@ -87,18 +88,19 @@ async def test_assert(httpserver):
 
 
 @pytest.mark.asyncio
-async def test_handler(httpserver):
+async def test_handler(httpserver: HTTPServer):
     httpserver.expect_request("/", method="GET").respond_with_data("")
 
     async def _(client: LocustClientSession):
         async with client.get(httpserver.url_for("/")) as resp:
             pass
-        # POST is not allowed
+        # POST is not allowed, will log the request as failed
         async with client.post(httpserver.url_for("/")) as resp:
             pass
+        # Explicitly mark the request as successful
         async with client.post(httpserver.url_for("/")) as resp:
             resp.error = False
-        # assertion failure
+        # Assertion failure
         async with client.post(httpserver.url_for("/")) as resp:
             assert resp.status == 200
 
