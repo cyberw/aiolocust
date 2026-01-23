@@ -18,7 +18,7 @@ async def run(client: LocustClientSession):
 
 ## Installation
 
-AIOLocust is just a regular Python package, and can be installed in many ways, but we recommend using [uv](https://docs.astral.sh/uv/getting-started/installation/)
+AIOLocust can be installed in many ways, but we recommend using [uv](https://docs.astral.sh/uv/getting-started/installation/)
 
 ```text
 uv tool install aiolocust
