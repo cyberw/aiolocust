@@ -27,7 +27,7 @@ aiolocust --help
 
 For alternative ways to install, see the bottom of this page.
 
-## Create a locustfile (have a look at [locustfile.py](locustfile.py))
+## Create a locustfile (see above, or have a look at [locustfile.py](locustfile.py))
 
 ## Run a test
 
