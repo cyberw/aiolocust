@@ -18,7 +18,7 @@ async def run(client: LocustClientSession):
 
 ## Installation
 
-AIOLocust can be installed in many ways, but we recommend using [uv](https://docs.astral.sh/uv/getting-started/installation/)
+We recommend using [uv](https://docs.astral.sh/uv/getting-started/installation/) for installation
 
 ```text
 uv tool install aiolocust
