@@ -16,39 +16,23 @@ async def run(client: LocustClientSession):
     asyncio.sleep(0.1)
 ```
 
-## How to run
+## Installation
 
-### 1. Create a project, request freethreading Python build
-
-We recommend using [uv](https://docs.astral.sh/uv/getting-started/installation/)
+AIOLocust is just a regular Python package, and can be installed in many ways, but we recommend using [uv](https://docs.astral.sh/uv/getting-started/installation/)
 
 ```text
-uv init myproject
-cd myproject
-uv python pin 3.14t
+uv tool install aiolocust
+aiolocust --help
 ```
 
-### 2. Add the package, test installation
+For alternative ways to install, see the bottom of this page.
+
+## Create a locustfile (have a look at [locustfile.py](locustfile.py))
+
+## Run a test
 
 ```text
-uv add aiolocust
-uv run aiolocust --help
-```
-
-### 3. Create your locustfile (have a look at [locustfile.py](locustfile.py))
-
-### 4. Run it
-
-```text
-uv run aiolocust --run-time 5 --users 20
-```
-
-## Or install for development/run latest from git
-
-```text
-git clone https://github.com/cyberw/aiolocust.git
-cd aiolocust
-uv run aiolocust --run-time 5 --users 20
+aiolocust --run-time 5 --users 20
 ```
 
 ## Why?
@@ -95,4 +79,20 @@ For example, aiolocust can do almost 70k requests/s on a MacBook Pro M3. It is a
 * Support for distributed tests
 * Polish. This is not ready for production use yet.
 
+## Alternative ways to install
 
+If your tests need additional packages, or you want to structure your code in a complete Python project, here's how:
+
+```text
+uv init --python 3.14t
+uv add aiolocust
+uv run aiolocust --help
+```
+
+Install for developing aiolocust, or just getting the latest changes before they make it into a release:
+
+```text
+git clone https://github.com/cyberw/aiolocust.git
+cd aiolocust
+uv run aiolocust --run-time 5 --users 20
+```
