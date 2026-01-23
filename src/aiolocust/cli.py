@@ -12,7 +12,7 @@ from aiolocust import main
 @click.argument("filename", type=click.Path(exists=True), default="locustfile.py")
 @click.option("-u", "--users", type=int, default=1)
 @click.option("--event-loops", type=click.INT, default=None)
-@click.option("--run-time", type=click.INT, default=None)
+@click.option("-t", "--run-time", type=click.INT, default=None)
 def cli(filename, users, event_loops, run_time):
     file_path = Path(filename).resolve()
     module_name = file_path.stem
