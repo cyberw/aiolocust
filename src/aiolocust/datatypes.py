@@ -1,4 +1,5 @@
-from dataclasses import dataclass
+import threading
+from dataclasses import dataclass, field
 
 
 @dataclass(slots=True)
@@ -16,3 +17,4 @@ class RequestEntry:
     sum_ttfb: float
     sum_ttlb: float
     max_ttlb: float
+    lock: threading.Lock = field(default_factory=threading.Lock)
