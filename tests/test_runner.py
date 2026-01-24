@@ -15,6 +15,6 @@ async def test_runner(http_server, capfd):  # noqa: ARG001
 
     await main(run, 1, 1)
     out, err = capfd.readouterr()
+    assert err == ""
     assert " http://localhost:8081/ " in out
     assert "0 (0.0%)" in out
-    assert err == ""
