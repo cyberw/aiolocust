@@ -4,7 +4,18 @@ This is a 2026 reimagining of [Locust](https://github.com/locustio/locust/). It 
 
 **!!! This is pre-alpha software, not production ready !!!**
 
-## Example test script
+## Installation
+
+We recommend using [uv](https://docs.astral.sh/uv/getting-started/installation/) for installation
+
+```text
+uv tool install aiolocust
+aiolocust --help
+```
+
+There are also some [alternative ways to install](#alternative ways-to-install).
+
+## Create a locustfile
 
 ```python
 import asyncio
@@ -15,19 +26,6 @@ async def run(client: LocustClientSession):
         assert resp.status == 200
     await asyncio.sleep(0.1)
 ```
-
-## Installation
-
-We recommend using [uv](https://docs.astral.sh/uv/getting-started/installation/) for installation
-
-```text
-uv tool install aiolocust
-aiolocust --help
-```
-
-For alternative ways to install, see the bottom of this page.
-
-## Create a locustfile (see above, or have a look at [locustfile.py](locustfile.py))
 
 ## Run a test
 
