@@ -77,13 +77,13 @@ We also plan to further emphasizes the "It's just Python"-approach. For example,
 
 aiolocust is more performant than "regular" Locust because has a smaller footprint/complexity, but it's two main gains come from:
 
-### Using [asyncio](https://docs.python.org/3/library/asyncio.html) together with [aiohttp](https://docs.aiohttp.org/en/stable/)
+### [asyncio](https://docs.python.org/3/library/asyncio.html) + [aiohttp](https://docs.aiohttp.org/en/stable/)
 
 aiolocust's performance is *much* better than HttpUser (based on Requests), and even slightly better than FastHttpUser (based on geventhttpclient). Because it uses async programming instead of monkey patching it is more useful on modern Python and more future-proof. Specifically it allows your locustfile to easily use asyncio libraries (like Playwright), which are becoming more and more common.
 
-### Leveraging Python in its [freethreading/no-GIL](https://docs.python.org/3/howto/free-threading-python.html) form
+### [Freethreading/no-GIL Python](https://docs.python.org/3/howto/free-threading-python.html)
 
-This means that you dont need to launch one Locust process per core! And even if your load tests are doing some heavy computations, they are less likely to impact eachother, as one thread will not block Python from concurrently working on another one.
+This means that you dont need to launch one Locust process per core! And even if your load tests happen to do some heavy computations, they are less likely to impact eachother, as one thread will not block Python from concurrently working on another one.
 
 Users/threads can also communicate easily with eachother, as they are in the same process, unlike in the old Locust implementation where you were forced to use zmq messaging between master and worker processes and worker-to-worker communication was nearly impossible.
 
@@ -99,7 +99,7 @@ aiolocust can do almost 70k requests/s on a MacBook Pro M3. It is also much fast
 
 ## Alternative ways to install
 
-If your tests need additional packages, or you want to structure your code in a complete Python project, here's how:
+If your tests need additional packages, or you want to structure your code in a complete Python project:
 
 ```text
 uv init --python 3.14t
@@ -112,5 +112,12 @@ Install for developing aiolocust, or just getting the latest changes before they
 ```text
 git clone https://github.com/cyberw/aiolocust.git
 cd aiolocust
-uv run aiolocust --run-time 5 --users 20
+uv run aiolocust --help
+```
+
+You can still use pip. Just remember that you need a freethreading Python build:
+
+```text
+pip install aiolocust
+aiolocust --help
 ```
