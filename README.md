@@ -15,7 +15,7 @@ aiolocust --help
 
 There are also some [alternative ways to install](#alternative-ways-to-install).
 
-## Create a locustfile
+## Create a locustfile.py
 
 ```python
 import asyncio
