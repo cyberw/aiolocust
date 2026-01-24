@@ -5,7 +5,7 @@
 [![Downloads](https://static.pepy.tech/personalized-badge/aiolocust?period=total&units=INTERNATIONAL_SYSTEM&left_color=GREY&right_color=GREEN&left_text=downloads)](https://pepy.tech/projects/aiolocust)
 [![Build Status](https://github.com/cyberw/aiolocust/workflows/Tests/badge.svg)](https://github.com/cyberw/aiolocust/actions?query=workflow%3ATests)
 
-This is a 2026 reimagining of the load testing tool [Locust](https://github.com/locustio/locust/). It is possible that we may merge the projects at some point, but for now it is a separate library.
+This is a 2026 reimagining of the load testing tool [Locust](https://github.com/locustio/locust/).
 
 **!!! This is pre-alpha software !!!**
 
@@ -70,6 +70,8 @@ Locust was created in 2011, and while it has gone through several major overhaul
 AIOLocust is built to be smaller in scope, but capture the learnings from Locust. It uses modern, explicitly asyncronous, Python code (instead of gevent/monkey patching).
 
 It also further emphasizes the "It's just Python"-approach. If you, for example, want to take precise control of the ramp up and ramp down of a test, you shouldn't need to read the documentation, you should only need to know how to write code. We'll still provide the option of using prebuilt features too of course, but we'll try not to "build our users into a box".
+
+It is possible that we may merge the projects at some point, but for now it is a separate library.
 
 ### High performance
 
