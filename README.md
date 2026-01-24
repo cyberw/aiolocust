@@ -23,14 +23,29 @@ from aiolocust import LocustClientSession
 
 async def run(client: LocustClientSession):
     async with client.get("http://example.com/") as resp:
-        assert resp.status == 200
+        pass
+    async with client.get("http://example.com/") as resp:
+        # extra validation, not just HTTP response code:
+        assert "expected text" in await resp.text()
     await asyncio.sleep(0.1)
 ```
 
 ## Run a test
 
 ```text
-aiolocust --run-time 5 --users 20
+aiolocust --run-time 30 --users 20
+
+ Name                   ┃  Count ┃ Failures ┃    Avg ┃    Max ┃       Rate
+━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━╇━━━━━━━━━━╇━━━━━━━━╇━━━━━━━━╇━━━━━━━━━━━━
+ http://example.com/    │ 120779 │ 0 (0.0%) │  1.6ms │ 22.6ms │ 60372.44/s
+────────────────────────┼────────┼──────────┼────────┼────────┼────────────
+ Total                  │ 120779 │ 0 (0.0%) │  1.6ms │ 22.6ms │ 60372.44/s
+...
+ Name                   ┃   Count ┃ Failures ┃    Avg ┃    Max ┃       Rate
+━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━╇━━━━━━━━━━╇━━━━━━━━╇━━━━━━━━╇━━━━━━━━━━━━
+ http://example.com/    │ 1836384 │ 0 (0.0%) │  1.6ms │ 22.6ms │ 61154.84/s
+────────────────────────┼─────────┼──────────┼────────┼────────┼────────────
+ Total                  │ 1836385 │ 0 (0.0%) │  1.6ms │ 22.6ms │ 61154.87/s
 ```
 
 ## Why?
