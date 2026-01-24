@@ -1,4 +1,4 @@
-# AIOLocust
+# aiolocust
 
 This is a 2026 reimagining of [Locust](https://github.com/locustio/locust/). It is possible that we may merge the projects at some point, but for now it is a separate library.
 
