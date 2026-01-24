@@ -34,7 +34,9 @@ async def run(client: LocustClientSession):
 
 ```text
 aiolocust --run-time 30 --users 100
+```
 
+```text
  Name                   ┃  Count ┃ Failures ┃    Avg ┃    Max ┃       Rate
 ━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━╇━━━━━━━━━━╇━━━━━━━━╇━━━━━━━━╇━━━━━━━━━━━━
  http://example.com/    │ 120779 │ 0 (0.0%) │  1.6ms │ 22.6ms │ 60372.44/s
@@ -80,15 +82,7 @@ Users/threads can also communicate easily with eachother, as they are in the sam
 
 ## Some actual numbers
 
-For example, aiolocust can do almost 70k requests/s on a MacBook Pro M3. It is also much faster to start than regular Locust, and has no issues spawning a lot of new users in a short interval.
-
-```text
-  Name                   ┃   Count ┃ Failures ┃     Avg ┃        Max ┃       Rate
- ━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━╇━━━━━━━━━━╇━━━━━━━━━╇━━━━━━━━━━━━╇━━━━━━━━━━━━
-  http://localhost:8080/ │ 2032741 │ 0 (0.0%) │   2.8ms │     35.8ms │ 67659.22/s
- ────────────────────────┼─────────┼──────────┼─────────┼────────────┼────────────
-  Total                  │   2.8ms │   35.8ms │ 2032741 │ 67659.22/s │
-```
+aiolocust can do almost 70k requests/s on a MacBook Pro M3. It is also much faster to start than regular Locust, and has no issues spawning a lot of new users in a short interval.
 
 ## Things this doesn't have compared do Locust (at least not yet)
 
