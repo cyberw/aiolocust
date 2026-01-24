@@ -13,7 +13,7 @@ uv tool install aiolocust
 aiolocust --help
 ```
 
-There are also some [alternative ways to install](#alternative ways-to-install).
+There are also some [alternative ways to install](#alternative-ways-to-install).
 
 ## Create a locustfile
 
