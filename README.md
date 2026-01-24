@@ -1,7 +1,7 @@
 # aiolocust
 
 [![PyPI](https://img.shields.io/pypi/v/aiolocust.svg)](https://pypi.org/project/aiolocust/)
-[![Supported Python Versions](https://img.shields.io/pypi/pyversions/aiolocust?color=brightgreen)](https://pypi.org/project/aiolocust/)
+![Python Version from PEP 621 TOML](https://img.shields.io/python/required-version-toml?tomlFilePath=https%3A%2F%2Fraw.githubusercontent.com%2Fcyberw%2Faiolocust%2Fmaster%2Fpyproject.toml)
 [![Downloads](https://static.pepy.tech/personalized-badge/aiolocust?period=total&units=INTERNATIONAL_SYSTEM&left_color=GREY&right_color=GREEN&left_text=downloads)](https://pepy.tech/projects/aiolocust)
 [![Build Status](https://github.com/cyberw/aiolocust/workflows/Tests/badge.svg)](https://github.com/cyberw/aiolocust/actions?query=workflow%3ATests)
 
