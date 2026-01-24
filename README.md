@@ -67,21 +67,21 @@ Locust was created in 2011, and while it has gone through several major overhaul
 
 aiolocust is built to be smaller in scope, but capture the learnings from Locust. It is possible that we may merge the projects at some point, but for now it is a separate library.
 
-### Simpler and more consistent syntax than Locust, leveraging asyncio instead of gevent
+## Simple and consistent syntax
 
-It uses modern, explicitly asyncronous, Python code (instead of gevent/monkey patching).
+Tests are expressed in modern, explicitly asyncronous, syntax instead of relying on gevent monkey patching and implicit concurrency.
 
 We also plan to further emphasizes the "It's just Python"-approach. For example, if you want to take precise control of the ramp up and ramp down of a test, you shouldn't need to read the documentation, you should only need to know how to write code. We'll still provide the option of using prebuilt features too of course, but we'll try not to "build our users into a box".
 
-### High performance
+## High performance
 
 aiolocust is more performant than "regular" Locust because has a smaller footprint/complexity, but it's two main gains come from:
 
-#### Using [asyncio](https://docs.python.org/3/library/asyncio.html) together with [aiohttp](https://docs.aiohttp.org/en/stable/)
+### Using [asyncio](https://docs.python.org/3/library/asyncio.html) together with [aiohttp](https://docs.aiohttp.org/en/stable/)
 
 aiolocust's performance is *much* better than HttpUser (based on Requests), and even slightly better than FastHttpUser (based on geventhttpclient). Because it uses async programming instead of monkey patching it is more useful on modern Python and more future-proof. Specifically it allows your locustfile to easily use asyncio libraries (like Playwright), which are becoming more and more common.
 
-#### Leveraging Python in its [freethreading/no-GIL](https://docs.python.org/3/howto/free-threading-python.html) form
+### Leveraging Python in its [freethreading/no-GIL](https://docs.python.org/3/howto/free-threading-python.html) form
 
 This means that you dont need to launch one Locust process per core! And even if your load tests are doing some heavy computations, they are less likely to impact eachother, as one thread will not block Python from concurrently working on another one.
 
