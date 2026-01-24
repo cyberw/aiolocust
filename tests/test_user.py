@@ -3,8 +3,8 @@ from aiohttp import ClientConnectorError
 from aiohttp.client_exceptions import ClientResponseError
 from pytest_httpserver import HTTPServer
 
-from aiolocust import LocustClientSession
 from aiolocust.datatypes import Request
+from aiolocust.runner import LocustClientSession
 
 
 @pytest.mark.asyncio

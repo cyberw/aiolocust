@@ -5,7 +5,7 @@ from pathlib import Path
 
 import click
 
-from aiolocust import main
+from aiolocust.runner import main
 
 
 @click.command()
