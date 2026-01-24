@@ -1,5 +1,7 @@
 from dataclasses import dataclass
 
+from .util import Counter
+
 
 @dataclass(slots=True)
 class Request:
@@ -11,8 +13,8 @@ class Request:
 
 @dataclass(slots=True)
 class RequestEntry:
-    count: int
-    errorcount: int
+    count: Counter
+    errorcount: Counter
     sum_ttfb: float
     sum_ttlb: float
     max_ttlb: float

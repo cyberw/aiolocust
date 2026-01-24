@@ -77,16 +77,16 @@ async def stats_printer(run_time: int | None = None):
         for url, re in requests_copy.items():
             table.add_row(
                 url,
-                str(re.count),
-                f"{re.errorcount} ({100 * re.errorcount / re.count:2.1f}%)",
-                f"{1000 * re.sum_ttlb / re.count:4.1f}ms",
+                str(re.count.get()),
+                f"{re.errorcount.get()} ({100 * re.errorcount.get() / re.count.get():2.1f}%)",
+                f"{1000 * re.sum_ttlb / re.count.get():4.1f}ms",
                 f"{1000 * re.max_ttlb:4.1f}ms",
-                f"{re.count / elapsed:.2f}/s",
+                f"{re.count.get() / elapsed:.2f}/s",
             )
             total_ttlb += re.sum_ttlb
             total_max_ttlb = max(total_max_ttlb, re.max_ttlb)
-            total_count += re.count
-            total_errorcount += re.errorcount
+            total_count += re.count.get()
+            total_errorcount += re.errorcount.get()
         table.add_section()
         table.add_row(
             "Total",
@@ -110,7 +110,7 @@ async def user_loop(user):
                 await user(client)
             except (ClientResponseError, AssertionError):
                 pass
-            client.iteration += 1
+            client.iteration.inc()
 
 
 async def user_runner(user, count, run_time, printer):

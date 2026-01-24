@@ -7,6 +7,7 @@ from aiohttp.client import _RequestContextManager
 
 from . import event_handlers
 from .datatypes import Request
+from .util import Counter
 
 
 class LocustResponse(ClientResponse):
@@ -69,7 +70,7 @@ class LocustRequestContextManager(_RequestContextManager):
 
 
 class LocustClientSession(ClientSession):
-    iteration = 0
+    iteration = Counter()
 
     def __init__(self, base_url=None, request_handler: Callable | None = None, **kwargs):
         super().__init__(base_url=base_url, **kwargs)
