@@ -1,1 +1,1 @@
-from .runner import LocustClientSession  # noqa: F401
+from .http import LocustClientSession  # noqa: F401
