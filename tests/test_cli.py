@@ -10,9 +10,10 @@ def _timeout_handler(_signum, _frame):
 
 
 def test_cli(http_server):  # noqa: ARG001
-    # ensure long-running hangs fail quickly in CI/local runs
-    signal.signal(signal.SIGALRM, _timeout_handler)
-    signal.alarm(10)
+    # SIGALRM isn't available on Windows; only set an alarm when present
+    if hasattr(signal, "SIGALRM"):
+        signal.signal(signal.SIGALRM, _timeout_handler)
+        signal.alarm(10)
     runner = CliRunner()
     with runner.isolated_filesystem():
         with open("my_locustfile.py", "w") as f:
@@ -26,5 +27,6 @@ async def run(client: LocustClientSession):
         assert result.exit_code == 0
         assert "http://localhost:" in result.output
         assert "0 (0.0%)" in result.output
-    # clear the alarm whether the test passed or failed
-    signal.alarm(0)
+
+    if hasattr(signal, "SIGALRM"):
+        signal.alarm(0)
