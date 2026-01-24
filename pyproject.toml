@@ -50,3 +50,6 @@ dev = [
 
 [project.scripts]
 aiolocust = "aiolocust.cli:cli"
+
+[tool.pytest]
+filterwarnings = ["ignore:Inheritance class LocustClientSession from ClientSession is discouraged:DeprecationWarning"]
