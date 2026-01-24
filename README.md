@@ -11,7 +11,7 @@ This is a 2026 reimagining of the load testing tool [Locust](https://github.com/
 
 ## Installation
 
-We recommend using [uv](https://docs.astral.sh/uv/getting-started/installation/) for installation
+We recommend using [uv](https://docs.astral.sh/uv/getting-started/installation/)
 
 ```text
 uv tool install aiolocust
