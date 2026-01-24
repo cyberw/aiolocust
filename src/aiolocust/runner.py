@@ -110,7 +110,6 @@ async def user_loop(user):
                 await user(client)
             except (ClientResponseError, AssertionError):
                 pass
-            client.iteration += 1
 
 
 async def user_runner(user, count, run_time, printer):

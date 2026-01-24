@@ -69,8 +69,6 @@ class LocustRequestContextManager(_RequestContextManager):
 
 
 class LocustClientSession(ClientSession):
-    iteration = 0
-
     def __init__(self, base_url=None, request_handler: Callable | None = None, **kwargs):
         super().__init__(base_url=base_url, **kwargs)
         self.request_handler = request_handler or event_handlers.request
