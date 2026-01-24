@@ -61,17 +61,17 @@ aiolocust --run-time 30 --users 100
  Total                  │ 1836385 │ 0 (0.0%) │  1.6ms │ 22.6ms │ 61154.87/s
 ```
 
-## Why?
-
-### Simpler and more consistent syntax than Locust, leveraging asyncio instead of gevent
+## Why a rewrite instead of just expanding Locust?
 
 Locust was created in 2011, and while it has gone through several major overhauls, it still has a fair amount of legacy style code, and has accumulated a lot of non-core functionality that make it very hard to maintain and improve. It's 10000+ lines of code using a mix of procedural, object oriented and functional programming, with several confusing abstractions.
 
-AIOLocust is built to be smaller in scope, but capture the learnings from Locust. It uses modern, explicitly asyncronous, Python code (instead of gevent/monkey patching).
+aiolocust is built to be smaller in scope, but capture the learnings from Locust. It is possible that we may merge the projects at some point, but for now it is a separate library.
 
-It also further emphasizes the "It's just Python"-approach. If you, for example, want to take precise control of the ramp up and ramp down of a test, you shouldn't need to read the documentation, you should only need to know how to write code. We'll still provide the option of using prebuilt features too of course, but we'll try not to "build our users into a box".
+### Simpler and more consistent syntax than Locust, leveraging asyncio instead of gevent
 
-It is possible that we may merge the projects at some point, but for now it is a separate library.
+It uses modern, explicitly asyncronous, Python code (instead of gevent/monkey patching).
+
+We also plan to further emphasizes the "It's just Python"-approach. For example, if you want to take precise control of the ramp up and ramp down of a test, you shouldn't need to read the documentation, you should only need to know how to write code. We'll still provide the option of using prebuilt features too of course, but we'll try not to "build our users into a box".
 
 ### High performance
 
@@ -87,7 +87,7 @@ This means that you dont need to launch one Locust process per core! And even if
 
 Users/threads can also communicate easily with eachother, as they are in the same process, unlike in the old Locust implementation where you were forced to use zmq messaging between master and worker processes and worker-to-worker communication was nearly impossible.
 
-## Some actual numbers
+### Some actual numbers
 
 aiolocust can do almost 70k requests/s on a MacBook Pro M3. It is also much faster to start than regular Locust, and has no issues spawning a lot of new users in a short interval.
 
