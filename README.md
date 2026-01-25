@@ -101,7 +101,7 @@ uv add aiolocust
 uv run aiolocust --help
 ```
 
-Install for developing aiolocust, or just getting the latest changes before they make it into a release:
+Install for developing the tool itself, or just getting the latest changes before they make it into a release:
 
 ```text
 git clone https://github.com/cyberw/aiolocust.git
@@ -109,7 +109,7 @@ cd aiolocust
 uv run aiolocust --help
 ```
 
-You can still use pip. Just remember that you need a freethreading Python build:
+You can still use good old pip as well, just remember that you need a freethreading Python build:
 
 ```text
 pip install aiolocust
