@@ -42,10 +42,10 @@ async def test_hard_fails_raise_and_log():
 
 @pytest.mark.asyncio
 async def test_raise_for_status(httpserver: HTTPServer):
-    httpserver.expect_request("/README2.md").respond_with_data("", status=404)
-
     async def _(client: LocustClientSession):
-        async with client.get(httpserver.url_for("/README2.md"), raise_for_status=True) as resp:
+        async with client.get(httpserver.url_for("/doesnt_exist"), raise_for_status=True) as resp:
+            pass
+        async with client.get(httpserver.url_for("/this_wont_be_reached")) as resp:
             pass
 
     requests: list[Request] = []
@@ -58,6 +58,7 @@ async def test_raise_for_status(httpserver: HTTPServer):
             await _(client)
 
     assert len(requests) == 1
+    assert requests[0].url.endswith("doesnt_exist")
     assert isinstance(requests[0].error, ClientResponseError)
 
 
