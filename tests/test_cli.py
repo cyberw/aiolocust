@@ -2,7 +2,7 @@ import signal
 
 from typer.testing import CliRunner
 
-from aiolocust.cli import app
+from aiolocust.main import app
 
 
 def _timeout_handler(_signum, _frame):

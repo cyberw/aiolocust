@@ -12,7 +12,7 @@ app = typer.Typer(add_completion=False)
 
 
 @app.command()
-def cli(
+def main(
     filename: Annotated[str, typer.Argument(help="The test to run")] = "locustfile.py",
     users: Annotated[int, typer.Option("-u", "--users", help="The number of concurrent VUs")] = 1,
     duration: Annotated[int | None, typer.Option("-d", "--duration", help="Stop the test after X seconds")] = None,
