@@ -13,9 +13,9 @@ app = typer.Typer()
 
 @app.command()
 def cli(
-    filename: Annotated[str, typer.Argument()] = "locustfile.py",
-    users: Annotated[int, typer.Option("-u", "-users")] = 1,
-    duration: Annotated[int, typer.Option("-d", "--duration")] | None = None,
+    filename: Annotated[str, typer.Argument(help="The test to run")] = "locustfile.py",
+    users: Annotated[int, typer.Option("-u", "--users", help="The number of concurrent VUs")] = 1,
+    duration: Annotated[int | None, typer.Option("-d", "--duration", help="How long to run the test")] = None,
     event_loops: int | None = None,
 ):
     file_path = Path(filename).resolve()
