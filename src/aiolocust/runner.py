@@ -88,14 +88,24 @@ async def stats_printer(run_time: int | None = None):
             total_count += re.count
             total_errorcount += re.errorcount
         table.add_section()
-        table.add_row(
-            "Total",
-            str(total_count),
-            f"{total_errorcount} ({100 * total_errorcount / total_count:2.1f}%)",
-            f"{1000 * total_ttlb / total_count:4.1f}ms",
-            f"{1000 * total_max_ttlb:4.1f}ms",
-            f"{total_count / elapsed:.2f}/s",
-        )
+        if total_count == 0:
+            table.add_row(
+                "Total",
+                "0",
+                "",
+                "",
+                "",
+                "",
+            )
+        else:
+            table.add_row(
+                "Total",
+                str(total_count),
+                f"{total_errorcount} ({100 * total_errorcount / total_count:2.1f}%)",
+                f"{1000 * total_ttlb / total_count:4.1f}ms",
+                f"{1000 * total_max_ttlb:4.1f}ms",
+                f"{total_count / elapsed:.2f}/s",
+            )
         print()
         console.print(table)
 
