@@ -5,9 +5,7 @@
 [![Downloads](https://static.pepy.tech/personalized-badge/aiolocust?period=total&units=INTERNATIONAL_SYSTEM&left_color=GREY&right_color=GREEN&left_text=downloads)](https://pepy.tech/projects/aiolocust)
 [![Build Status](https://github.com/cyberw/aiolocust/workflows/Tests/badge.svg)](https://github.com/cyberw/aiolocust/actions?query=workflow%3ATests)
 
-This is a 2026 reimagining of the load testing tool [Locust](https://github.com/locustio/locust/).
-
-**!!! This is pre-alpha software !!!**
+This is a 2026 reimagining of the load testing tool [Locust](https://github.com/locustio/locust/). It is not yet very mature and almost certainly has a lot of bugs and missing features.
 
 ## Installation
 
