@@ -2,25 +2,33 @@ import asyncio
 import importlib.util
 import sys
 from pathlib import Path
+from typing import Annotated
 
-import click
+import typer
 
 from aiolocust.runner import main
 
+app = typer.Typer()
 
-@click.command()
-@click.argument("filename", type=click.Path(exists=True), default="locustfile.py")
-@click.option("-u", "--users", type=int, default=1)
-@click.option("-t", "--run-time", type=click.INT, default=None)
-@click.option("--event-loops", type=click.INT, default=None)
-def cli(filename, users, run_time, event_loops):
+
+@app.command()
+def cli(
+    filename: Annotated[str, typer.Argument()] = "locustfile.py",
+    users: int = 1,
+    run_time: int | None = None,
+    event_loops: int | None = None,
+):
     file_path = Path(filename).resolve()
+    if not file_path.exists():
+        typer.echo(f"Error: Could not find the file at {file_path}")
+        raise typer.Exit(code=1)
+
     module_name = file_path.stem
 
     spec = importlib.util.spec_from_file_location(module_name, file_path)
     if spec is None or spec.loader is None:
-        click.echo(f"Error: Could not load the file at {file_path}")
-        return
+        typer.echo(f"Error: Could not load the file at {file_path}")
+        raise typer.Exit(code=1)
 
     module = importlib.util.module_from_spec(spec)
 
@@ -33,8 +41,8 @@ def cli(filename, users, run_time, event_loops):
     if hasattr(module, "run"):
         asyncio.run(main(module.run, users, run_time, event_loops))
     else:
-        click.echo(f"Error: No run function defined in {filename}")
+        typer.echo(f"Error: No run function defined in {filename}")
 
 
 if __name__ == "__main__":
-    cli()
+    app()

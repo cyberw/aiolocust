@@ -1,8 +1,8 @@
 import signal
 
-from click.testing import CliRunner
+from typer.testing import CliRunner
 
-from aiolocust.cli import cli
+from aiolocust.cli import app
 
 
 def _timeout_handler(_signum, _frame):
@@ -22,11 +22,10 @@ async def run(client: LocustClientSession):
     async with client.get("http://localhost:8081/") as resp:
         pass
 """)
-
-        result = runner.invoke(cli, ["my_locustfile.py", "--run-time", "1"])
-        assert result.exit_code == 0
+        result = runner.invoke(app, ["my_locustfile.py", "--run-time", "1"])
         assert "http://localhost:" in result.output
         assert "0 (0.0%)" in result.output
+        assert result.exit_code == 0
 
     if hasattr(signal, "SIGALRM"):
         signal.alarm(0)

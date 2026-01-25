@@ -22,7 +22,7 @@ dependencies = [
     "rich>=14.2.0",
     "uvloop>=0.22.1 ; sys_platform == 'linux'",
     "uvloop>=0.22.1 ; sys_platform == 'darwin'",
-    "click>=8.3.0",
+    "typer>=0.21.1",
 ]
 
 [tool.uv]
