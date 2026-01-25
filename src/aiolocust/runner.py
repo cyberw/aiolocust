@@ -144,7 +144,7 @@ def distribute_evenly(total, num_buckets):
     return [base + 1 if i < remainder else base for i in range(num_buckets)]
 
 
-async def main(user: Callable, user_count: int, duration: int | None = None, event_loops: int | None = None):
+async def run_test(user: Callable, user_count: int, duration: int | None = None, event_loops: int | None = None):
     global running
     running = True
     if event_loops is None:

@@ -2,18 +2,18 @@ import asyncio
 
 import pytest
 
-from aiolocust.runner import LocustClientSession, main
+from aiolocust.runner import LocustClientSession, run_test
 
 
 @pytest.mark.asyncio
 async def test_runner(http_server, capfd):  # noqa: ARG001
-    async def run(client: LocustClientSession):
+    async def user(client: LocustClientSession):
         await asyncio.sleep(1)
         print("hello")
         async with client.get("http://localhost:8081/") as resp:
             pass
 
-    await main(run, 1, 1)
+    await run_test(user, 1, 2)
     out, err = capfd.readouterr()
     assert err == ""
     assert " http://localhost:8081/ " in out
