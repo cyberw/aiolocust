@@ -55,7 +55,7 @@ def signal_handler(_sig, _frame):
 signal.signal(signal.SIGINT, signal_handler)
 
 
-async def stats_printer(run_time: int | None = None):
+async def stats_printer(duration: int | None = None):
     global running
     start_time = time.perf_counter()
     while running:
@@ -109,7 +109,7 @@ async def stats_printer(run_time: int | None = None):
         print()
         console.print(table)
 
-        if run_time and elapsed > run_time:
+        if duration and elapsed > duration:
             running = False
 
 
@@ -122,17 +122,17 @@ async def user_loop(user):
                 pass
 
 
-async def user_runner(user, count, run_time, printer):
+async def user_runner(user, count, duration, printer):
     event_handlers.requests = {}
     async with asyncio.TaskGroup() as tg:
         if printer:
-            tg.create_task(stats_printer(run_time))
+            tg.create_task(stats_printer(duration))
         for _ in range(count):
             tg.create_task(user_loop(user))
 
 
-def thread_worker(user, count, run_time, printer):
-    return asyncio.run(user_runner(user, count, run_time, printer), loop_factory=new_event_loop)
+def thread_worker(user, count, duration, printer):
+    return asyncio.run(user_runner(user, count, duration, printer), loop_factory=new_event_loop)
 
 
 def distribute_evenly(total, num_buckets):
@@ -144,7 +144,7 @@ def distribute_evenly(total, num_buckets):
     return [base + 1 if i < remainder else base for i in range(num_buckets)]
 
 
-async def main(user: Callable, user_count: int, run_time: int | None = None, event_loops: int | None = None):
+async def main(user: Callable, user_count: int, duration: int | None = None, event_loops: int | None = None):
     global running
     running = True
     if event_loops is None:
@@ -162,7 +162,7 @@ async def main(user: Callable, user_count: int, run_time: int | None = None, eve
             args=(
                 user,
                 i,
-                run_time,
+                duration,
                 not threads,  # first thread prints stats
             ),
         )

@@ -22,7 +22,7 @@ async def run(client: LocustClientSession):
     async with client.get("http://localhost:8081/") as resp:
         pass
 """)
-        result = runner.invoke(app, ["my_locustfile.py", "--run-time", "1"])
+        result = runner.invoke(app, ["my_locustfile.py", "--duration", "1", "-u", "2"])
         assert "http://localhost:" in result.output
         assert "0 (0.0%)" in result.output
         assert result.exit_code == 0

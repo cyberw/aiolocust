@@ -14,8 +14,8 @@ app = typer.Typer()
 @app.command()
 def cli(
     filename: Annotated[str, typer.Argument()] = "locustfile.py",
-    users: int = 1,
-    run_time: int | None = None,
+    users: Annotated[int, typer.Option("-u", "-users")] = 1,
+    duration: Annotated[int, typer.Option("-d", "--duration")] | None = None,
     event_loops: int | None = None,
 ):
     file_path = Path(filename).resolve()
@@ -39,6 +39,6 @@ def cli(
     spec.loader.exec_module(module)
 
     if hasattr(module, "run"):
-        asyncio.run(main(module.run, users, run_time, event_loops))
+        asyncio.run(main(module.run, users, duration, event_loops))
     else:
         typer.echo(f"Error: No run function defined in {filename}")

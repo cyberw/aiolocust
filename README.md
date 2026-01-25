@@ -38,7 +38,7 @@ async def run(client: LocustClientSession):
 ## Run a test
 
 ```text
-aiolocust --run-time 30 --users 100
+aiolocust --duration 30 --users 100
 ```
 
 ```text
@@ -86,10 +86,6 @@ aiolocust's performance is *much* better than HttpUser (based on Requests), and 
 This means that you dont need to launch one Locust process per core! And even if your load tests happen to do some heavy computations, they are less likely to impact eachother, as one thread will not block Python from concurrently working on another one.
 
 Users/threads can also communicate easily with eachother, as they are in the same process, unlike in the old Locust implementation where you were forced to use zmq messaging between master and worker processes and worker-to-worker communication was nearly impossible.
-
-### Some actual numbers
-
-aiolocust can do almost 70k requests/s on a MacBook Pro M3. It is also much faster to start than regular Locust, and has no issues spawning a lot of new users in a short interval.
 
 ## Things this doesn't have compared do Locust (at least not yet)
 
