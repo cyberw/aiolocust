@@ -135,6 +135,8 @@ def distribute_evenly(total, num_buckets):
 
 
 async def main(user: Callable, user_count: int, run_time: int | None = None, event_loops: int | None = None):
+    global running
+    running = True
     if event_loops is None:
         if cpu_count := os.cpu_count():
             # for heavy calculations this may need to be increased,
@@ -143,7 +145,7 @@ async def main(user: Callable, user_count: int, run_time: int | None = None, eve
         else:
             event_loops = 1
 
-    threads = []
+    threads: list[threading.Thread] = []
     for i in distribute_evenly(user_count, event_loops):
         t = threading.Thread(
             target=thread_worker,
