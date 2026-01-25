@@ -42,7 +42,3 @@ def cli(
         asyncio.run(main(module.run, users, run_time, event_loops))
     else:
         typer.echo(f"Error: No run function defined in {filename}")
-
-
-if __name__ == "__main__":
-    app()
