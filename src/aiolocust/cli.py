@@ -8,15 +8,20 @@ import typer
 
 from aiolocust.runner import main
 
-app = typer.Typer()
+app = typer.Typer(add_completion=False)
 
 
 @app.command()
 def cli(
     filename: Annotated[str, typer.Argument(help="The test to run")] = "locustfile.py",
     users: Annotated[int, typer.Option("-u", "--users", help="The number of concurrent VUs")] = 1,
-    duration: Annotated[int | None, typer.Option("-d", "--duration", help="How long to run the test")] = None,
-    event_loops: int | None = None,
+    duration: Annotated[int | None, typer.Option("-d", "--duration", help="Stop the test after X seconds")] = None,
+    event_loops: Annotated[
+        int | None,
+        typer.Option(
+            "--event-loops", help="Set the number of aio event loops", rich_help_panel="Advanced Configuration"
+        ),
+    ] = None,
 ):
     file_path = Path(filename).resolve()
     if not file_path.exists():
