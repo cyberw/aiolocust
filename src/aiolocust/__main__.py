@@ -1,6 +1,4 @@
-# Allow running as `python -m aiolocust` — invoke the Typer app so
-# command-line arguments are parsed instead of calling the command
-# function directly which ignores `sys.argv`.
+# Allow running as python -m aiolocust ...
 
 from aiolocust.cli import app
 
