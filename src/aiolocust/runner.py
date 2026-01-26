@@ -37,6 +37,7 @@ if sys._is_gil_enabled():
 
 
 running = True
+start_time = 0
 console = Console()
 
 
@@ -54,62 +55,72 @@ def signal_handler(_sig, _frame):
 signal.signal(signal.SIGINT, signal_handler)
 
 
-async def stats_printer(duration: int | None = None):
-    global running
-    start_time = time.perf_counter()
+def print_table():
+    requests_copy: dict[str, RequestEntry] = event_handlers.requests.copy()  # avoid mutation during print
+    elapsed = time.perf_counter() - start_time
+    total_ttlb = 0
+    total_max_ttlb = 0
+    total_count = 0
+    total_errorcount = 0
+    table = Table(show_edge=False)
+    table.add_column("Name", max_width=30)
+    table.add_column("Count", justify="right")
+    table.add_column("Failures", justify="right")
+    table.add_column("Avg", justify="right")
+    table.add_column("Max", justify="right")
+    table.add_column("Rate", justify="right")
+
+    for url, re in requests_copy.items():
+        table.add_row(
+            url,
+            str(re.count),
+            f"{re.errorcount} ({100 * re.errorcount / re.count:2.1f}%)",
+            f"{1000 * re.sum_ttlb / re.count:4.1f}ms",
+            f"{1000 * re.max_ttlb:4.1f}ms",
+            f"{re.count / elapsed:.2f}/s",
+        )
+        total_ttlb += re.sum_ttlb
+        total_max_ttlb = max(total_max_ttlb, re.max_ttlb)
+        total_count += re.count
+        total_errorcount += re.errorcount
+    table.add_section()
+    if total_count == 0:
+        table.add_row(
+            "Total",
+            "0",
+            "",
+            "",
+            "",
+            "",
+        )
+    else:
+        table.add_row(
+            "Total",
+            str(total_count),
+            f"{total_errorcount} ({100 * total_errorcount / total_count:2.1f}%)",
+            f"{1000 * total_ttlb / total_count:4.1f}ms",
+            f"{1000 * total_max_ttlb:4.1f}ms",
+            f"{total_count / elapsed:.2f}/s",
+        )
+    print()
+    console.print(table)
+
+
+async def stats_printer():
+    first = True
     while running:
+        if not first:
+            print_table()
+        first = False
         await asyncio.sleep(2)
-        requests_copy: dict[str, RequestEntry] = event_handlers.requests.copy()  # avoid mutation during print
-        elapsed = time.perf_counter() - start_time
-        total_ttlb = 0
-        total_max_ttlb = 0
-        total_count = 0
-        total_errorcount = 0
-        table = Table(show_edge=False)
-        table.add_column("Name", max_width=30)
-        table.add_column("Count", justify="right")
-        table.add_column("Failures", justify="right")
-        table.add_column("Avg", justify="right")
-        table.add_column("Max", justify="right")
-        table.add_column("Rate", justify="right")
 
-        for url, re in requests_copy.items():
-            table.add_row(
-                url,
-                str(re.count),
-                f"{re.errorcount} ({100 * re.errorcount / re.count:2.1f}%)",
-                f"{1000 * re.sum_ttlb / re.count:4.1f}ms",
-                f"{1000 * re.max_ttlb:4.1f}ms",
-                f"{re.count / elapsed:.2f}/s",
-            )
-            total_ttlb += re.sum_ttlb
-            total_max_ttlb = max(total_max_ttlb, re.max_ttlb)
-            total_count += re.count
-            total_errorcount += re.errorcount
-        table.add_section()
-        if total_count == 0:
-            table.add_row(
-                "Total",
-                "0",
-                "",
-                "",
-                "",
-                "",
-            )
-        else:
-            table.add_row(
-                "Total",
-                str(total_count),
-                f"{total_errorcount} ({100 * total_errorcount / total_count:2.1f}%)",
-                f"{1000 * total_ttlb / total_count:4.1f}ms",
-                f"{1000 * total_max_ttlb:4.1f}ms",
-                f"{total_count / elapsed:.2f}/s",
-            )
-        print()
-        console.print(table)
 
-        if duration and elapsed > duration:
-            running = False
+def shutdown():
+    global running
+    running = False
+    print()
+    print("--------- Summary: ----------")
+    print_table()
 
 
 async def user_loop(user):
@@ -142,6 +153,7 @@ def distribute_evenly(total, num_buckets) -> list[int]:
 
 async def run_test(user: Callable, user_count: int, duration: int | None = None, event_loops: int | None = None):
     global running
+    global start_time
     running = True
     if event_loops is None:
         if cpu_count := os.cpu_count():
@@ -150,9 +162,16 @@ async def run_test(user: Callable, user_count: int, duration: int | None = None,
             event_loops = max(cpu_count // 2, 1)
         else:
             event_loops = 1
-
+    loop = asyncio.get_running_loop()
     users_per_worker = distribute_evenly(user_count, event_loops)
+
     event_handlers.requests = {}
+    start_time = time.perf_counter()
+
     coros = [asyncio.to_thread(thread_worker, user, i) for i in users_per_worker]
-    asyncio.get_running_loop().create_task(stats_printer(duration))
+    loop.create_task(stats_printer())
+
+    if duration:
+        loop.call_later(duration, shutdown)
+
     return await asyncio.gather(*coros)
