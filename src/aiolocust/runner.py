@@ -2,7 +2,6 @@ import asyncio
 import os
 import signal
 import sys
-import threading
 import time
 import warnings
 from collections.abc import Callable
@@ -122,20 +121,17 @@ async def user_loop(user):
                 pass
 
 
-async def user_runner(user, count, duration, printer):
-    event_handlers.requests = {}
+async def user_runner(user, count):
     async with asyncio.TaskGroup() as tg:
-        if printer:
-            tg.create_task(stats_printer(duration))
         for _ in range(count):
             tg.create_task(user_loop(user))
 
 
-def thread_worker(user, count, duration, printer):
-    return asyncio.run(user_runner(user, count, duration, printer), loop_factory=new_event_loop)
+def thread_worker(user, count):
+    return asyncio.run(user_runner(user, count), loop_factory=new_event_loop)
 
 
-def distribute_evenly(total, num_buckets):
+def distribute_evenly(total, num_buckets) -> list[int]:
     # Calculate the base amount for every bucket
     base = total // num_buckets
     # Calculate how many buckets need an extra +1
@@ -155,19 +151,8 @@ async def run_test(user: Callable, user_count: int, duration: int | None = None,
         else:
             event_loops = 1
 
-    threads: list[threading.Thread] = []
-    for i in distribute_evenly(user_count, event_loops):
-        t = threading.Thread(
-            target=thread_worker,
-            args=(
-                user,
-                i,
-                duration,
-                not threads,  # first thread prints stats
-            ),
-        )
-        threads.append(t)
-        t.start()
-
-    for t in threads:
-        t.join()
+    users_per_worker = distribute_evenly(user_count, event_loops)
+    event_handlers.requests = {}
+    coros = [asyncio.to_thread(thread_worker, user, i) for i in users_per_worker]
+    asyncio.get_running_loop().create_task(stats_printer(duration))
+    return await asyncio.gather(*coros)
