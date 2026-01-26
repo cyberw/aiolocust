@@ -7,11 +7,8 @@ import warnings
 from collections.abc import Callable
 
 from aiohttp import ClientResponseError
-from rich.console import Console
-from rich.table import Table
 
-from . import event_handlers
-from .datatypes import RequestEntry
+from . import stats
 from .http import LocustClientSession
 
 # uvloop is faster than the default pure-python asyncio event loop
@@ -38,7 +35,6 @@ if sys._is_gil_enabled():
 
 running = True
 start_time = 0
-console = Console()
 
 
 original_sigint_handler = signal.getsignal(signal.SIGINT)
@@ -55,62 +51,11 @@ def signal_handler(_sig, _frame):
 signal.signal(signal.SIGINT, signal_handler)
 
 
-def print_table():
-    requests_copy: dict[str, RequestEntry] = event_handlers.requests.copy()  # avoid mutation during print
-    elapsed = time.perf_counter() - start_time
-    total_ttlb = 0
-    total_max_ttlb = 0
-    total_count = 0
-    total_errorcount = 0
-    table = Table(show_edge=False)
-    table.add_column("Name", max_width=30)
-    table.add_column("Count", justify="right")
-    table.add_column("Failures", justify="right")
-    table.add_column("Avg", justify="right")
-    table.add_column("Max", justify="right")
-    table.add_column("Rate", justify="right")
-
-    for url, re in requests_copy.items():
-        table.add_row(
-            url,
-            str(re.count),
-            f"{re.errorcount} ({100 * re.errorcount / re.count:2.1f}%)",
-            f"{1000 * re.sum_ttlb / re.count:4.1f}ms",
-            f"{1000 * re.max_ttlb:4.1f}ms",
-            f"{re.count / elapsed:.2f}/s",
-        )
-        total_ttlb += re.sum_ttlb
-        total_max_ttlb = max(total_max_ttlb, re.max_ttlb)
-        total_count += re.count
-        total_errorcount += re.errorcount
-    table.add_section()
-    if total_count == 0:
-        table.add_row(
-            "Total",
-            "0",
-            "",
-            "",
-            "",
-            "",
-        )
-    else:
-        table.add_row(
-            "Total",
-            str(total_count),
-            f"{total_errorcount} ({100 * total_errorcount / total_count:2.1f}%)",
-            f"{1000 * total_ttlb / total_count:4.1f}ms",
-            f"{1000 * total_max_ttlb:4.1f}ms",
-            f"{total_count / elapsed:.2f}/s",
-        )
-    print()
-    console.print(table)
-
-
 async def stats_printer():
     first = True
     while running:
         if not first:
-            print_table()
+            stats.print_table()
         first = False
         await asyncio.sleep(2)
 
@@ -120,7 +65,7 @@ def shutdown():
     running = False
     print()
     print("--------- Summary: ----------")
-    print_table()
+    stats.print_table()
 
 
 async def user_loop(user):
@@ -165,8 +110,8 @@ async def run_test(user: Callable, user_count: int, duration: int | None = None,
     loop = asyncio.get_running_loop()
     users_per_worker = distribute_evenly(user_count, event_loops)
 
-    event_handlers.requests = {}
-    start_time = time.perf_counter()
+    stats.requests = {}
+    stats.start_time = time.perf_counter()
 
     coros = [asyncio.to_thread(thread_worker, user, i) for i in users_per_worker]
     loop.create_task(stats_printer())

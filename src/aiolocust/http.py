@@ -5,7 +5,7 @@ from typing import cast
 from aiohttp import ClientConnectorError, ClientResponse, ClientResponseError, ClientSession
 from aiohttp.client import _RequestContextManager
 
-from . import event_handlers
+from . import stats
 from .datatypes import Request
 
 
@@ -71,7 +71,7 @@ class LocustRequestContextManager(_RequestContextManager):
 class LocustClientSession(ClientSession):
     def __init__(self, base_url=None, request_handler: Callable | None = None, **kwargs):
         super().__init__(base_url=base_url, **kwargs)
-        self.request_handler = request_handler or event_handlers.request
+        self.request_handler = request_handler or stats.request
 
     # explicitly declare this to get the correct return type and enter session
     async def __aenter__(self) -> LocustClientSession:
