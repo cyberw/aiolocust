@@ -14,6 +14,13 @@ from aiolocust.datatypes import Request
 async def test_stats():
     stats.requests = {}
     stats.start_time = time.perf_counter()
+    f = io.StringIO()
+    with redirect_stdout(f):
+        stats.print_table()
+
+    output = f.getvalue()
+    print(output)
+    assert "Total" in output
     stats.request(Request("foo", 1, 1, None))
     stats.request(Request("foo", 1, 2, True))
     f = io.StringIO()
@@ -44,3 +51,18 @@ async def test_stats():
     assert re.search("foo .* 0.50/s", output)
     assert re.search("Total .* 0.50/s", output)
     assert "1500.0ms" in output
+
+
+@pytest.mark.asyncio
+async def test_really_short_run():
+    stats.requests = {}
+    stats.start_time = time.perf_counter()
+    stats.request(Request("foo", 1, 1, None))
+
+    f = io.StringIO()
+    with redirect_stdout(f):
+        stats.print_table(True)
+
+    output = f.getvalue()
+    print(output)
+    assert "foo" in output

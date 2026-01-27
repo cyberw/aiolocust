@@ -46,6 +46,10 @@ def print_table(summary=False):
     table.add_column("Max", justify="right")
     table.add_column("Rate", justify="right")
 
+    if summary:
+        console.print()
+        console.print("--------- Summary: ----------")
+
     for url, rts in requests.items():
         count = 0
         errorcount = 0
