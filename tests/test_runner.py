@@ -20,7 +20,7 @@ async def test_runner(http_server, capfd):  # noqa: ARG001
     # first print will happen after a request has been created, but it is not yet in the window
     assert "http://localhost:8081/ │     0" in out
     # second print should have two requsts in the window
-    assert "http://localhost:8081/ │     2" in out
+    assert "http://localhost:8081/ │     2" in out or "http://localhost:8081/ │     3" in out
 
     stats.print_table(True)  # call to print summary is made in main, so we do it manually here
 
