@@ -50,5 +50,6 @@ def main(
     else:
         typer.echo(f"Error: No run function defined in {filename}")
 
+    print()
     print("--------- Summary: ----------")
     stats.print_table(True)
