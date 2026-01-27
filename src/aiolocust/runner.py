@@ -35,7 +35,7 @@ if sys._is_gil_enabled():
 
 running = True
 start_time = 0
-
+coros = []
 
 original_sigint_handler = signal.getsignal(signal.SIGINT)
 
@@ -63,9 +63,6 @@ async def stats_printer():
 def shutdown():
     global running
     running = False
-    print()
-    print("--------- Summary: ----------")
-    stats.print_table()
 
 
 async def user_loop(user):
@@ -99,6 +96,7 @@ def distribute_evenly(total, num_buckets) -> list[int]:
 async def run_test(user: Callable, user_count: int, duration: int | None = None, event_loops: int | None = None):
     global running
     global start_time
+    global coros
     running = True
     if event_loops is None:
         if cpu_count := os.cpu_count():
