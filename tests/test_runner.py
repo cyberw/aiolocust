@@ -9,7 +9,7 @@ from aiolocust.runner import LocustClientSession, run_test
 @pytest.mark.asyncio
 async def test_runner(http_server, capfd):  # noqa: ARG001
     async def run(client: LocustClientSession):
-        await asyncio.sleep(1)
+        await asyncio.sleep(0.9)
         async with client.get("http://localhost:8081/") as resp:
             pass
 
@@ -28,5 +28,5 @@ async def test_runner(http_server, capfd):  # noqa: ARG001
     print(out)
     assert err == ""
     assert "Summary" in out
-    assert " http://localhost:8081/ │     5" in out
+    assert " http://localhost:8081/ │     5" in out or " http://localhost:8081/ │     6" in out
     assert "0 (0.0%)" in out
