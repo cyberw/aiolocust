@@ -51,39 +51,6 @@ def signal_handler(_sig, _frame):
 signal.signal(signal.SIGINT, signal_handler)
 
 
-async def stats_printer():
-    first = True
-    while running:
-        if not first:
-            stats.print_table()
-        first = False
-        await asyncio.sleep(2)
-
-
-def shutdown():
-    global running
-    running = False
-
-
-async def user_loop(user):
-    async with LocustClientSession() as client:
-        while running:
-            try:
-                await user(client)
-            except (ClientResponseError, AssertionError):
-                pass
-
-
-async def user_runner(user, count):
-    async with asyncio.TaskGroup() as tg:
-        for _ in range(count):
-            tg.create_task(user_loop(user))
-
-
-def thread_worker(user, count):
-    return asyncio.run(user_runner(user, count), loop_factory=new_event_loop)
-
-
 def distribute_evenly(total, num_buckets) -> list[int]:
     # Calculate the base amount for every bucket
     base = total // num_buckets
@@ -93,28 +60,59 @@ def distribute_evenly(total, num_buckets) -> list[int]:
     return [base + 1 if i < remainder else base for i in range(num_buckets)]
 
 
-async def run_test(user: Callable, user_count: int, duration: int | None = None, event_loops: int | None = None):
-    global running
-    global start_time
-    global coros
-    running = True
-    if event_loops is None:
-        if cpu_count := os.cpu_count():
-            # for heavy calculations this may need to be increased,
-            # but for I/O bound tasks 1/2 of CPU cores seems to be the most efficient
-            event_loops = max(cpu_count // 2, 1)
-        else:
-            event_loops = 1
-    loop = asyncio.get_running_loop()
-    users_per_worker = distribute_evenly(user_count, event_loops)
+class Runner:
+    async def stats_printer(self):
+        first = True
+        while running:
+            if not first:
+                stats.print_table()
+            first = False
+            await asyncio.sleep(2)
 
-    stats.requests = {}
-    stats.start_time = time.perf_counter()
+    def shutdown(self):
+        global running
+        running = False
 
-    coros = [asyncio.to_thread(thread_worker, user, i) for i in users_per_worker]
-    loop.create_task(stats_printer())
+    async def user_loop(self, user):
+        async with LocustClientSession() as client:
+            while running:
+                try:
+                    await user(client)
+                except (ClientResponseError, AssertionError):
+                    pass
 
-    if duration:
-        loop.call_later(duration, shutdown)
+    async def user_runner(self, user, count):
+        async with asyncio.TaskGroup() as tg:
+            for _ in range(count):
+                tg.create_task(self.user_loop(user))
 
-    return await asyncio.gather(*coros)
+    def thread_worker(self, user, count):
+        return asyncio.run(self.user_runner(user, count), loop_factory=new_event_loop)
+
+    async def run_test(
+        self, user: Callable, user_count: int, duration: int | None = None, event_loops: int | None = None
+    ):
+        global running
+        global start_time
+        global coros
+        running = True
+        if event_loops is None:
+            if cpu_count := os.cpu_count():
+                # for heavy calculations this may need to be increased,
+                # but for I/O bound tasks 1/2 of CPU cores seems to be the most efficient
+                event_loops = max(cpu_count // 2, 1)
+            else:
+                event_loops = 1
+        loop = asyncio.get_running_loop()
+        users_per_worker = distribute_evenly(user_count, event_loops)
+
+        stats.requests = {}
+        stats.start_time = time.perf_counter()
+
+        coros = [asyncio.to_thread(self.thread_worker, user, i) for i in users_per_worker]
+        loop.create_task(self.stats_printer())
+
+        if duration:
+            loop.call_later(duration, self.shutdown)
+
+        return await asyncio.gather(*coros)

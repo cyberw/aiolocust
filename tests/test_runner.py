@@ -3,7 +3,7 @@ import asyncio
 import pytest
 
 from aiolocust import stats
-from aiolocust.runner import LocustClientSession, run_test
+from aiolocust.runner import LocustClientSession, Runner
 
 
 @pytest.mark.asyncio
@@ -13,7 +13,8 @@ async def test_runner(http_server, capfd):  # noqa: ARG001
         async with client.get("http://localhost:8081/") as resp:
             pass
 
-    await run_test(run, 1, 5)
+    r = Runner()
+    await r.run_test(run, 1, 5)
     out, err = capfd.readouterr()
     assert err == ""
     print(out)
