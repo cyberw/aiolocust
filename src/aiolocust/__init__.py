@@ -1,1 +1,1 @@
-from .http import LocustClientSession  # noqa: F401
+from aiolocust.http import LocustClientSession  # noqa: F401

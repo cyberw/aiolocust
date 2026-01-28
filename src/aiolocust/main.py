@@ -8,8 +8,6 @@ import typer
 
 from aiolocust.runner import Runner
 
-from . import stats
-
 app = typer.Typer(add_completion=False)
 
 
@@ -48,7 +46,6 @@ def main(
     if hasattr(module, "run"):
         r = Runner()
         asyncio.run(r.run_test(module.run, users, duration, event_loops))
+        r.stats.print_table(True)
     else:
         typer.echo(f"Error: No run function defined in {filename}")
-
-    stats.print_table(True)

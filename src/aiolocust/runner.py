@@ -2,14 +2,13 @@ import asyncio
 import os
 import signal
 import sys
-import time
 import warnings
 from collections.abc import Callable
 
 from aiohttp import ClientResponseError
 
-from . import stats
-from .http import LocustClientSession
+from aiolocust.http import LocustClientSession
+from aiolocust.stats import Stats
 
 # uvloop is faster than the default pure-python asyncio event loop
 # so if it is installed, we're going to be using that one
@@ -50,12 +49,13 @@ class Runner:
         signal.signal(signal.SIGINT, self.signal_handler)
         self.running = False
         self.start_time = 0
+        self.stats = Stats()
 
     async def stats_printer(self):
         first = True
         while self.running:
             if not first:
-                stats.print_table()
+                self.stats.print_table()
             first = False
             await asyncio.sleep(2)
 
@@ -63,7 +63,7 @@ class Runner:
         self.running = False
 
     async def user_loop(self, user):
-        async with LocustClientSession() as client:
+        async with LocustClientSession(self.stats.request, self) as client:
             while self.running:
                 try:
                     await user(client)
@@ -98,8 +98,7 @@ class Runner:
         loop = asyncio.get_running_loop()
         users_per_worker = distribute_evenly(user_count, event_loops)
 
-        stats.requests = {}
-        stats.start_time = time.perf_counter()
+        self.stats.reset()
 
         coros = [asyncio.to_thread(self.thread_worker, user, i) for i in users_per_worker]
         loop.create_task(self.stats_printer())
