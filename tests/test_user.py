@@ -1,5 +1,6 @@
 import pytest
-from aiohttp import ClientConnectorError
+import pytest_aiohttp
+from aiohttp import ClientConnectorError, WSMsgType, web
 from aiohttp.client_exceptions import ClientResponseError
 from pytest_httpserver import HTTPServer
 
@@ -119,3 +120,51 @@ async def test_handler(httpserver: HTTPServer):
     assert requests[1].error  # bad response code => error = True
     assert not requests[2].error  # error explicitly set to False
     assert isinstance(requests[3].error, AssertionError)  # assertion failure overwrites bad response code
+
+
+async def websocket_handler(request):
+    ws = web.WebSocketResponse()
+    await ws.prepare(request)
+
+    async for msg in ws:
+        if msg.type == WSMsgType.TEXT:
+            if msg.data == "close":
+                await ws.close()
+            else:
+                await ws.send_str(f"reply-for-{msg.data}")
+        elif msg.type == WSMsgType.ERROR:
+            print(f"ws connection closed with exception {ws.exception()}")
+
+    return ws
+
+
+async def test_websocket(aiohttp_client: pytest_aiohttp.AiohttpClient):
+    app = web.Application()
+    app.add_routes([web.get("/ws", websocket_handler)])
+    test_client = await aiohttp_client(app)
+
+    requests: list[Request] = []
+
+    def request(req: Request):
+        requests.append(req)
+
+    async def _(client: LocustClientSession):
+        async with client.ws_connect(test_client.make_url("/ws")) as ws:
+            await ws.send_str("foo")
+            request(Request("send foo", 0, 0, None))
+            async for msg in ws:
+                if msg.type == WSMsgType.TEXT:
+                    request(Request(f"recv {msg.data}", 0, 0, None))
+                    await ws.send_str("close")
+                elif msg.type == WSMsgType.ERROR:
+                    request(Request(f"recv {msg.data}", 0, 0, Exception("error-response")))
+                    break
+
+    async with LocustClientSession(request) as client:
+        await _(client)
+
+    assert requests[0].url == "send foo"
+    assert requests[0].error is None
+    assert requests[1].url == "recv reply-for-foo"
+    assert requests[1].error is None
+    assert len(requests) == 2
