@@ -33,22 +33,7 @@ if sys._is_gil_enabled():
     raise RuntimeError("aiolocust requires a freethreading Python build")
 
 
-running = True
-start_time = 0
-coros = []
-
 original_sigint_handler = signal.getsignal(signal.SIGINT)
-
-
-def signal_handler(_sig, _frame):
-    print("Stopping...")
-    global running
-    running = False
-    # stop everything immediately on second Ctrl-C
-    signal.signal(signal.SIGINT, original_sigint_handler)
-
-
-signal.signal(signal.SIGINT, signal_handler)
 
 
 def distribute_evenly(total, num_buckets) -> list[int]:
@@ -61,21 +46,25 @@ def distribute_evenly(total, num_buckets) -> list[int]:
 
 
 class Runner:
+    def __init__(self):
+        signal.signal(signal.SIGINT, self.signal_handler)
+        self.running = False
+        self.start_time = 0
+
     async def stats_printer(self):
         first = True
-        while running:
+        while self.running:
             if not first:
                 stats.print_table()
             first = False
             await asyncio.sleep(2)
 
     def shutdown(self):
-        global running
-        running = False
+        self.running = False
 
     async def user_loop(self, user):
         async with LocustClientSession() as client:
-            while running:
+            while self.running:
                 try:
                     await user(client)
                 except (ClientResponseError, AssertionError):
@@ -89,13 +78,16 @@ class Runner:
     def thread_worker(self, user, count):
         return asyncio.run(self.user_runner(user, count), loop_factory=new_event_loop)
 
+    def signal_handler(self, _sig, _frame):
+        print("Stopping...")
+        self.running = False
+        # stop everything immediately on second Ctrl-C
+        signal.signal(signal.SIGINT, original_sigint_handler)
+
     async def run_test(
         self, user: Callable, user_count: int, duration: int | None = None, event_loops: int | None = None
     ):
-        global running
-        global start_time
-        global coros
-        running = True
+        self.running = True
         if event_loops is None:
             if cpu_count := os.cpu_count():
                 # for heavy calculations this may need to be increased,
