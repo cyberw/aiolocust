@@ -17,7 +17,10 @@ async def test_basic(httpserver: HTTPServer):
         async with client.post(httpserver.url_for("/")) as resp:
             assert resp.status == 200
 
-    async with LocustClientSession() as client:
+    def request(req: Request):
+        pass
+
+    async with LocustClientSession(request) as client:
         await _(client)
 
 
@@ -33,7 +36,7 @@ async def test_hard_fails_raise_and_log():
     def request(req: Request):
         requests.append(req)
 
-    async with LocustClientSession(request_handler=request) as client:
+    async with LocustClientSession(request) as client:
         await _(client)
 
     assert len(requests) == 1
@@ -53,7 +56,7 @@ async def test_raise_for_status(httpserver: HTTPServer):
     def request(req: Request):
         requests.append(req)
 
-    async with LocustClientSession(None, request_handler=request) as client:
+    async with LocustClientSession(request_handler=request) as client:
         with pytest.raises(ClientResponseError):
             await _(client)
 
@@ -78,7 +81,7 @@ async def test_assert(httpserver: HTTPServer):
     def request(req: Request):
         requests.append(req)
 
-    async with LocustClientSession(None, request_handler=request) as client:
+    async with LocustClientSession(request) as client:
         try:
             await _(client)
         except AssertionError:
@@ -110,7 +113,7 @@ async def test_handler(httpserver: HTTPServer):
     def request(req: Request):
         requests.append(req)
 
-    async with LocustClientSession(None, request_handler=request) as client:
+    async with LocustClientSession(request) as client:
         try:
             await _(client)
         except AssertionError:

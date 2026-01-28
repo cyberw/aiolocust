@@ -6,9 +6,7 @@ from typing import Annotated
 
 import typer
 
-from aiolocust.runner import run_test
-
-from . import stats
+from aiolocust.runner import Runner
 
 app = typer.Typer(add_completion=False)
 
@@ -46,8 +44,8 @@ def main(
     spec.loader.exec_module(module)
 
     if hasattr(module, "run"):
-        asyncio.run(run_test(module.run, users, duration, event_loops))
+        r = Runner()
+        asyncio.run(r.run_test(module.run, users, duration, event_loops))
+        r.stats.print_table(True)
     else:
         typer.echo(f"Error: No run function defined in {filename}")
-
-    stats.print_table(True)
