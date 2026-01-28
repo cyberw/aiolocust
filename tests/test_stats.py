@@ -1,10 +1,10 @@
 import asyncio
 import io
-import re
 import time
 from contextlib import redirect_stdout
 
 import pytest
+from utils import assert_search
 
 from aiolocust import stats
 from aiolocust.datatypes import Request
@@ -48,8 +48,8 @@ async def test_stats():
 
     output = f.getvalue()
     print(output)
-    assert re.search("foo .* 0.50/s", output)
-    assert re.search("Total .* 0.50/s", output)
+    assert_search("foo .* 0.50/s", output)
+    assert_search("Total .* 0.50/s", output)
     assert "1500.0ms" in output
 
 
