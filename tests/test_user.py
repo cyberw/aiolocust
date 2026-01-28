@@ -7,7 +7,6 @@ from aiolocust.datatypes import Request
 from aiolocust.runner import LocustClientSession
 
 
-@pytest.mark.asyncio
 async def test_basic(httpserver: HTTPServer):
     httpserver.expect_request("/").respond_with_data("")
 
@@ -24,7 +23,6 @@ async def test_basic(httpserver: HTTPServer):
         await _(client)
 
 
-@pytest.mark.asyncio
 async def test_hard_fails_raise_and_log():
     async def _(client: LocustClientSession):
         with pytest.raises(ClientConnectorError):
@@ -43,7 +41,6 @@ async def test_hard_fails_raise_and_log():
     assert isinstance(requests[0].error, ClientConnectorError)
 
 
-@pytest.mark.asyncio
 async def test_raise_for_status(httpserver: HTTPServer):
     async def _(client: LocustClientSession):
         async with client.get(httpserver.url_for("/doesnt_exist"), raise_for_status=True) as resp:
@@ -65,7 +62,6 @@ async def test_raise_for_status(httpserver: HTTPServer):
     assert isinstance(requests[0].error, ClientResponseError)
 
 
-@pytest.mark.asyncio
 async def test_assert(httpserver: HTTPServer):
     httpserver.expect_request("/").respond_with_data("")
 
@@ -91,7 +87,6 @@ async def test_assert(httpserver: HTTPServer):
     assert isinstance(requests[0].error, AssertionError)
 
 
-@pytest.mark.asyncio
 async def test_handler(httpserver: HTTPServer):
     httpserver.expect_request("/", method="GET").respond_with_data("")
 

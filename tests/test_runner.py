@@ -1,12 +1,10 @@
 import asyncio
 
-import pytest
 from utils import assert_search
 
 from aiolocust.runner import LocustClientSession, Runner
 
 
-@pytest.mark.asyncio
 async def test_runner(http_server, capfd):  # noqa: ARG001
     async def run(client: LocustClientSession):
         await asyncio.sleep(1)

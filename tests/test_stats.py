@@ -2,14 +2,12 @@ import asyncio
 import io
 from contextlib import redirect_stdout
 
-import pytest
 from utils import assert_search
 
 from aiolocust.datatypes import Request
 from aiolocust.stats import Stats
 
 
-@pytest.mark.asyncio
 async def test_stats():
     stats = Stats()
     f = io.StringIO()
@@ -50,7 +48,6 @@ async def test_stats():
     assert "1500.0ms" in output
 
 
-@pytest.mark.asyncio
 async def test_really_short_run():
     stats = Stats()
     stats.request(Request("foo", 1, 1, None))
