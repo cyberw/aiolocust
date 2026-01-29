@@ -12,7 +12,7 @@ async def test_runner(http_server, capfd):  # noqa: ARG001
             pass
 
     r = Runner()
-    await r.run_test(run, 1, 4)
+    await r.run_test(run, 1, 5)
     out, err = capfd.readouterr()
     assert err == ""
     print(out)
@@ -28,5 +28,5 @@ async def test_runner(http_server, capfd):  # noqa: ARG001
     print(out)
     assert err == ""
     assert "Summary" in out
-    assert_search(" http://localhost:8081/ │     4|5", out)
+    assert_search(" http://localhost:8081/ │     4|5|6", out)
     assert "0 (0.0%)" in out
