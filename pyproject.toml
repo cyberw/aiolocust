@@ -1,6 +1,6 @@
 [project]
 name = "aiolocust"
-version = "0.1.5"
+version = "0.1.0" # updated from github action on tags
 description = "Add your description here"
 readme = "README.md"
 authors = [

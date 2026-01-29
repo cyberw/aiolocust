@@ -113,7 +113,9 @@ jobs:
               uses: astral-sh/setup-uv@v7
 
             - name: Build package
-              run: uv build
+              run: |
+                  uv version ${{ github.ref_name }}
+                  uv build
 
             - name: Publish to PyPI
               run: uv publish
