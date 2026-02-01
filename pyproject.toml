@@ -23,6 +23,9 @@ dependencies = [
     "uvloop>=0.22.1 ; sys_platform == 'linux'",
     "uvloop>=0.22.1 ; sys_platform == 'darwin'",
     "typer>=0.21.1",
+    "opentelemetry-api>=1.39.1",
+    "opentelemetry-sdk>=1.39.1",
+    "opentelemetry-instrumentation-aiohttp-client>=0.60b1",
 ]
 
 [tool.uv]

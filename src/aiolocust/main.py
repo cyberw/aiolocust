@@ -46,6 +46,7 @@ def main(
     if hasattr(module, "run"):
         r = Runner()
         asyncio.run(r.run_test(module.run, users, duration, event_loops))
-        r.stats.print_table(True)
+        # summary not yet implemented for OTEL
+        # r.stats.print_table(True)
     else:
         typer.echo(f"Error: No run function defined in {filename}")
