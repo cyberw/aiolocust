@@ -74,7 +74,7 @@ class LocustRequestContextManager(_RequestContextManager):
 class LocustClientSession(ClientSession):
     def __init__(self, request_handler: Callable, runner: Runner | None = None, base_url=None, **kwargs):
         super().__init__(base_url=base_url, **kwargs)
-        self.runner = runner
+        self.runner: Runner = runner  # pyright: ignore[reportAttributeAccessIssue] # always set outside of unit testing
         self._request_handler = request_handler
 
     # explicitly declare this to get the correct return type and enter session
