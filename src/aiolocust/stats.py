@@ -85,7 +85,7 @@ class TableMetricExporter(MetricExporter):
                         avg_ttlb_ms = (point.sum / point.count) * 1000
                         max_ttlb_ms = point.max * 1000
                         table.add_row(
-                            url,
+                            str(url),
                             str(point.count),
                             # f"{errorcount} ({error_percentage:2.1f}%)",
                             f"{avg_ttlb_ms:4.1f}ms",
