@@ -77,6 +77,7 @@ class TableMetricExporter(MetricExporter):
                         self.storage[metric_key] = (current_val, now)
 
                         # attrs = ", ".join([f"{k}={v}" for k, v in point.attributes.items()])
+                        url = None
                         for k, v in point.attributes.items():
                             if k == "http.url":
                                 url = v
