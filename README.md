@@ -71,6 +71,10 @@ Tests are expressed in modern, explicitly asyncronous, syntax instead of relying
 
 We also plan to further emphasizes the "It's just Python"-approach. For example, if you want to take precise control of the ramp up and ramp down of a test, you shouldn't need to read the documentation, you should only need to know how to write code. We'll still provide the option of using prebuilt features too of course, but we'll try not to "build our users into a box".
 
+## OTEL Native
+
+aiolocust uses OTel for metrics and exporting them into your own monitoring solution is very easy. The original Locust supported exporting OTtel traces/metrics as well, but it was "bolted on" and it still maintained its own quite complex metrics tracking (sometimes it was not even entirely accurate).
+
 ## High performance
 
 aiolocust is more performant than "regular" Locust because has a smaller footprint/complexity, but it's two main gains come from:
