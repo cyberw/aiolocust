@@ -63,9 +63,9 @@ aiolocust --duration 30 --users 100
 
 ## Why a rewrite instead of just expanding Locust?
 
-Locust was created in 2011, and while it has gone through several major overhauls, it still has a fair amount of legacy style code, and has accumulated a lot of non-core functionality that make it very hard to maintain and improve. It's 10000+ lines of code using a mix of procedural, object oriented and functional programming, with several confusing abstractions.
+Locust was created in 2011, and while it has gone through several major overhauls, it still has a lot of legacy style code, and has accumulated a lot of non-core functionality that make it very hard to maintain and improve. It has over 10000 lines of code, with a mix of procedural, object oriented and functional programming, with several confusing abstractions.
 
-aiolocust is built to be smaller in scope, but capture the learnings from Locust. It is possible that we may merge the projects at some point, but for now it is a separate library.
+aiolocust is built to be smaller in scope, but capture the learnings from Locust. It is possible that this could be merged into Locust at some point, but for now it is a completely separate package.
 
 ## Simple and consistent syntax
 
