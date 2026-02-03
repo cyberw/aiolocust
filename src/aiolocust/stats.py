@@ -10,7 +10,7 @@ from opentelemetry.sdk.resources import Resource
 from rich.console import Console
 from rich.table import Table
 
-from aiolocust.datatypes import Request, RequestTimeSeries
+from aiolocust.datatypes import Request
 
 resource = Resource.create({"service.name": "locust"})
 reader = InMemoryMetricReader()
@@ -24,15 +24,8 @@ ttlb = meter.create_histogram("http.client.duration")
 class Stats:
     def __init__(self, console: Console | None = None):
         self._console = console if console else Console()
-        self.requests: dict[str, RequestTimeSeries] = {}
-        self.start_time: float = time.perf_counter()
         self.storage = {}
         self.start_time = time.time()
-        self._console = Console()
-
-    def reset(self):
-        self.start_time: float = time.perf_counter()
-        self.requests.clear()
 
     def request(self, req: Request):
         attributes = {
