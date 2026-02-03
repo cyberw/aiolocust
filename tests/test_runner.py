@@ -21,7 +21,7 @@ async def test_runner(http_server, capfd):  # noqa: ARG001
 
     # Summary not yet implemented for OTEL
     # # call to print summary is normally made in main, so we have to do it manually here
-    # r.stats.print_table(True)
+    r.stats.print_table(True)
 
     # out, err = capfd.readouterr()
     # print(out)

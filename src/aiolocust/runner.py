@@ -51,6 +51,14 @@ class Runner:
         self.start_time = 0
         self.stats = Stats()
 
+    async def stats_printer(self):
+        first = True
+        while self.running:
+            if not first:
+                self.stats.print_table()
+            first = False
+            await asyncio.sleep(2)
+
     def shutdown(self):
         self.running = False
 
@@ -93,6 +101,7 @@ class Runner:
         self.stats.reset()
 
         coros = [asyncio.to_thread(self.thread_worker, user, i) for i in users_per_worker]
+        loop.create_task(self.stats_printer())
 
         if duration:
             loop.call_later(duration, self.shutdown)
