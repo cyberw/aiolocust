@@ -1,5 +1,6 @@
 import time
 from collections import defaultdict
+from threading import Lock
 
 from opentelemetry.sdk.metrics import MeterProvider
 from opentelemetry.sdk.metrics.export import HistogramDataPoint, InMemoryMetricReader
@@ -24,12 +25,13 @@ class Stats:
         self.last_time = self.start_time
         self.total: dict[str, RequestEntry] = defaultdict(lambda: RequestEntry(0, 0, 0, 0, 0))
         self.error_counter = defaultdict(int)
+        self.error_counter_lock = Lock()
 
     def record_error(self, key: str):
-        if key not in self.error_counter and len(self.error_counter) >= MAX_ERROR_KEYS:
-            key = "OTHER"
-
-        self.error_counter[key] += 1
+        with self.error_counter_lock:
+            if key not in self.error_counter and len(self.error_counter) >= MAX_ERROR_KEYS:
+                key = "OTHER"
+            self.error_counter[key] += 1
 
     def request(self, req: Request):
         attributes = {
