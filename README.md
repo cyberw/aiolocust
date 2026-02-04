@@ -7,7 +7,7 @@
 
 This is a 2026 reimagining of the load testing tool [Locust](https://github.com/locustio/locust/).
 
-Right now it is pre-alpha stage and almost certainly has a lot of missing features. Feedback is very welcome, but don't expect it to be polished!
+It is "alpha stage" and is still missing some important features, but feedback and bug reports are very welcome!
 
 ## Installation
 
