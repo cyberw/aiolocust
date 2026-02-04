@@ -60,7 +60,12 @@ class LocustRequestContextManager(_RequestContextManager):
     async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
         await super().__aexit__(exc_type, exc_val, exc_tb)
         if self._resp.error is None:  # no explicit value set in with-block
-            self._resp.error = exc_val or self._resp.status >= 400
+            try:
+                self._resp.raise_for_status()
+            except ClientResponseError as e:
+                self._resp.error = e
+            if exc_val:  # overwrite if there was an explicit exception (e.g. an assert or crash)
+                self._resp.error = exc_val
         self.request_handler(
             Request(
                 str(self.url),

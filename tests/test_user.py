@@ -42,6 +42,29 @@ async def test_hard_fails_raise_and_log():
     assert isinstance(requests[0].error, ClientConnectorError)
 
 
+async def test_404(httpserver: HTTPServer):
+    httpserver.expect_request("/").respond_with_data("", 404)
+
+    async def _(client: LocustClientSession):
+        async with client.get(httpserver.url_for("/")) as resp:
+            pass
+        async with client.get(httpserver.url_for("/")) as resp:
+            pass
+
+    requests: list[Request] = []
+
+    def request(req: Request):
+        requests.append(req)
+
+    async with LocustClientSession(request_handler=request) as client:
+        await _(client)
+
+    assert requests[0].url.endswith("/")
+    assert isinstance(requests[0].error, ClientResponseError)
+    assert "404," in str(requests[0].error)
+    assert len(requests) == 2  # ensure first request failure didnt interrupt flow
+
+
 async def test_raise_for_status(httpserver: HTTPServer):
     async def _(client: LocustClientSession):
         async with client.get(httpserver.url_for("/doesnt_exist"), raise_for_status=True) as resp:

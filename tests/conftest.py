@@ -6,7 +6,11 @@ import pytest
 
 class _SimpleHandler(BaseHTTPRequestHandler):
     def do_GET(self):
-        self.send_response(200)
+        try:
+            # allow using /<status code> for custom status codes
+            self.send_response(int(self.path.lstrip("/")))
+        except ValueError:
+            self.send_response(200)
         self.send_header("Content-Type", "text/plain")
         self.end_headers()
         self.wfile.write(b"OK")

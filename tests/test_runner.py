@@ -10,6 +10,8 @@ async def test_runner(http_server, capfd):  # noqa: ARG001
         await asyncio.sleep(1)
         async with client.get("http://localhost:8081/") as resp:
             pass
+        async with client.get("http://localhost:8081/404") as resp:
+            pass
         async with client.get("http://localhost:8081/") as resp:
             assert "foo" in await resp.text()
 
@@ -19,6 +21,7 @@ async def test_runner(http_server, capfd):  # noqa: ARG001
     assert err == ""
     print(out)
     assert "Summary" in out
-    assert_search(r" http://localhost:8081/ │[ ]+[468] .* \(50.0%\)", out)
+    assert_search(r" http://localhost:8081/[ ]+│[ ]+[468] .* \(50.0%\)", out)
     assert "Error" in out
     assert_search(r"[234] .* assert 'foo' in 'OK'", out)
+    assert_search(r"[234] .* 404,", out)
