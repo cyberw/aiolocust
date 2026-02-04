@@ -75,7 +75,7 @@ We also plan to further emphasizes the "It's just Python"-approach. For example,
 
 ## OTEL Native
 
-aiolocust uses OTel for metrics and exporting them into your own monitoring solution is very easy. The original Locust supported exporting OTtel traces/metrics as well, but it was "bolted on" and it still maintained its own quite complex metrics tracking (sometimes it was not even entirely accurate).
+aiolocust uses OTel for metrics and exporting them into your own monitoring solution is very easy. The original Locust supported exporting OTtel traces/metrics as well, but it was "bolted on" and it still maintained its own quite complex metrics tracking.
 
 ## High performance
 
@@ -87,7 +87,7 @@ aiolocust's performance is *much* better than HttpUser (based on Requests), and 
 
 ### [Freethreading/no-GIL Python](https://docs.python.org/3/howto/free-threading-python.html)
 
-This means that you dont need to launch one Locust process per core! And even if your load tests happen to do some heavy computations, they are less likely to impact eachother, as one thread will not block Python from concurrently working on another one.
+This means that you dont need to launch one Locust process per CPU core! And even if your load tests happen to do some heavy computations, they are less likely to impact eachother, as one thread will not block Python from concurrently working on another one.
 
 Users/threads can also communicate easily with eachother, as they are in the same process, unlike in the old Locust implementation where you were forced to use zmq messaging between master and worker processes and worker-to-worker communication was nearly impossible.
 
