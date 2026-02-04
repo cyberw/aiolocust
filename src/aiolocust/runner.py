@@ -80,8 +80,8 @@ class Runner:
         return asyncio.run(self.user_runner(user, count), loop_factory=new_event_loop)
 
     def signal_handler(self, _sig, _frame):
-        print("Stopping...")
-        self.running = False
+        print("\nStopping...")
+        self.shutdown()
         # stop everything immediately on second Ctrl-C
         signal.signal(signal.SIGINT, original_sigint_handler)
 
@@ -107,5 +107,4 @@ class Runner:
             loop.call_later(duration, self.shutdown)
 
         await asyncio.gather(*coros)
-        self.stats.print_table(True)
         return
