@@ -49,7 +49,7 @@ async def test_error_pct_summary():
     stats.request(Request("foo", 1, 1, None))
     stats.request(Request("foo", 2, 2, None))
     stats.request(Request("bar", 3, 3, None))
-    stats.request(Request("bar", 4, 4, True))
+    stats.request(Request("bar", 4, 4, Exception("an exception")))
     stats.request(Request("baz", 5, 5, True))
     await asyncio.sleep(0.5)
     stats.print_table(True)
@@ -63,3 +63,21 @@ async def test_error_pct_summary():
     assert_search(r"foo .* 1500.0ms", output)
     assert_search(r"bar .* 3500.0ms", output)
     assert_search(r"Total .* 3000.0ms .* 5000.0ms", output)
+
+    assert_search(r"Errors", output)
+    assert_search(r"an exception .* 1", output)
+
+
+async def test_error_cardinality():
+    f = io.StringIO()
+    stats = Stats(Console(file=f))
+    for i in range(300):
+        stats.request(Request("foo", 1, 1, Exception(f"error with unique id {i}")))
+    stats.print_table(True)
+    output = f.getvalue()
+    print(output)
+
+    assert_search(r"Errors", output)
+    assert_search(r"error with unique id 0 .* 1", output)
+    assert_search(r"error with unique id 199 .* 1", output)
+    assert_search(r"OTHER .* 100", output)

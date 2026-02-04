@@ -9,6 +9,8 @@ from rich.table import Table
 
 from aiolocust.datatypes import Request, RequestEntry
 
+MAX_ERROR_KEYS = 200
+
 
 class Stats:
     def __init__(self, console: Console | None = None):
@@ -21,6 +23,13 @@ class Stats:
         self.start_time = time.time()
         self.last_time = self.start_time
         self.total: dict[str, RequestEntry] = defaultdict(lambda: RequestEntry(0, 0, 0, 0, 0))
+        self.error_counter = defaultdict(int)
+
+    def record_error(self, key: str):
+        if key not in self.error_counter and len(self.error_counter) >= MAX_ERROR_KEYS:
+            key = "OTHER"
+
+        self.error_counter[key] += 1
 
     def request(self, req: Request):
         attributes = {
@@ -34,6 +43,7 @@ class Stats:
         }
         if req.error:
             attributes["error.type"] = req.error.__class__.__name__
+            self.record_error(str(req.error))
         self.ttlb_histogram.record(req.ttlb, attributes=attributes)
 
     def _get_entries(self) -> dict[str, RequestEntry]:
@@ -142,8 +152,20 @@ class Stats:
 
         self.last_time = time.time()
 
-        self._console.print()
         if final_summary:
             table.title = "Summary"
+        else:
+            self._console.print()
         self._console.print(table)
+
+        if final_summary and self.error_counter:
+            error_table = Table(title="Errors", show_edge=False)
+
+            error_table.add_column("Error")
+            error_table.add_column("Count", justify="right")
+
+            for key, count in sorted(self.error_counter.items(), key=lambda item: item[1], reverse=True):
+                error_table.add_row(key, str(count))
+            self._console.print(error_table)
+
         return
