@@ -61,6 +61,7 @@ class Runner:
 
     def shutdown(self):
         self.running = False
+        self.stats.print_table(True)
 
     async def user_loop(self, user):
         async with LocustClientSession(self.stats.request, self) as client:
@@ -88,6 +89,7 @@ class Runner:
         self, user: Callable, user_count: int, duration: int | None = None, event_loops: int | None = None
     ):
         self.running = True
+
         if event_loops is None:
             if cpu_count := os.cpu_count():
                 # for heavy calculations this may need to be increased,
@@ -98,12 +100,12 @@ class Runner:
         loop = asyncio.get_running_loop()
         users_per_worker = distribute_evenly(user_count, event_loops)
 
-        self.stats.reset()
-
         coros = [asyncio.to_thread(self.thread_worker, user, i) for i in users_per_worker]
         loop.create_task(self.stats_printer())
 
         if duration:
             loop.call_later(duration, self.shutdown)
 
-        return await asyncio.gather(*coros)
+        await asyncio.gather(*coros)
+        self.stats.print_table(True)
+        return

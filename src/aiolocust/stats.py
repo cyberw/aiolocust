@@ -1,4 +1,5 @@
 import time
+from collections import defaultdict
 
 from opentelemetry import metrics
 from opentelemetry.sdk.metrics import MeterProvider
@@ -10,22 +11,22 @@ from opentelemetry.sdk.resources import Resource
 from rich.console import Console
 from rich.table import Table
 
-from aiolocust.datatypes import Request
+from aiolocust.datatypes import Request, RequestEntry
 
 resource = Resource.create({"service.name": "locust"})
-reader = InMemoryMetricReader()
-provider = MeterProvider(resource=resource, metric_readers=[reader])
-metrics.set_meter_provider(provider)
-meter = metrics.get_meter("my_meter")
-ttlb = meter.create_histogram("http.client.duration")
-# ttfb = meter.create_histogram("http.client.duration")
 
 
 class Stats:
     def __init__(self, console: Console | None = None):
         self._console = console if console else Console()
-        self.storage = {}
+        self.reader = InMemoryMetricReader()
+        self.provider = MeterProvider(resource=resource, metric_readers=[self.reader])
+        metrics.set_meter_provider(self.provider)
+        self.meter = metrics.get_meter("my_meter")
+        self.ttlb_histogram = self.meter.create_histogram("http.client.duration")
         self.start_time = time.time()
+        self.last_time = self.start_time
+        self.total: dict[str, RequestEntry] = defaultdict(lambda: RequestEntry(0, 0, 0, 0, 0))
 
     def request(self, req: Request):
         attributes = {
@@ -39,94 +40,115 @@ class Stats:
         }
         if req.error:
             attributes["error.type"] = req.error.__class__.__name__
-        ttlb.record(req.ttlb, attributes=attributes)
+        self.ttlb_histogram.record(req.ttlb, attributes=attributes)
 
     def print_table(self, summary=False):
-        metrics_data = reader.get_metrics_data()
-        assert metrics_data  # just for type checking
+        metrics_data = self.reader.get_metrics_data()
         table = Table(show_edge=False)
         table.add_column("Name", max_width=30)
         table.add_column("Count", justify="right")
-        # table.add_column("Failures", justify="right")
+        table.add_column("Failures", justify="right")
         table.add_column("Avg", justify="right")
         table.add_column("Max", justify="right")
         table.add_column("Rate", justify="right")
-        total_ttlb = 0
-        total_max_ttlb = 0
-        total_count = 0
-        total_rate = 0
-        # total_errorcount = 0
+
         now = time.time()
-        for resource_metric in metrics_data.resource_metrics:
+        lines: dict[str, RequestEntry] = defaultdict(lambda: RequestEntry(0, 0, 0, 0, 0))
+
+        for resource_metric in metrics_data.resource_metrics if metrics_data else []:
             for scope_metric in resource_metric.scope_metrics:
                 for metric in scope_metric.metrics:
-                    # Logic to handle different metric types (Sum, Gauge, etc.)
                     for point in metric.data.data_points:
                         if not point.attributes:
                             raise Exception(f"A data point had no attributes, that should never happen. Point: {point}")
-                        # Create a unique key for this specific metric + attribute combo
-                        attr_items = tuple(sorted(point.attributes.items()))
-                        metric_key = (metric.name, attr_items)
-                        if isinstance(point, HistogramDataPoint):
-                            current_val = point.count
-                            # if point.attributes.get("error.type"):
-                            #     current_err = point.count
-                            # else:
-                            #     current_val = point.count
-                        else:
-                            print(f"Unexpected datapoint type: {point}")
-                            continue
+                        if not isinstance(point, HistogramDataPoint):
+                            raise Exception(f"Unexpected datapoint type: {point}")
+                        re = lines[str(point.attributes["http.url"])]
+                        if point.attributes.get("error.type"):
+                            re.errorcount = point.count
+                        re.count += point.count
+                        re.max_ttlb = max(point.max, re.max_ttlb)
+                        re.sum_ttlb += point.sum
 
-                        rate = 0.0
+        total_ttlb = 0
+        total_max_ttlb = 0
+        total_count = 0
+        total_errorcount = 0
+        total_rate = 0
 
-                        # Calculate rate if we have a previous data point
-                        if metric_key in self.storage:
-                            prev_val, prev_time = self.storage[metric_key]
-                            delta_val = current_val - prev_val
-                            delta_time = now - prev_time
-                            if delta_time > 0:
-                                rate = delta_val / delta_time
-                            else:
-                                rate = float("inf")  # not sure this can actually ever happen
-                        else:
-                            # assume program up time was startime.
-                            # this will have issues repeated test runs without restart...
-                            rate = current_val / (time.time() - self.start_time)
+        for url, re in lines.items():
+            avg_ttlb_ms = re.sum_ttlb / re.count * 1000
+            max_ttlb_ms = re.max_ttlb * 1000
+            error_percentage = re.errorcount / re.count * 100
+            rate = (re.count - self.total[url].count) / (now - self.last_time)
+            if not summary:
+                table.add_row(
+                    url,
+                    str(re.count),
+                    f"{re.errorcount} ({error_percentage:2.1f}%)",
+                    f"{avg_ttlb_ms:4.1f}ms",
+                    f"{max_ttlb_ms:4.1f}ms",
+                    f"{rate:.2f}/s",
+                )
+            total_ttlb += re.sum_ttlb
+            total_max_ttlb = max(total_max_ttlb, max_ttlb_ms)
+            total_count += re.count
+            total_errorcount += re.errorcount
+            total_rate += rate
 
-                        # Update storage for the next cycle
-                        self.storage[metric_key] = (current_val, now)
+        total_error_percentage = total_errorcount / total_count * 100 if total_count else 0
+        total_avg_ttlb_ms = total_ttlb / total_count * 1000 if total_count else 0
+        if not summary:
+            table.add_row(
+                "Total",
+                str(total_count),
+                f"{total_errorcount} ({total_error_percentage:2.1f}%)",
+                f"{total_avg_ttlb_ms:4.1f}ms",
+                f"{total_max_ttlb:4.1f}ms",
+                f"{total_rate:.2f}/s",
+            )
 
-                        # attrs = ", ".join([f"{k}={v}" for k, v in point.attributes.items()])
-                        url = None
-                        for k, v in point.attributes.items():
-                            if k == "http.url":
-                                url = v
-                            elif k == "":  # implement error tracking here
-                                pass
-                        avg_ttlb_ms = (point.sum / point.count) * 1000
-                        max_ttlb_ms = point.max * 1000
-                        table.add_row(
-                            str(url),
-                            str(point.count),
-                            # f"{errorcount} ({error_percentage:2.1f}%)",
-                            f"{avg_ttlb_ms:4.1f}ms",
-                            f"{max_ttlb_ms:4.1f}ms",
-                            f"{rate:.2f}/s",
-                        )
-                        total_ttlb += point.sum
-                        total_max_ttlb = max(total_max_ttlb, max_ttlb_ms)
-                        total_count += point.count
-                        total_rate += rate
-                        # total_errorcount += errorcount
+        # Prepare for next batch, and possibly the summary
+        total_ttlb = 0
+        total_max_ttlb = 0
+        total_count = 0
+        total_errorcount = 0
+        total_rate = 0
+        for url, re in lines.items():
+            self.total[url] = re
+            if summary:
+                total_avg_ttlb_ms = re.sum_ttlb / re.count * 1000
+                total_ttlb += re.sum_ttlb
+                total_max_ttlb = max(total_max_ttlb, max_ttlb_ms)
+                rate = re.count / (now - self.start_time)
+                total_rate += rate
+                total_count += re.count
+                total_errorcount += re.errorcount
+                table.add_row(
+                    url,
+                    str(re.count),
+                    f"{re.errorcount} ({error_percentage:2.1f}%)",
+                    f"{avg_ttlb_ms:4.1f}ms",
+                    f"{max_ttlb_ms:4.1f}ms",
+                    f"{rate:.2f}/s",
+                )
 
-        table.add_row(
-            "Total",
-            str(total_count),
-            # f"{total_errorcount} ({100 * total_errorcount / total_count:2.1f}%)",
-            f"{1000 * total_ttlb / total_count:4.1f}ms",
-            f"{total_max_ttlb:4.1f}ms",
-            f"{total_rate:.2f}/s",
-        )
+        if summary:
+            total_error_percentage = total_errorcount / total_count * 100 if total_count else 0
+            total_avg_ttlb_ms = total_ttlb / total_count * 1000 if total_count else 0
+            table.add_row(
+                "Total",
+                str(total_count),
+                f"{total_errorcount} ({total_error_percentage:2.1f}%)",
+                f"{total_avg_ttlb_ms:4.1f}ms",
+                f"{total_max_ttlb:4.1f}ms",
+                f"{total_rate:.2f}/s",
+            )
+
+        self.last_time = time.time()
+
+        if summary:
+            self._console.print("Summary")
         self._console.print()
         self._console.print(table)
         return
