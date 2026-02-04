@@ -68,7 +68,7 @@ class Stats:
         table.add_column("Rate", justify="right")
         now = time.time()
 
-        lines = self._get_entries()
+        entries = self._get_entries()
 
         total_ttlb = 0
         total_max_ttlb = 0
@@ -76,7 +76,7 @@ class Stats:
         total_errorcount = 0
         total_rate = 0
 
-        for url, re in lines.items():
+        for url, re in entries.items():
             avg_ttlb_ms = re.sum_ttlb / re.count * 1000
             max_ttlb_ms = re.max_ttlb * 1000
             error_percentage = re.errorcount / re.count * 100
@@ -114,7 +114,7 @@ class Stats:
         total_count = 0
         total_errorcount = 0
         total_rate = 0
-        for url, re in lines.items():
+        for url, re in entries.items():
             self.total[url] = re
             if summary:
                 total_ttlb += re.sum_ttlb
