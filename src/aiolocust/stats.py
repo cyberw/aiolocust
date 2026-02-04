@@ -1,7 +1,6 @@
 import time
 from collections import defaultdict
 
-from opentelemetry import metrics
 from opentelemetry.sdk.metrics import MeterProvider
 from opentelemetry.sdk.metrics.export import (
     HistogramDataPoint,
@@ -13,16 +12,14 @@ from rich.table import Table
 
 from aiolocust.datatypes import Request, RequestEntry
 
-resource = Resource.create({"service.name": "locust"})
-
 
 class Stats:
     def __init__(self, console: Console | None = None):
         self._console = console if console else Console()
         self.reader = InMemoryMetricReader()
-        self.provider = MeterProvider(resource=resource, metric_readers=[self.reader])
-        metrics.set_meter_provider(self.provider)
-        self.meter = metrics.get_meter("my_meter")
+        self.resource = Resource.create({"service.name": "locust"})
+        self.provider = MeterProvider(resource=self.resource, metric_readers=[self.reader])
+        self.meter = self.provider.get_meter("my_meter")
         self.ttlb_histogram = self.meter.create_histogram("http.client.duration")
         self.start_time = time.time()
         self.last_time = self.start_time
