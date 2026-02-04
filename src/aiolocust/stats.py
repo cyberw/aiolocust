@@ -114,13 +114,17 @@ class Stats:
         for url, re in lines.items():
             self.total[url] = re
             if summary:
-                total_avg_ttlb_ms = re.sum_ttlb / re.count * 1000
                 total_ttlb += re.sum_ttlb
-                total_max_ttlb = max(total_max_ttlb, max_ttlb_ms)
+                total_max_ttlb = max(total_max_ttlb, re.max_ttlb)
                 rate = re.count / (now - self.start_time)
                 total_rate += rate
                 total_count += re.count
                 total_errorcount += re.errorcount
+
+                error_percentage = re.errorcount / re.count * 100
+                avg_ttlb_ms = re.sum_ttlb / re.count * 1000
+                max_ttlb_ms = re.max_ttlb * 1000
+
                 table.add_row(
                     url,
                     str(re.count),
@@ -133,12 +137,13 @@ class Stats:
         if summary:
             total_error_percentage = total_errorcount / total_count * 100 if total_count else 0
             total_avg_ttlb_ms = total_ttlb / total_count * 1000 if total_count else 0
+            total_max_ttlb_ms = total_max_ttlb * 1000
             table.add_row(
                 "Total",
                 str(total_count),
                 f"{total_errorcount} ({total_error_percentage:2.1f}%)",
                 f"{total_avg_ttlb_ms:4.1f}ms",
-                f"{total_max_ttlb:4.1f}ms",
+                f"{total_max_ttlb_ms:4.1f}ms",
                 f"{total_rate:.2f}/s",
             )
 
