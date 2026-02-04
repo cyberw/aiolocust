@@ -1,5 +1,4 @@
-import threading
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 
 @dataclass(slots=True)
@@ -8,12 +7,6 @@ class Request:
     ttfb: float
     ttlb: float
     error: Exception | bool | None
-
-
-@dataclass(slots=True)
-class RequestTimeSeries:
-    buckets: dict[int, RequestEntry] = field(default_factory=dict)
-    lock: threading.Lock = field(default_factory=threading.Lock)
 
 
 @dataclass(slots=True)
