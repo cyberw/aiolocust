@@ -41,3 +41,21 @@ async def test_stats():
     assert_search(r"foo .* [23].\d{2}/s", output)
     assert_search(r"Total .* [67].\d{2}/s", output)
     assert "1500.0ms" in output
+
+
+async def test_error_pct_summary():
+    f = io.StringIO()
+    stats = Stats(Console(file=f))
+    stats.request(Request("foo", 1, 1, None))
+    stats.request(Request("foo", 1, 1, None))
+    stats.request(Request("bar", 1, 1, None))
+    stats.request(Request("bar", 1, 2, True))
+    stats.request(Request("baz", 1, 2, True))
+    await asyncio.sleep(0.5)
+    stats.print_table(True)
+    output = f.getvalue()
+    print(output)
+    assert_search(r"foo .* 0 \(0.0%\)", output)
+    assert_search(r"bar .* 1 \(50.0%\)", output)
+    assert_search(r"baz .* 1 \(100.0%\)", output)
+    assert_search(r"Total .* 2 \(40.0%\)", output)
