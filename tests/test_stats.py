@@ -64,8 +64,8 @@ async def test_error_pct_summary():
     assert_search(r"bar .* 3500.0ms", output)
     assert_search(r"Total .* 3000.0ms .* 5000.0ms", output)
 
-    assert_search(r"Errors", output)
-    assert_search(r"an exception .* 1", output)
+    assert "Error" in output
+    assert_search(r"1 .* an exception", output)
 
 
 async def test_error_cardinality():
@@ -77,7 +77,7 @@ async def test_error_cardinality():
     output = f.getvalue()
     print(output)
 
-    assert_search(r"Errors", output)
-    assert_search(r"error with unique id 0 .* 1", output)
-    assert_search(r"error with unique id 199 .* 1", output)
-    assert_search(r"OTHER .* 100", output)
+    assert "Error" in output
+    assert_search(r"1 .* error with unique id 0", output)
+    assert_search(r"1 .* error with unique id 199", output)
+    assert_search(r"100 .* OTHER", output)

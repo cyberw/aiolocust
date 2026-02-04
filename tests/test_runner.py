@@ -20,5 +20,5 @@ async def test_runner(http_server, capfd):  # noqa: ARG001
     print(out)
     assert "Summary" in out
     assert_search(r" http://localhost:8081/ │[ ]+[468] .* \(50.0%\)", out)
-    assert_search(r"Errors", out)
-    assert_search(r"assert 'foo' in 'OK' .* [234]", out)
+    assert "Error" in out
+    assert_search(r"[234] .* assert 'foo' in 'OK'", out)
