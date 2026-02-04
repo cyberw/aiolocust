@@ -58,3 +58,6 @@ aiolocust = "aiolocust.main:app"
 [tool.pytest]
 filterwarnings = ["ignore:Inheritance class LocustClientSession from ClientSession is discouraged:DeprecationWarning"]
 asyncio_mode = "auto"
+
+[tool.pyright]
+typeCheckingMode = "standard" # this is the default when running pyright on command line, but needed to help vscode
