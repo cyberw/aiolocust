@@ -39,19 +39,9 @@ class Stats:
             attributes["error.type"] = req.error.__class__.__name__
         self.ttlb_histogram.record(req.ttlb, attributes=attributes)
 
-    def print_table(self, summary=False):
+    def _get_entries(self) -> dict[str, RequestEntry]:
         metrics_data = self.reader.get_metrics_data()
-        table = Table(show_edge=False)
-        table.add_column("Name", max_width=30)
-        table.add_column("Count", justify="right")
-        table.add_column("Failures", justify="right")
-        table.add_column("Avg", justify="right")
-        table.add_column("Max", justify="right")
-        table.add_column("Rate", justify="right")
-
-        now = time.time()
-        lines: dict[str, RequestEntry] = defaultdict(lambda: RequestEntry(0, 0, 0, 0, 0))
-
+        entries: dict[str, RequestEntry] = defaultdict(lambda: RequestEntry(0, 0, 0, 0, 0))
         for resource_metric in metrics_data.resource_metrics if metrics_data else []:
             for scope_metric in resource_metric.scope_metrics:
                 for metric in scope_metric.metrics:
@@ -60,12 +50,25 @@ class Stats:
                             raise Exception(f"A data point had no attributes, that should never happen. Point: {point}")
                         if not isinstance(point, HistogramDataPoint):
                             raise Exception(f"Unexpected datapoint type: {point}")
-                        re = lines[str(point.attributes["http.url"])]
+                        re = entries[str(point.attributes["http.url"])]
                         if point.attributes.get("error.type"):
                             re.errorcount = point.count
                         re.count += point.count
                         re.max_ttlb = max(point.max, re.max_ttlb)
                         re.sum_ttlb += point.sum
+        return entries
+
+    def print_table(self, summary=False):
+        table = Table(show_edge=False)
+        table.add_column("Name", max_width=30)
+        table.add_column("Count", justify="right")
+        table.add_column("Failures", justify="right")
+        table.add_column("Avg", justify="right")
+        table.add_column("Max", justify="right")
+        table.add_column("Rate", justify="right")
+        now = time.time()
+
+        lines = self._get_entries()
 
         total_ttlb = 0
         total_max_ttlb = 0
