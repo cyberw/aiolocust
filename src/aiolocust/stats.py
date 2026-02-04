@@ -163,11 +163,11 @@ class Stats:
         if final_summary and self.error_counter:
             error_table = Table(title="Errors", show_edge=False)
 
+            error_table.add_column("Count")
             error_table.add_column("Error")
-            error_table.add_column("Count", justify="right")
 
             for key, count in sorted(self.error_counter.items(), key=lambda item: item[1], reverse=True):
-                error_table.add_row(key, str(count))
+                error_table.add_row(str(count), key)
             self._console.print(error_table)
 
         return
