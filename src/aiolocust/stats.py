@@ -161,7 +161,8 @@ class Stats:
         self._console.print(table)
 
         if final_summary and self.error_counter:
-            error_table = Table(title="Errors", show_edge=False)
+            self._console.print()
+            error_table = Table(show_edge=False)
 
             error_table.add_column("Count")
             error_table.add_column("Error")
