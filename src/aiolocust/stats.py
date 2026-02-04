@@ -58,7 +58,7 @@ class Stats:
                         re.sum_ttlb += point.sum
         return entries
 
-    def print_table(self, summary=False):
+    def print_table(self, final_summary=False):
         table = Table(show_edge=False)
         table.add_column("Name", max_width=30)
         table.add_column("Count", justify="right")
@@ -81,7 +81,7 @@ class Stats:
             max_ttlb_ms = re.max_ttlb * 1000
             error_percentage = re.errorcount / re.count * 100
             rate = (re.count - self.total[url].count) / (now - self.last_time)
-            if not summary:
+            if not final_summary:
                 table.add_row(
                     url,
                     str(re.count),
@@ -98,7 +98,7 @@ class Stats:
 
         total_error_percentage = total_errorcount / total_count * 100 if total_count else 0
         total_avg_ttlb_ms = total_ttlb / total_count * 1000 if total_count else 0
-        if not summary:
+        if not final_summary:
             table.add_row(
                 "Total",
                 str(total_count),
@@ -108,7 +108,7 @@ class Stats:
                 f"{total_rate:.2f}/s",
             )
 
-        # Prepare for next batch, and possibly the summary
+        # Prepare for next batch, and possibly the final summary
         total_ttlb = 0
         total_max_ttlb = 0
         total_count = 0
@@ -116,7 +116,7 @@ class Stats:
         total_rate = 0
         for url, re in entries.items():
             self.total[url] = re
-            if summary:
+            if final_summary:
                 total_ttlb += re.sum_ttlb
                 total_max_ttlb = max(total_max_ttlb, re.max_ttlb)
                 rate = re.count / (now - self.start_time)
@@ -137,7 +137,7 @@ class Stats:
                     f"{rate:.2f}/s",
                 )
 
-        if summary:
+        if final_summary:
             total_error_percentage = total_errorcount / total_count * 100 if total_count else 0
             total_avg_ttlb_ms = total_ttlb / total_count * 1000 if total_count else 0
             total_max_ttlb_ms = total_max_ttlb * 1000
@@ -152,8 +152,8 @@ class Stats:
 
         self.last_time = time.time()
 
-        if summary:
-            self._console.print("Summary")
         self._console.print()
+        if final_summary:
+            table.title = "Summary"
         self._console.print(table)
         return
