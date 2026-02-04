@@ -2,10 +2,7 @@ import time
 from collections import defaultdict
 
 from opentelemetry.sdk.metrics import MeterProvider
-from opentelemetry.sdk.metrics.export import (
-    HistogramDataPoint,
-    InMemoryMetricReader,
-)
+from opentelemetry.sdk.metrics.export import HistogramDataPoint, InMemoryMetricReader
 from opentelemetry.sdk.resources import Resource
 from rich.console import Console
 from rich.table import Table
@@ -19,7 +16,7 @@ class Stats:
         self.reader = InMemoryMetricReader()
         self.resource = Resource.create({"service.name": "locust"})
         self.provider = MeterProvider(resource=self.resource, metric_readers=[self.reader])
-        self.meter = self.provider.get_meter("my_meter")
+        self.meter = self.provider.get_meter("locust")
         self.ttlb_histogram = self.meter.create_histogram("http.client.duration")
         self.start_time = time.time()
         self.last_time = self.start_time
