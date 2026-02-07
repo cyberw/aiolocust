@@ -14,7 +14,6 @@ from opentelemetry.sdk.metrics.export import (
 )
 from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider
-from rich.console import Console
 from rich.table import Table
 
 from aiolocust.datatypes import Request, RequestEntry
@@ -51,8 +50,7 @@ def make_row(name: str, re: RequestEntry, start, end) -> list[str]:
 
 
 class Stats:
-    def __init__(self, console: Console | None = None):
-        self._console = console if console else Console()
+    def __init__(self):
         self.start_time = time.time()
         self.last_time = self.start_time
         self.aggregate: dict[str, RequestEntry] = defaultdict(RequestEntry)
@@ -99,7 +97,7 @@ class Stats:
 
         return entries
 
-    def get_table(self, final_summary) -> list[list[str]]:
+    def _get_rows(self, final_summary) -> list[list[str]]:
         table: list[list[str]] = []
         summary_table: list[list[str]] = []
         now = time.time()
@@ -127,7 +125,7 @@ class Stats:
 
             return summary_table
 
-    def print_table(self, final_summary=False):
+    def get_table(self, final_summary=False):
         table = Table(show_edge=False)
         table.add_column("Name", max_width=30)
         table.add_column("Count", justify="right")
@@ -136,22 +134,20 @@ class Stats:
         table.add_column("Max", justify="right")
         table.add_column("Rate", justify="right")
 
-        for row in self.get_table(final_summary):
+        for row in self._get_rows(final_summary):
             table.add_row(*row)
 
         if final_summary:
             table.title = "Summary"
 
-        self._console.print(table)
+        return table
 
-        if final_summary and self.error_counter:
-            error_table = Table(show_edge=False)
-            error_table.add_column("Count")
-            error_table.add_column("Error")
+    def get_error_table(self):
+        error_table = Table(show_edge=False)
+        error_table.add_column("Count")
+        error_table.add_column("Error")
 
-            for key, count in sorted(self.error_counter.items(), key=lambda item: item[1], reverse=True):
-                error_table.add_row(str(count), key)
+        for key, count in sorted(self.error_counter.items(), key=lambda item: item[1], reverse=True):
+            error_table.add_row(str(count), key)
 
-            self._console.print()
-            self._console.print(error_table)
-
+        return error_table
