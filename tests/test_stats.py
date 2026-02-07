@@ -10,11 +10,11 @@ from aiolocust.stats import Stats
 
 async def test_stats():
     f = io.StringIO()
-    stats = Stats(Console(file=f))
-    stats.print_table()
+    console = Console(file=f)
+    stats = Stats()
+    console.print(stats.get_table())
     output = f.getvalue()
     f.seek(0)
-    print(output)
     assert "Total" in output
 
     stats.request(Request("foo", 1, 1, None))
@@ -22,10 +22,9 @@ async def test_stats():
     stats.request(Request("bar", 1, 1, None))
     stats.request(Request("bar", 1, 2, True))
     await asyncio.sleep(0.5)
-    stats.print_table()
+    console.print(stats.get_table())
     output = f.getvalue()
     f.seek(0)
-    print(output)
     assert "foo" in output
     assert "bar" in output
     assert "1500.0ms" in output
@@ -34,10 +33,9 @@ async def test_stats():
     assert_search(r"Total .* [67].\d{2}/s", output)
 
     await asyncio.sleep(0.1)
-    stats.print_table(True)
+    console.print(stats.get_table(True))
     output = f.getvalue()
     f.seek(0)
-    print(output)
     assert_search(r"foo .* [23].\d{2}/s", output)
     assert_search(r"Total .* [67].\d{2}/s", output)
     assert "1500.0ms" in output
@@ -45,14 +43,16 @@ async def test_stats():
 
 async def test_error_pct_summary():
     f = io.StringIO()
-    stats = Stats(Console(file=f))
+    console = Console(file=f)
+    stats = Stats()
     stats.request(Request("foo", 1, 1, None))
     stats.request(Request("foo", 2, 2, None))
     stats.request(Request("bar", 3, 3, None))
     stats.request(Request("bar", 4, 4, Exception("an exception")))
     stats.request(Request("baz", 5, 5, True))
     await asyncio.sleep(0.5)
-    stats.print_table(True)
+    console.print(stats.get_table(True))
+    console.print(stats.get_error_table())
     output = f.getvalue()
     print(output)
     assert_search(r"foo .* 0 \(0.0%\)", output)
@@ -70,13 +70,12 @@ async def test_error_pct_summary():
 
 async def test_error_cardinality():
     f = io.StringIO()
-    stats = Stats(Console(file=f))
+    console = Console(file=f)
+    stats = Stats()
     for i in range(300):
         stats.request(Request("foo", 1, 1, Exception(f"error with unique id {i}")))
-    stats.print_table(True)
+    console.print(stats.get_error_table())
     output = f.getvalue()
-    print(output)
-
     assert "Error" in output
     assert_search(r"1 .* error with unique id 0", output)
     assert_search(r"1 .* error with unique id 199", output)

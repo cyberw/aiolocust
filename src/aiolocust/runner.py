@@ -6,6 +6,7 @@ import warnings
 from collections.abc import Callable
 
 from aiohttp import ClientResponseError
+from rich.console import Console
 
 from aiolocust.http import LocustClientSession
 from aiolocust.stats import Stats
@@ -50,18 +51,21 @@ class Runner:
         self.running = False
         self.start_time = 0
         self.stats = Stats()
+        self.console = Console()
 
     async def stats_printer(self):
         first = True
         while self.running:
             if not first:
-                self.stats.print_table()
+                self.console.print(self.stats.get_table())
             first = False
             await asyncio.sleep(2)
 
     def shutdown(self):
         self.running = False
-        self.stats.print_table(True)
+        self.console.print(self.stats.get_table(True))
+        if self.stats.error_counter:
+            self.console.print(self.stats.get_error_table())
 
     async def user_loop(self, user):
         async with LocustClientSession(self.stats.request, self) as client:
