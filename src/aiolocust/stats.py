@@ -2,9 +2,18 @@ import time
 from collections import defaultdict
 from threading import Lock
 
-from opentelemetry.sdk.metrics import MeterProvider
-from opentelemetry.sdk.metrics.export import HistogramDataPoint, InMemoryMetricReader
+from opentelemetry import metrics, trace
+from opentelemetry.sdk.metrics import (
+    Histogram,
+    MeterProvider,
+)
+from opentelemetry.sdk.metrics.export import (
+    AggregationTemporality,
+    HistogramDataPoint,
+    InMemoryMetricReader,
+)
 from opentelemetry.sdk.resources import Resource
+from opentelemetry.sdk.trace import TracerProvider
 from rich.console import Console
 from rich.table import Table
 
@@ -12,20 +21,33 @@ from aiolocust.datatypes import Request, RequestEntry
 
 MAX_ERROR_KEYS = 200
 
+reader = InMemoryMetricReader(
+    preferred_temporality={
+        Histogram: AggregationTemporality.DELTA,
+    }
+)
+
+resource = Resource.create(
+    {
+        "service.name": "locust",
+        "service.version": "0.0.0",  # __version__
+    }
+)
+trace.set_tracer_provider(TracerProvider(resource=resource))
+metrics.set_meter_provider(MeterProvider(resource=resource, metric_readers=[reader]))
+meter = metrics.get_meter("locust")
+ttlb_histogram = meter.create_histogram("http.client.duration")
+
 
 class Stats:
     def __init__(self, console: Console | None = None):
         self._console = console if console else Console()
-        self.reader = InMemoryMetricReader()
-        self.resource = Resource.create({"service.name": "locust"})
-        self.provider = MeterProvider(resource=self.resource, metric_readers=[self.reader])
-        self.meter = self.provider.get_meter("locust")
-        self.ttlb_histogram = self.meter.create_histogram("http.client.duration")
         self.start_time = time.time()
         self.last_time = self.start_time
         self.total: dict[str, RequestEntry] = defaultdict(lambda: RequestEntry(0, 0, 0, 0, 0))
         self.error_counter = defaultdict(int)
         self.error_counter_lock = Lock()
+        _ = reader.get_metrics_data()  # clear
 
     def record_error(self, key: str):
         with self.error_counter_lock:
@@ -46,10 +68,10 @@ class Stats:
         if req.error:
             attributes["error.type"] = req.error.__class__.__name__
             self.record_error(str(req.error))
-        self.ttlb_histogram.record(req.ttlb, attributes=attributes)
+        ttlb_histogram.record(req.ttlb, attributes=attributes)
 
     def _get_entries(self) -> dict[str, RequestEntry]:
-        metrics_data = self.reader.get_metrics_data()
+        metrics_data = reader.get_metrics_data()
         entries: dict[str, RequestEntry] = defaultdict(lambda: RequestEntry(0, 0, 0, 0, 0))
         for resource_metric in metrics_data.resource_metrics if metrics_data else []:
             for scope_metric in resource_metric.scope_metrics:
@@ -86,8 +108,12 @@ class Stats:
         total_rate = 0
 
         for url, re in entries.items():
+            self.total[url].count += re.count
+            self.total[url].errorcount += re.errorcount
+            self.total[url].sum_ttlb += re.sum_ttlb
+            self.total[url].max_ttlb = max(self.total[url].max_ttlb, re.max_ttlb)
             error_percentage = re.errorcount / re.count * 100
-            rate = (re.count - self.total[url].count) / (now - self.last_time)
+            rate = re.count / (now - self.last_time)
             if not final_summary:
                 table.add_row(
                     url,
@@ -115,15 +141,14 @@ class Stats:
                 f"{total_rate:.2f}/s",
             )
 
-        # Prepare for next batch, and possibly the final summary
-        total_ttlb = 0
-        total_max_ttlb = 0
-        total_count = 0
-        total_errorcount = 0
-        total_rate = 0
-        for url, re in entries.items():
-            self.total[url] = re
-            if final_summary:
+        if final_summary:
+            table.title = "Summary"
+            total_ttlb = 0
+            total_max_ttlb = 0
+            total_count = 0
+            total_errorcount = 0
+            total_rate = 0
+            for url, re in self.total.items():
                 total_ttlb += re.sum_ttlb
                 total_max_ttlb = max(total_max_ttlb, re.max_ttlb)
                 rate = re.count / (now - self.start_time)
@@ -139,8 +164,6 @@ class Stats:
                     f"{re.max_ttlb * 1000:4.1f}ms",
                     f"{rate:.2f}/s",
                 )
-
-        if final_summary:
             total_error_percentage = total_errorcount / total_count * 100 if total_count else 0
             total_avg_ttlb_ms = total_ttlb / total_count * 1000 if total_count else 0
             table.add_row(
@@ -151,13 +174,11 @@ class Stats:
                 f"{total_max_ttlb * 1000:4.1f}ms",
                 f"{total_rate:.2f}/s",
             )
+        else:
+            self._console.print()
 
         self.last_time = time.time()
 
-        if final_summary:
-            table.title = "Summary"
-        else:
-            self._console.print()
         self._console.print(table)
 
         if final_summary and self.error_counter:
