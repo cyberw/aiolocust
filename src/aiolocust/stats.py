@@ -47,6 +47,7 @@ class Stats:
         self.total: dict[str, RequestEntry] = defaultdict(lambda: RequestEntry(0, 0, 0, 0, 0))
         self.error_counter = defaultdict(int)
         self.error_counter_lock = Lock()
+        _ = reader.get_metrics_data()  # clear
 
     def record_error(self, key: str):
         with self.error_counter_lock:
