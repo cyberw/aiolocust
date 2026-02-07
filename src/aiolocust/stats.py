@@ -3,15 +3,8 @@ from collections import defaultdict
 from threading import Lock
 
 from opentelemetry import metrics, trace
-from opentelemetry.sdk.metrics import (
-    Histogram,
-    MeterProvider,
-)
-from opentelemetry.sdk.metrics.export import (
-    AggregationTemporality,
-    HistogramDataPoint,
-    InMemoryMetricReader,
-)
+from opentelemetry.sdk.metrics import Histogram, MeterProvider
+from opentelemetry.sdk.metrics.export import AggregationTemporality, HistogramDataPoint, InMemoryMetricReader
 from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider
 from rich.table import Table
