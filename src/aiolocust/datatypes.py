@@ -16,12 +16,6 @@ class RequestEntry:
     sum_ttlb: float = 0.0
     max_ttlb: float = 0.0
 
-    def add_datapoint(self, count: int, errorcount: int, sum_ttlb: float, max_ttlb: float):
-        self.count += count
-        self.errorcount += errorcount
-        self.sum_ttlb += sum_ttlb
-        self.max_ttlb = max(self.max_ttlb, max_ttlb)
-
     def __iadd__(self, other: RequestEntry):
         if isinstance(other, RequestEntry):
             self.count += other.count

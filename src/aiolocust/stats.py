@@ -90,9 +90,11 @@ class Stats:
                             raise Exception(f"A data point had no attributes, that should never happen. Point: {point}")
                         if not isinstance(point, HistogramDataPoint):
                             raise Exception(f"Unexpected datapoint type: {point}")
-                        re = entries[str(point.attributes["http.url"])]
-                        re.add_datapoint(
-                            point.count, point.count if point.attributes.get("error.type") else 0, point.sum, point.max
+                        entries[str(point.attributes["http.url"])] += RequestEntry(
+                            point.count,
+                            point.count if point.attributes.get("error.type") else 0,
+                            point.sum,
+                            point.max,
                         )
 
         return entries
