@@ -75,7 +75,7 @@ We also plan to further emphasizes the "It's just Python"-approach. For example,
 
 ## OTEL Native
 
-aiolocust uses OTel for metrics and exporting them into your own monitoring solution is very easy. The original Locust supported exporting OTtel traces/metrics as well, but it was "bolted on" and it still maintained its own quite complex metrics tracking.
+aiolocust uses OTel for metrics and exporting them into your own monitoring solution is very easy. The original Locust supported exporting OTtel traces/metrics as well, but it was "bolted on" and it still maintains its own completely separate metrics tracking.
 
 ## High performance
 
