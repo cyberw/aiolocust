@@ -81,11 +81,11 @@ aiolocust uses OTel for metrics and exporting them into your own monitoring solu
 
 aiolocust is more performant than "regular" Locust because has a smaller footprint/complexity, but it's two main gains come from:
 
-### [asyncio](https://docs.python.org/3/library/asyncio.html) + [aiohttp](https://docs.aiohttp.org/en/stable/)
+### 1. [asyncio](https://docs.python.org/3/library/asyncio.html) + [aiohttp](https://docs.aiohttp.org/en/stable/)
 
 aiolocust's performance is *much* better than HttpUser (based on Requests), and even slightly better than FastHttpUser (based on geventhttpclient). Because it uses async programming instead of monkey patching it is more useful on modern Python and more future-proof. Specifically it allows your locustfile to easily use asyncio libraries (like Playwright), which are becoming more and more common.
 
-### [Freethreading/no-GIL Python](https://docs.python.org/3/howto/free-threading-python.html)
+### 2. [Freethreading/no-GIL Python](https://docs.python.org/3/howto/free-threading-python.html)
 
 This means that you dont need to launch one Locust process per CPU core! And even if your load tests happen to do some heavy computations, they are less likely to impact eachother, as one thread will not block Python from concurrently working on another one.
 
