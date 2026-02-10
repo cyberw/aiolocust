@@ -1,5 +1,6 @@
 name: Tests
-
+env:
+    COLUMNS: 140 # Avoid narrow or even truncated output from pytest and rich
 on:
     push:
         branches:
