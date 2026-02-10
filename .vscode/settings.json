@@ -29,5 +29,7 @@
 ],
 "python.testing.unittestEnabled": false,
 "python.terminal.activateEnvironment": true,
-"python.testing.pytestEnabled": true
+"python.testing.pytestEnabled": true,
+"testing.defaultGutterClickAction": "debug"
 }
+
