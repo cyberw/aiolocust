@@ -2,13 +2,13 @@ import time
 from collections import defaultdict
 from threading import Lock
 
-from opentelemetry import metrics, trace
-from opentelemetry.sdk.metrics import Histogram, MeterProvider
+from opentelemetry import metrics
+from opentelemetry.sdk.metrics import Histogram
 from opentelemetry.sdk.metrics.export import AggregationTemporality, HistogramDataPoint, InMemoryMetricReader
 from opentelemetry.sdk.resources import Resource
-from opentelemetry.sdk.trace import TracerProvider
 from rich.table import Table
 
+from aiolocust import otel
 from aiolocust.datatypes import Request, RequestEntry
 
 MAX_ERROR_KEYS = 200
@@ -18,15 +18,14 @@ reader = InMemoryMetricReader(
         Histogram: AggregationTemporality.DELTA,
     }
 )
-
 resource = Resource.create(
     {
         "service.name": "locust",
         "service.version": "0.0.0",  # __version__
     }
 )
-trace.set_tracer_provider(TracerProvider(resource=resource))
-metrics.set_meter_provider(MeterProvider(resource=resource, metric_readers=[reader]))
+otel.setup_tracer_provider(resource)
+otel.setup_meter_provider(resource, [reader])
 meter = metrics.get_meter("locust")
 ttlb_histogram = meter.create_histogram("http.client.duration")
 
@@ -49,7 +48,7 @@ class Stats:
         self.aggregate: dict[str, RequestEntry] = defaultdict(RequestEntry)
         self.error_counter = defaultdict(int)
         self.error_counter_lock = Lock()
-        _ = reader.get_metrics_data()  # clear
+        _ = reader.get_metrics_data()  # clear reader, in case this is not the first Stats object
 
     def record_error(self, key: str):
         with self.error_counter_lock:
@@ -83,12 +82,15 @@ class Stats:
                             raise Exception(f"A data point had no attributes, that should never happen. Point: {point}")
                         if not isinstance(point, HistogramDataPoint):
                             raise Exception(f"Unexpected datapoint type: {point}")
-                        entries[str(point.attributes["http.url"])] += RequestEntry(
-                            point.count,
-                            point.count if point.attributes.get("error.type") else 0,
-                            point.sum,
-                            point.max,
-                        )
+                        if name := point.attributes.get("http.url"):
+                            entries[str(name)] += RequestEntry(
+                                point.count,
+                                point.count if point.attributes.get("error.type") else 0,
+                                point.sum,
+                                point.max,
+                            )
+                        else:
+                            pass  # print(f"Unknown point {point}")
 
         return entries
 

@@ -24,8 +24,7 @@ async def run(client: LocustClientSession):
 """)
         result = runner.invoke(app, ["my_locustfile.py", "--duration", "3", "-u", "2"])
         assert "http://localhost:" in result.output
-        # OTEL error percentage tracking not yet implemented
-        # assert "0 (0.0%)" in result.output
+        assert "0 (0.0%)" in result.output
         assert result.exit_code == 0
 
     if hasattr(signal, "SIGALRM"):
