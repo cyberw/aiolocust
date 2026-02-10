@@ -77,6 +77,8 @@ We also plan to further emphasizes the "It's just Python"-approach. For example,
 
 aiolocust uses OTel for metrics and exporting them into your own monitoring solution is very easy. The original Locust supported exporting OTtel traces/metrics as well, but it was "bolted on" and it still maintains its own completely separate metrics tracking.
 
+For aiolocust, [just instrument any library as usual](examples/otel/instrument_aiohttpclient.py) and use [OTel standard env vars](https://opentelemetry.io/docs/specs/otel/protocol/exporter/) for export configuration.
+
 ## High performance
 
 aiolocust is more performant than "regular" Locust because has a smaller footprint/complexity, but it's two main gains come from:
