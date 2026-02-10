@@ -1,13 +1,16 @@
 import asyncio
 import os
-from tempfile import NamedTemporaryFile
+from tempfile import TemporaryDirectory
 
 import pytest
 
 
 async def test_otel_traces_exporter(http_server):  # noqa: ARG001
-    with NamedTemporaryFile(suffix=".py") as tempfile:
-        tempfile.write(b"""
+    with TemporaryDirectory() as tmp_dir:
+        script_path = os.path.join(tmp_dir, "my_script.py")
+
+        with open(script_path, "w") as tempfile:
+            tempfile.write("""
 from opentelemetry.instrumentation.aiohttp_client import AioHttpClientInstrumentor
 AioHttpClientInstrumentor().instrument()
 
@@ -16,7 +19,6 @@ async def run(client):
         pass
     print("done!")
 """)
-        tempfile.flush()
         proc = await asyncio.create_subprocess_exec(
             "aiolocust",
             tempfile.name,
