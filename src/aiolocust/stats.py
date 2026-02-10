@@ -5,7 +5,6 @@ from threading import Lock
 from opentelemetry import metrics
 from opentelemetry.sdk.metrics import Histogram
 from opentelemetry.sdk.metrics.export import AggregationTemporality, HistogramDataPoint, InMemoryMetricReader
-from opentelemetry.sdk.resources import Resource
 from rich.table import Table
 
 from aiolocust import otel
@@ -18,14 +17,9 @@ reader = InMemoryMetricReader(
         Histogram: AggregationTemporality.DELTA,
     }
 )
-resource = Resource.create(
-    {
-        "service.name": "locust",
-        "service.version": "0.0.0",  # __version__
-    }
-)
-otel.setup_tracer_provider(resource)
-otel.setup_meter_provider(resource, [reader])
+
+otel.setup_tracer_provider()
+otel.setup_meter_provider([reader])
 meter = metrics.get_meter("locust")
 ttlb_histogram = meter.create_histogram("http.client.duration")
 

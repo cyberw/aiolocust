@@ -3,11 +3,19 @@ import os
 from opentelemetry import metrics, trace
 from opentelemetry.sdk.metrics import MeterProvider
 from opentelemetry.sdk.metrics.export import ConsoleMetricExporter, MetricReader, PeriodicExportingMetricReader
+from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor, ConsoleSpanExporter, SimpleSpanProcessor
 
+resource = Resource.create(
+    {
+        "service.name": "locust",
+        "service.version": "0.0.0",  # __version__
+    }
+)
 
-def setup_tracer_provider(resource):
+
+def setup_tracer_provider():
     tracer_provider = TracerProvider(resource=resource)
     trace.set_tracer_provider(tracer_provider)
     traces_exporters = {e.strip().lower() for e in os.getenv("OTEL_TRACES_EXPORTER", "none").split(",") if e.strip()}
@@ -46,7 +54,7 @@ def setup_tracer_provider(resource):
             print(f"Unknown traces exporter '{exporter}'. Ignored")
 
 
-def setup_meter_provider(resource, metric_readers: list[MetricReader]):
+def setup_meter_provider(metric_readers: list[MetricReader]):
     metrics_exporters = {e.strip().lower() for e in os.getenv("OTEL_METRICS_EXPORTER", "none").split(",") if e.strip()}
     for exporter in metrics_exporters:
         if exporter == "otlp":
