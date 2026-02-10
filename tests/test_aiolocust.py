@@ -36,14 +36,14 @@ async def run(client):
         except TimeoutError:
             proc.terminate()
             stdout, stderr = await proc.communicate()
-            output = stdout.decode()
+            output = stdout.decode(errors="replace")
             print(output)
             pytest.fail("process never terminated")
         else:
-            err = stderr.decode()
+            err = stderr.decode(errors="replace")
             print(err)
             assert not err
-            output = stdout.decode()
+            output = stdout.decode(errors="replace")
             assert "http://localhost:" in output
             assert "0 (0.0%)" in output
             assert '"trace_id":' in output
