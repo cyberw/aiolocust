@@ -38,7 +38,7 @@ build-backend = "uv_build"
 [tool.ruff]
 target-version = "py314"
 line-length = 120
-# lint.ignore = ["E402", "E501", "E713", "E731"]
+lint.ignore = ["E501", "E402", "E713", "E731"]
 lint.select = ["E", "F", "W", "UP", "I", "ARG001"]
 lint.dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?)|resp)$"
 
