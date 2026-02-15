@@ -36,6 +36,40 @@ jobs:
 
             - name: pytest
               run: uv run pytest tests
+
+    examples:
+        runs-on: ubuntu-latest
+        timeout-minutes: 4
+        steps:
+            - uses: actions/checkout@v6
+
+            - name: Start Server
+              run: |
+                  cd tests/performance && nginx -p $PWD -c $PWD/nginx.conf
+                  # timeout 10s sh -c 'until curl -s localhost:8080; do sleep 1; done'
+
+            - name: set up python
+              uses: actions/setup-python@v6
+              with:
+                  python-version-file: ".python-version"
+
+            - name: setup uv
+              uses: astral-sh/setup-uv@v7
+              with:
+                  enable-cache: true
+
+            - name: Run Tests
+              env:
+                  OTEL_TRACES_EXPORTER: console
+              run: |
+                  uv run aiolocust examples/otel/instrument_aiohttpclient.py -d 1 | tee locust_output.txt
+                  grep -E '"name": "GET"' locust_output.txt
+                  # advanced
+                  uv run aiolocust examples/otel/instrument_aiohttpclient_span_manipulation.py -d 1 | tee locust_output.txt
+                  grep '"name": "some-name"' locust_output.txt
+                  grep '"foo": "bar"' locust_output.txt
+                  grep 'some-value' locust_output.txt
+
     perftest:
         runs-on: ubuntu-latest
         timeout-minutes: 4
