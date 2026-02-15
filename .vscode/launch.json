@@ -2,24 +2,35 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "module",
+            "name": "run aiolocust",
             "type": "debugpy",
             "request": "launch",
             "module": "aiolocust",
             "env": {
+                // "OTEL_TRACES_EXPORTER": "console"
             },
-            "args": ["locustfile.py"],
-            "justMyCode": true
+            "args": ["${file}", "-d", "2"],
+            "justMyCode": false
         },
         {
-            "name": "python",
+            "name": "run current file",
             "type": "debugpy",
             "request": "launch",
-            "program": "locustfile.py",
+            "program": "${file}",
             "console": "integratedTerminal",
             "env": {
             },
             "justMyCode": true
+        },
+        {
+            "name": "(test debug only)",
+            "type": "debugpy",
+            "request": "launch",
+            "purpose": ["debug-test"],
+            "justMyCode": true,
+            "env": {
+                "COLUMNS": "140" // By default VSCode indicates to pytest that the terminal is only 80 characters wide for some reason
+            }, 
         }
     ]
 }

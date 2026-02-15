@@ -1,8 +1,13 @@
 import asyncio
+import os
 
+import pytest
+from opentelemetry.instrumentation.aiohttp_client import AioHttpClientInstrumentor
 from utils import assert_search
 
-from aiolocust.runner import LocustClientSession, Runner
+from aiolocust import otel
+from aiolocust.http import LocustClientSession, request_hook
+from aiolocust.runner import Runner
 
 
 async def test_runner(http_server, capteesys):  # noqa: ARG001
@@ -50,4 +55,33 @@ async def test_runner_w_otel(http_server, capteesys):  # noqa: ARG001
     assert "Error" in out
     assert_search(r"[234] .* assert 'foo' in 'OK'", out)
     assert_search(r"[234] .* 404,", out)
+    assert "bar" not in out
+
+
+@pytest.mark.skipif(
+    condition=not bool(os.environ.get("VSCODE_CLI")), reason="Only works when run individually, not sure why"
+)
+async def test_runner_w_instrumentation(http_server, capfd):  # noqa: ARG001
+    AioHttpClientInstrumentor().instrument(request_hook=request_hook)
+    os.environ["OTEL_TRACES_EXPORTER"] = "console"
+    otel.setup_trace_exporters()
+
+    async def run(client: LocustClientSession):
+        await asyncio.sleep(1)
+        async with client.get("http://localhost:8081/", name="foo") as resp:
+            pass
+        async with client.get("http://localhost:8081/404", name="foo") as resp:
+            pass
+
+    r = Runner()
+    await r.run_test(run, 1, 2)
+    out, err = capfd.readouterr()
+    assert err == ""
+    assert '"trace_id"' in out
+    assert '"name": "foo"' in out
+    assert '"name": "GET"' not in out
+    assert "Summary" in out
+    assert_search(r" foo[ ]+│[ ]+[24] .* \(50.0%\)", out)
+    assert "Error" in out
+    assert_search(r"[12] .* 404,", out)
     assert "bar" not in out
