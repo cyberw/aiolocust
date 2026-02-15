@@ -24,6 +24,29 @@ async def test_basic(httpserver: HTTPServer):
         await _(client)
 
 
+async def test_name(httpserver: HTTPServer):
+    httpserver.expect_request("/").respond_with_data("")
+
+    async def _(client: LocustClientSession):
+        async with client.get(httpserver.url_for("/"), name="foo") as resp:
+            pass
+        async with client.get(httpserver.url_for("/doesnt_exist"), name="foo") as resp:
+            pass
+
+    requests: list[Request] = []
+
+    def request(req: Request):
+        requests.append(req)
+
+    async with LocustClientSession(request_handler=request) as client:
+        await _(client)
+
+    assert requests[0].url == "foo"
+    assert requests[1].url == "foo"
+    assert len(requests) == 2
+    assert isinstance(requests[1].error, ClientResponseError)
+
+
 async def test_hard_fails_raise_and_log():
     async def _(client: LocustClientSession):
         with pytest.raises(ClientConnectorError):

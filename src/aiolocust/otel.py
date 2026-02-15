@@ -14,10 +14,12 @@ resource = Resource.create(
     }
 )
 
+tracer_provider = TracerProvider(resource=resource)
+trace.set_tracer_provider(tracer_provider)
+tracer = tracer_provider.get_tracer("aiolocust")
 
-def setup_tracer_provider():
-    tracer_provider = TracerProvider(resource=resource)
-    trace.set_tracer_provider(tracer_provider)
+
+def setup_trace_exporters():
     traces_exporters = {e.strip().lower() for e in os.getenv("OTEL_TRACES_EXPORTER", "none").split(",") if e.strip()}
     for exporter in traces_exporters:
         if exporter == "otlp":

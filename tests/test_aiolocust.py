@@ -12,10 +12,14 @@ async def test_otel_traces_exporter(http_server):  # noqa: ARG001
         with open(script_path, "w") as tempfile:
             tempfile.write("""
 from opentelemetry.instrumentation.aiohttp_client import AioHttpClientInstrumentor
-AioHttpClientInstrumentor().instrument()
+from aiolocust.http import request_hook
+
+AioHttpClientInstrumentor().instrument(request_hook=request_hook)
 
 async def run(client):
-    async with client.get("http://localhost:8081/", ) as resp:
+    async with client.get("http://localhost:8081/") as resp:
+        pass
+    async with client.get("http://localhost:8081/", name="foo") as resp:
         pass
     print("done!")
 """)
@@ -49,5 +53,7 @@ async def run(client):
             assert "http://localhost:" in output
             assert "0 (0.0%)" in output
             assert '"trace_id":' in output
+            assert '"name": "GET"' in output  # not renamed
+            assert '"name": "foo"' in output  # using explicit name
             assert "done!" in output
             assert await proc.wait() == 0

@@ -18,7 +18,7 @@ reader = InMemoryMetricReader(
     }
 )
 
-otel.setup_tracer_provider()
+otel.setup_trace_exporters()
 otel.setup_meter_provider([reader])
 meter = metrics.get_meter("locust")
 ttlb_histogram = meter.create_histogram("http.client.duration")

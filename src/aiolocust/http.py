@@ -2,14 +2,19 @@ import time
 from collections.abc import Callable
 from typing import TYPE_CHECKING, cast
 
+import aiohttp
 from aiohttp import ClientConnectorError, ClientResponse, ClientResponseError, ClientSession
 from aiohttp.client import _RequestContextManager
+from opentelemetry import context
+from opentelemetry.trace import Span
+
+from aiolocust.datatypes import Request
 
 if TYPE_CHECKING:  # avoid circular import
     from aiolocust.runner import Runner
 
 
-from aiolocust.datatypes import Request
+SPAN_NAME_KEY = context.create_key("name")
 
 
 class LocustResponse(ClientResponse):
@@ -26,15 +31,18 @@ class LocustResponse(ClientResponse):
 
 
 class LocustRequestContextManager(_RequestContextManager):
-    def __init__(self, request_handler: Callable, *args, **kwargs):
+    def __init__(self, request_handler: Callable, *args, name=None, **kwargs):
         super().__init__(*args, **kwargs)
         # slightly hacky way to get the URL, but passing it explicitly would be a mess
         # and it is only used for connection errors where the exception doesn't contain URL
         self.str_or_url = args[0]._coro.cr_frame.f_locals["str_or_url"]
         self.request_handler = request_handler
         self._resp: LocustResponse  # type: ignore
+        self.name = name
 
     async def __aenter__(self) -> LocustResponse:
+        ctx = context.set_value(SPAN_NAME_KEY, self.name)
+        token = context.attach(ctx)
         self.start_time = time.perf_counter()
         try:
             await super().__aenter__()
@@ -44,17 +52,24 @@ class LocustRequestContextManager(_RequestContextManager):
                 url = request_info.url
             else:
                 url = self.str_or_url
-            self.request_handler(Request(url, elapsed, elapsed, e))
+            self.request_handler(Request(str(self.name or url), elapsed, elapsed, e))
             raise
         except ClientResponseError as e:
             elapsed = self.ttlb = time.perf_counter() - self.start_time
-            self.request_handler(Request(str(e.request_info.url), elapsed, elapsed, e))
+            self.request_handler(Request(str(self.name or self.str_or_url), elapsed, elapsed, e))
+            raise
+        except TimeoutError as e:
+            elapsed = self.ttlb = time.perf_counter() - self.start_time
+            self.request_handler(Request(str(self.name or self.str_or_url), elapsed, elapsed, e))
             raise
         else:
             self.url = super()._resp.url
             self.ttfb = time.perf_counter() - self.start_time
             await self._resp.read()
             self.ttlb = time.perf_counter() - self.start_time
+        finally:
+            context.detach(token)
+
         return LocustResponse.wrap_response(self._resp)
 
     async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
@@ -62,18 +77,30 @@ class LocustRequestContextManager(_RequestContextManager):
         if self._resp.error is None:  # no explicit value set in with-block
             try:
                 self._resp.raise_for_status()
-            except ClientResponseError as e:
+            except (ClientResponseError, ClientConnectorError) as e:
                 self._resp.error = e
             if exc_val:  # overwrite if there was an explicit exception (e.g. an assert or crash)
                 self._resp.error = exc_val
         self.request_handler(
             Request(
-                str(self.url),
+                str(self.name or self.url),
                 self.ttfb,
                 self.ttlb,
                 self._resp.error,
             )
         )
+
+
+def request_hook(span: Span, params: aiohttp.TraceRequestStartParams):  # noqa: ARG001
+    """
+    Request hook for renaming spans based on name parameter (passed via context vars)
+
+    Typical usage:
+
+    AioHttpClientInstrumentor().instrument(request_hook=aiolocust.http.request_hook)
+    """
+    if custom_name := context.get_value(SPAN_NAME_KEY):
+        span.update_name(str(custom_name))
 
 
 class LocustClientSession(ClientSession):
@@ -86,8 +113,8 @@ class LocustClientSession(ClientSession):
     async def __aenter__(self) -> LocustClientSession:
         return self
 
-    def get(self, url, **kwargs) -> LocustRequestContextManager:
-        return LocustRequestContextManager(self._request_handler, super().get(url, **kwargs))
+    def get(self, url, name=None, **kwargs) -> LocustRequestContextManager:
+        return LocustRequestContextManager(self._request_handler, super().get(url, **kwargs), name=name)
 
-    def post(self, url, **kwargs) -> LocustRequestContextManager:
-        return LocustRequestContextManager(self._request_handler, super().post(url, **kwargs))
+    def post(self, url, name=None, **kwargs) -> LocustRequestContextManager:
+        return LocustRequestContextManager(self._request_handler, super().post(url, **kwargs), name=name)
