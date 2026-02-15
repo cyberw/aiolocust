@@ -20,9 +20,6 @@ async def run(client: LocustClientSession):
     async with client.get("http://localhost:8080/", raise_for_status=True) as resp:
         pass
 
-    # slow down a little
-    await asyncio.sleep(0.1)
-
     # If you want to intentionally mess with loadgen performance to prove freethreading works:
     # def busy_loop(seconds: float):
     #     end = time.perf_counter() + seconds
