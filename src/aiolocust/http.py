@@ -118,3 +118,18 @@ class LocustClientSession(ClientSession):
 
     def post(self, url, name=None, **kwargs) -> LocustRequestContextManager:
         return LocustRequestContextManager(self._request_handler, super().post(url, **kwargs), name=name)
+
+    def options(self, url, name=None, **kwargs) -> LocustRequestContextManager:
+        return LocustRequestContextManager(self._request_handler, super().options(url, **kwargs), name=name)
+
+    def head(self, url, name=None, **kwargs) -> LocustRequestContextManager:
+        return LocustRequestContextManager(self._request_handler, super().head(url, **kwargs), name=name)
+
+    def put(self, url, name=None, **kwargs) -> LocustRequestContextManager:
+        return LocustRequestContextManager(self._request_handler, super().put(url, **kwargs), name=name)
+
+    def patch(self, url, name=None, **kwargs) -> LocustRequestContextManager:
+        return LocustRequestContextManager(self._request_handler, super().patch(url, **kwargs), name=name)
+
+    def delete(self, url, name=None, **kwargs) -> LocustRequestContextManager:
+        return LocustRequestContextManager(self._request_handler, super().delete(url, **kwargs), name=name)
