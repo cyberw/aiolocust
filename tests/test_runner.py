@@ -9,6 +9,8 @@ from aiolocust import otel
 from aiolocust.http import LocustClientSession, request_hook
 from aiolocust.runner import Runner
 
+WINDOWS_DELAY = 1 if os.name == "nt" else 0
+
 
 async def test_runner(http_server, capteesys):  # noqa: ARG001
     async def run(client: LocustClientSession):
@@ -25,7 +27,7 @@ async def test_runner(http_server, capteesys):  # noqa: ARG001
             assert "bar" in await resp.text()
 
     r = Runner()
-    await r.run_test(run, 1, 3)
+    await r.run_test(run, 1, 3 + WINDOWS_DELAY)
     out, err = capteesys.readouterr()
     assert err == ""
     assert "Summary" in out
@@ -51,7 +53,7 @@ async def test_runner_w_otel(http_server, capteesys):  # noqa: ARG001
             assert "bar" in await resp.text()
 
     r = Runner()
-    await r.run_test(run, 1, 3)
+    await r.run_test(run, 1, 3 + WINDOWS_DELAY)
     out, err = capteesys.readouterr()
     assert err == ""
     assert "Summary" in out
