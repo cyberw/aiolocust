@@ -146,6 +146,11 @@ async def test_handler(httpserver: HTTPServer):
         # Explicitly mark the request as successful
         async with client.post(httpserver.url_for("/")) as resp:
             resp.error = False
+        # Explicit error logs the request as failed, but flow continues
+        async with client.get(httpserver.url_for("/")) as resp:
+            text = await resp.text()
+            if not text.startswith("Hello"):
+                resp.error = "Response did not start with 'Hello'"
         # Assertion failure
         async with client.post(httpserver.url_for("/")) as resp:
             assert resp.status == 200
@@ -161,11 +166,12 @@ async def test_handler(httpserver: HTTPServer):
         except AssertionError:
             pass
 
-    assert len(requests) == 4
+    assert len(requests) == 5
     assert not requests[0].error
     assert requests[1].error  # bad response code => error = True
     assert not requests[2].error  # error explicitly set to False
-    assert isinstance(requests[3].error, AssertionError)  # assertion failure overwrites bad response code
+    assert requests[3].error == "Response did not start with 'Hello'"
+    assert isinstance(requests[4].error, AssertionError)  # assertion failure overwrites bad response code
 
 
 async def websocket_handler(request):

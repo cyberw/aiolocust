@@ -17,6 +17,8 @@ async def test_runner(http_server, capteesys):  # noqa: ARG001
             pass
         async with client.get("http://localhost:8081/404") as resp:
             pass
+        async with client.get("http://localhost:8081/", name="renamed") as resp:
+            resp.error = "Oh no"
         async with client.get("http://localhost:8081/") as resp:
             assert "foo" in await resp.text()
         async with client.get("http://localhost:8081/") as resp:
@@ -28,9 +30,11 @@ async def test_runner(http_server, capteesys):  # noqa: ARG001
     assert err == ""
     assert "Summary" in out
     assert_search(r" http://localhost:8081/[ ]+│[ ]+[468] .* \(50.0%\)", out)
+    assert_search(r" renamed[ ]+│[ ]+[234] .* \(100.0%\)", out)
     assert "Error" in out
     assert_search(r"[234] .* assert 'foo' in 'OK'", out)
     assert_search(r"[234] .* 404,", out)
+    assert_search(r"[234] .* Oh no", out)
     assert "bar" not in out
 
 

@@ -18,7 +18,7 @@ SPAN_NAME_KEY = context.create_key("name")
 
 
 class LocustResponse(ClientResponse):
-    error: Exception | bool | None = None
+    error: Exception | bool | str | None = None
 
     def __init__(self, *args, **kwargs):
         raise NotImplementedError()  # use wrap_response
