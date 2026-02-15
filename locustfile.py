@@ -11,4 +11,6 @@ async def run(client: LocustClientSession):
     await asyncio.sleep(0.1)
 
 
-# see examples/advanced.py for more
+# See examples/advanced.py for more
+#
+# If you're not already familiar with using aiohttp to make http calls, see https://docs.aiohttp.org/

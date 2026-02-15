@@ -6,7 +6,7 @@ class Request:
     url: str
     ttfb: float
     ttlb: float
-    error: Exception | bool | None
+    error: Exception | bool | str | None
 
 
 @dataclass(slots=True)
