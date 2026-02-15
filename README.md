@@ -71,7 +71,7 @@ aiolocust is built to be smaller in scope, but capture the learnings from Locust
 
 Tests are expressed in modern, explicitly asyncronous, syntax instead of relying on gevent monkey patching and implicit concurrency.
 
-We also plan to further emphasizes the "It's just Python"-approach. For example, if you want to take precise control of the ramp up and ramp down of a test, you shouldn't need to read the documentation, you should only need to know how to write code. We'll still provide the option of using prebuilt features too of course, but we'll try not to "build our users into a box".
+We also plan to further emphasizes the "It's just Python"-approach. For example, if you want to take precise control of the ramp up and ramp down of a test, you shouldn't need to read the documentation, you should only need to know how to write code. We'll still provide the option of using prebuilt features too of course, but we'll make an effort "build our users into a box", which was sometimes the case with Locust.
 
 ## OTEL Native
 
