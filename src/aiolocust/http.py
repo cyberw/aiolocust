@@ -1,6 +1,6 @@
 import time
 from collections.abc import Callable
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING
 
 import aiohttp
 from aiohttp import ClientConnectorError, ClientResponse, ClientResponseError, ClientSession
@@ -18,16 +18,9 @@ SPAN_NAME_KEY = context.create_key("name")
 
 
 class LocustResponse(ClientResponse):
-    error: Exception | bool | str | None = None
-
     def __init__(self, *args, **kwargs):
-        raise NotImplementedError()  # use wrap_response
-
-    @classmethod
-    def wrap_response(cls, resp: ClientResponse) -> LocustResponse:
-        new = cast(LocustResponse, resp)
-        new.error = None
-        return new
+        super().__init__(*args, **kwargs)
+        self.error: Exception | bool | str | None = None
 
 
 class LocustRequestContextManager(_RequestContextManager):
@@ -70,7 +63,7 @@ class LocustRequestContextManager(_RequestContextManager):
         finally:
             context.detach(token)
 
-        return LocustResponse.wrap_response(self._resp)
+        return self._resp
 
     async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
         await super().__aexit__(exc_type, exc_val, exc_tb)
@@ -105,7 +98,7 @@ def request_hook(span: Span, params: aiohttp.TraceRequestStartParams):  # noqa: 
 
 class LocustClientSession(ClientSession):
     def __init__(self, request_handler: Callable, runner: Runner | None = None, base_url=None, **kwargs):
-        super().__init__(base_url=base_url, **kwargs)
+        super().__init__(base_url=base_url, response_class=LocustResponse, **kwargs)
         self.runner: Runner = runner  # pyright: ignore[reportAttributeAccessIssue] # always set outside of unit testing
         self._request_handler = request_handler
 
