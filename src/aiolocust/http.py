@@ -1,6 +1,7 @@
 import time
-from collections.abc import Callable
-from typing import TYPE_CHECKING
+from asyncio import Future
+from collections.abc import Callable, Coroutine
+from typing import TYPE_CHECKING, Any
 
 import aiohttp
 from aiohttp import ClientConnectorError, ClientResponse, ClientResponseError, ClientSession
@@ -24,11 +25,11 @@ class LocustResponse(ClientResponse):
 
 
 class LocustRequestContextManager(_RequestContextManager):
-    def __init__(self, request_handler: Callable, *args, name=None, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, request_handler: Callable, name, coro: Coroutine[Future[Any], None, ClientResponse]):
+        super().__init__(coro)
         # slightly hacky way to get the URL, but passing it explicitly would be a mess
         # and it is only used for connection errors where the exception doesn't contain URL
-        self.str_or_url = args[0]._coro.cr_frame.f_locals["str_or_url"]
+        self.str_or_url = coro._coro.cr_frame.f_locals["str_or_url"]  # type: ignore
         self.request_handler = request_handler
         self._resp: LocustResponse  # type: ignore
         self.name = name
@@ -106,23 +107,23 @@ class LocustClientSession(ClientSession):
     async def __aenter__(self) -> LocustClientSession:
         return self
 
-    def get(self, url, name=None, **kwargs) -> LocustRequestContextManager:
-        return LocustRequestContextManager(self._request_handler, super().get(url, **kwargs), name=name)
+    def get(self, url, *, name=None, **kwargs) -> LocustRequestContextManager:
+        return LocustRequestContextManager(self._request_handler, name, super().get(url, **kwargs))
 
-    def post(self, url, name=None, **kwargs) -> LocustRequestContextManager:
-        return LocustRequestContextManager(self._request_handler, super().post(url, **kwargs), name=name)
+    def post(self, url, *, name=None, **kwargs) -> LocustRequestContextManager:
+        return LocustRequestContextManager(self._request_handler, name, super().post(url, **kwargs))
 
-    def options(self, url, name=None, **kwargs) -> LocustRequestContextManager:
-        return LocustRequestContextManager(self._request_handler, super().options(url, **kwargs), name=name)
+    def options(self, url, *, name=None, **kwargs) -> LocustRequestContextManager:
+        return LocustRequestContextManager(self._request_handler, name, super().options(url, **kwargs))
 
-    def head(self, url, name=None, **kwargs) -> LocustRequestContextManager:
-        return LocustRequestContextManager(self._request_handler, super().head(url, **kwargs), name=name)
+    def head(self, url, *, name=None, **kwargs) -> LocustRequestContextManager:
+        return LocustRequestContextManager(self._request_handler, name, super().head(url, **kwargs))
 
-    def put(self, url, name=None, **kwargs) -> LocustRequestContextManager:
-        return LocustRequestContextManager(self._request_handler, super().put(url, **kwargs), name=name)
+    def put(self, url, *, name=None, **kwargs) -> LocustRequestContextManager:
+        return LocustRequestContextManager(self._request_handler, name, super().put(url, **kwargs))
 
-    def patch(self, url, name=None, **kwargs) -> LocustRequestContextManager:
-        return LocustRequestContextManager(self._request_handler, super().patch(url, **kwargs), name=name)
+    def patch(self, url, *, name=None, **kwargs) -> LocustRequestContextManager:
+        return LocustRequestContextManager(self._request_handler, name, super().patch(url, **kwargs))
 
-    def delete(self, url, name=None, **kwargs) -> LocustRequestContextManager:
-        return LocustRequestContextManager(self._request_handler, super().delete(url, **kwargs), name=name)
+    def delete(self, url, *, name=None, **kwargs) -> LocustRequestContextManager:
+        return LocustRequestContextManager(self._request_handler, name, super().delete(url, **kwargs))
