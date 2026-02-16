@@ -1,4 +1,3 @@
-# A slightly more advanced example
 import asyncio
 
 from aiolocust import LocustClientSession, Runner
