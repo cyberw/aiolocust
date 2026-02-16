@@ -28,6 +28,6 @@ async def run(client: LocustClientSession):
     # busy_loop(0.1)
 
 
-# make this file runnable with "python locustfile.py"
+# make this file runnable with "python advanced.py"
 if __name__ == "__main__":
     asyncio.run(Runner().run_test(run, 1, 1))

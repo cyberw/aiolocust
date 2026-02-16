@@ -35,6 +35,8 @@ async def run(client: LocustClientSession):
     await asyncio.sleep(0.1)
 ```
 
+See [more examples](examples/).
+
 ## Run a test
 
 ```text
