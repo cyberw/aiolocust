@@ -46,26 +46,55 @@ def distribute_evenly(total, num_buckets) -> list[int]:
 
 
 class Worker:
-    def __init__(self, runner: Runner, user: Callable, stats: Stats):
+    def __init__(self, runner: Runner, user: Callable):
         self._runner = runner
         self._user = user
-        self._stats = stats
+
+        self._loop: asyncio.AbstractEventLoop | None = None
+
+        self._tasks: list[asyncio.Task] = []
+        self._pending_spawns = 0
 
     async def _user_loop(self) -> None:
-        async with LocustClientSession(self._stats.request, self._runner) as client:
+        async with LocustClientSession(self._runner.stats.request, self._runner) as client:
             while self._runner.running:
                 try:
                     await self._user(client)
                 except (ClientResponseError, AssertionError):
                     pass
 
-    async def _run_users(self, user_count: int) -> None:
-        async with asyncio.TaskGroup() as tg:
-            for _ in range(user_count):
-                tg.create_task(self._user_loop())
+    async def _launch_users(self, n: int) -> None:
+        for _ in range(n):
+            self._tasks.append(asyncio.create_task(self._user_loop()))
 
-    def run(self, user_count: int) -> None:
-        asyncio.run(self._run_users(user_count), loop_factory=new_event_loop)
+    def launch_more(self, n: int) -> None:
+        if n <= 0:
+            return
+
+        self._pending_spawns += n
+
+        if self._loop is not None:
+            self._loop.call_soon_threadsafe(self._drain_pending)
+
+    def _drain_pending(self) -> None:
+        n = self._pending_spawns
+
+        if n > 0:
+            asyncio.create_task(self._launch_users(n))
+            self._pending_spawns = 0
+
+    async def _main(self) -> None:
+        self._loop = asyncio.get_running_loop()
+
+        self._drain_pending()
+
+        while self._runner.running:
+            await asyncio.sleep(0.1)
+
+        await asyncio.gather(*self._tasks)
+
+    def run(self) -> None:
+        asyncio.run(self._main(), loop_factory=new_event_loop)
 
 
 class Runner:
@@ -97,7 +126,12 @@ class Runner:
         signal.signal(signal.SIGINT, original_sigint_handler)
 
     async def run_test(
-        self, user: Callable, user_count: int, duration: int | None = None, event_loops: int | None = None
+        self,
+        user: Callable,
+        user_count: int,
+        spawn_rate: int | None = None,
+        duration: int | None = None,
+        event_loops: int | None = None,
     ):
         self.running = True
 
@@ -109,14 +143,29 @@ class Runner:
             else:
                 event_loops = 1
         loop = asyncio.get_running_loop()
-        users_per_worker = distribute_evenly(user_count, event_loops)
 
-        workers = [Worker(self, user, self.stats) for _ in range(event_loops)]
+        workers = [Worker(self, user) for _ in range(event_loops)]
+        worker_tasks = [asyncio.create_task(asyncio.to_thread(w.run)) for w in workers]
 
         loop.create_task(self.stats_printer())
+
+        remaining = user_count
+        rr = 0
+        while remaining > 0:
+            to_spawn = min(spawn_rate or user_count, remaining)
+
+            # round-robin
+            for _ in range(to_spawn):
+                workers[rr].launch_more(1)
+                rr = (rr + 1) % len(workers)
+
+            remaining -= to_spawn
+            if remaining:
+                await asyncio.sleep(1.0)
 
         if duration:
             loop.call_later(duration, self.shutdown)
 
-        await asyncio.gather(*[asyncio.to_thread(w.run, n_users) for w, n_users in zip(workers, users_per_worker)])
+        await asyncio.gather(*worker_tasks)
+
         return
