@@ -129,7 +129,7 @@ class Runner:
         self,
         user: Callable,
         user_count: int,
-        spawn_rate: int | None = None,
+        spawn_rate: float | None = None,
         duration: int | None = None,
         event_loops: int | None = None,
     ):
@@ -149,19 +149,28 @@ class Runner:
 
         loop.create_task(self.stats_printer())
 
+        if not spawn_rate:
+            spawn_rate = user_count
+
         remaining = user_count
         rr = 0
+        # take into account user fractions
+        budget = 0.0
+
+        tick = 1.0
         while remaining > 0:
-            to_spawn = min(spawn_rate or user_count, remaining)
+            budget += spawn_rate * tick
+            to_spawn = min(int(budget), remaining)
 
             # round-robin
             for _ in range(to_spawn):
                 workers[rr].launch_more(1)
                 rr = (rr + 1) % len(workers)
 
+            budget -= to_spawn
             remaining -= to_spawn
-            if remaining:
-                await asyncio.sleep(1.0)
+
+            await asyncio.sleep(tick)
 
         if duration:
             loop.call_later(duration, self.shutdown)
