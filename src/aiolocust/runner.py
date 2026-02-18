@@ -2,6 +2,7 @@ import asyncio
 import os
 import signal
 import sys
+import time
 import warnings
 from collections.abc import Callable
 
@@ -149,31 +150,46 @@ class Runner:
 
         loop.create_task(self.stats_printer())
 
+        if duration:
+            loop.call_later(duration, self.shutdown)
+
         if not spawn_rate:
             spawn_rate = user_count
 
-        remaining = user_count
+        spawned = 0
         rr = 0
-        # take into account user fractions
-        budget = 0.0
 
-        tick = 1.0
-        while remaining > 0:
-            budget += spawn_rate * tick
-            to_spawn = min(int(budget), remaining)
+        tick = 0.1
 
-            # round-robin
-            for _ in range(to_spawn):
-                workers[rr].launch_more(1)
-                rr = (rr + 1) % len(workers)
+        start = time.monotonic()
+        next_tick = start + tick
+        while self.running and spawned < user_count:
+            dt = time.monotonic() - start
 
-            budget -= to_spawn
-            remaining -= to_spawn
+            target = min(int(spawn_rate * dt), user_count)
+            need = target - spawned
+            if need > 0:
+                spawned += need
 
-            await asyncio.sleep(tick)
+                # round-robin
+                batch = [0] * len(workers)
+                for _ in range(need):
+                    batch[rr] += 1
+                    rr = (rr + 1) % len(workers)
 
-        if duration:
-            loop.call_later(duration, self.shutdown)
+                for w, k in zip(workers, batch):
+                    if k:
+                        w.launch_more(k)
+
+            now = time.monotonic()
+            sleep_for = next_tick - now
+            if sleep_for > 0:
+                await asyncio.sleep(sleep_for)
+                next_tick += tick
+            else:
+                # We’re behind schedule...
+                missed = int((-sleep_for) // tick) + 1
+                next_tick += missed * tick
 
         await asyncio.gather(*worker_tasks)
 
