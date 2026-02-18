@@ -74,27 +74,27 @@ class Worker:
         self._pending_spawns += n
 
         if self._loop is not None:
-            self._loop.call_soon_threadsafe(self._drain_pending)
+            self._loop.call_soon_threadsafe(self._drain_spawns)
 
-    def _drain_pending(self) -> None:
+    def _drain_spawns(self) -> None:
         n = self._pending_spawns
 
         if n > 0:
             asyncio.create_task(self._launch_users(n))
             self._pending_spawns = 0
 
-    async def _main(self) -> None:
+    async def _entrypoint(self) -> None:
         self._loop = asyncio.get_running_loop()
 
-        self._drain_pending()
+        self._drain_spawns()
 
         while self._runner.running:
             await asyncio.sleep(0.1)
 
         await asyncio.gather(*self._tasks)
 
-    def run(self) -> None:
-        asyncio.run(self._main(), loop_factory=new_event_loop)
+    def start(self) -> None:
+        asyncio.run(self._entrypoint(), loop_factory=new_event_loop)
 
 
 class Runner:
@@ -145,7 +145,7 @@ class Runner:
         loop = asyncio.get_running_loop()
 
         workers = [Worker(self, user) for _ in range(event_loops)]
-        worker_tasks = [asyncio.create_task(asyncio.to_thread(w.run)) for w in workers]
+        worker_tasks = [asyncio.create_task(asyncio.to_thread(w.start)) for w in workers]
 
         loop.create_task(self.stats_printer())
 
