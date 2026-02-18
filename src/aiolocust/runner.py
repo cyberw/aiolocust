@@ -94,8 +94,8 @@ class Worker:
 
         await asyncio.gather(*self._tasks)
 
-    def start(self) -> None:
-        asyncio.run(self._entrypoint(), loop_factory=new_event_loop)
+    def start(self):
+        return asyncio.run(self._entrypoint(), loop_factory=new_event_loop)
 
 
 class Runner:
