@@ -8,8 +8,8 @@ from collections.abc import Callable
 from aiohttp import ClientResponseError
 from rich.console import Console
 
+from aiolocust import stats
 from aiolocust.http import LocustClientSession
-from aiolocust.stats import Stats
 
 # uvloop is faster than the default pure-python asyncio event loop
 # so if it is installed, we're going to be using that one
@@ -50,25 +50,25 @@ class Runner:
         signal.signal(signal.SIGINT, self.signal_handler)
         self.running = False
         self.start_time = 0
-        self.stats = Stats()
+        self.sf = stats.StatsFormatter()
         self.console = Console()
 
     async def stats_printer(self):
         first = True
         while self.running:
             if not first:
-                self.console.print(self.stats.get_table())
+                self.console.print(self.sf.get_table())
             first = False
             await asyncio.sleep(2)
 
     def shutdown(self):
         self.running = False
-        self.console.print(self.stats.get_table(True))
-        if self.stats.error_counter:
-            self.console.print(self.stats.get_error_table())
+        self.console.print(self.sf.get_table(True))
+        if stats.error_counter:
+            self.console.print(self.sf.get_error_table())
 
     async def user_loop(self, user):
-        async with LocustClientSession(self.stats.request, self) as client:
+        async with LocustClientSession(self) as client:
             while self.running:
                 try:
                     await user(client)

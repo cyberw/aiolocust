@@ -5,24 +5,24 @@ from rich.console import Console
 from utils import assert_search
 
 from aiolocust.datatypes import Request
-from aiolocust.stats import Stats
+from aiolocust.stats import StatsFormatter, request
 
 
-async def test_stats():
+async def test_get_table():
     f = io.StringIO()
     console = Console(file=f)
-    stats = Stats()
-    console.print(stats.get_table())
+    sf = StatsFormatter()
+    console.print(sf.get_table())
     output = f.getvalue()
     f.seek(0)
     assert "Total" in output
 
-    stats.request(Request("foo", 1, 1, None))
-    stats.request(Request("foo", 1, 2, True))
-    stats.request(Request("bar", 1, 1, None))
-    stats.request(Request("bar", 1, 2, True))
+    request(Request("foo", 1, 1, None))
+    request(Request("foo", 1, 2, True))
+    request(Request("bar", 1, 1, None))
+    request(Request("bar", 1, 2, True))
     await asyncio.sleep(0.5)
-    console.print(stats.get_table())
+    console.print(sf.get_table())
     output = f.getvalue()
     f.seek(0)
     assert "foo" in output
@@ -33,7 +33,7 @@ async def test_stats():
     assert_search(r"Total .* [67].\d{2}/s", output)
 
     await asyncio.sleep(0.1)
-    console.print(stats.get_table(True))
+    console.print(sf.get_table(True))
     output = f.getvalue()
     f.seek(0)
     assert_search(r"foo .* [23].\d{2}/s", output)
@@ -44,15 +44,15 @@ async def test_stats():
 async def test_error_pct_summary():
     f = io.StringIO()
     console = Console(file=f)
-    stats = Stats()
-    stats.request(Request("foo", 1, 1, None))
-    stats.request(Request("foo", 2, 2, None))
-    stats.request(Request("bar", 3, 3, None))
-    stats.request(Request("bar", 4, 4, Exception("an exception")))
-    stats.request(Request("baz", 5, 5, True))
+    sf = StatsFormatter()
+    request(Request("foo", 1, 1, None))
+    request(Request("foo", 2, 2, None))
+    request(Request("bar", 3, 3, None))
+    request(Request("bar", 4, 4, Exception("an exception")))
+    request(Request("baz", 5, 5, True))
     await asyncio.sleep(0.5)
-    console.print(stats.get_table(True))
-    console.print(stats.get_error_table())
+    console.print(sf.get_table(True))
+    console.print(sf.get_error_table())
     output = f.getvalue()
     print(output)
     assert_search(r"foo .* 0 \(0.0%\)", output)
@@ -71,10 +71,10 @@ async def test_error_pct_summary():
 async def test_error_cardinality():
     f = io.StringIO()
     console = Console(file=f)
-    stats = Stats()
+    sf = StatsFormatter()
     for i in range(300):
-        stats.request(Request("foo", 1, 1, Exception(f"error with unique id {i}")))
-    console.print(stats.get_error_table())
+        request(Request("foo", 1, 1, Exception(f"error with unique id {i}")))
+    console.print(sf.get_error_table())
     output = f.getvalue()
     assert "Error" in output
     assert_search(r"1 .* error with unique id 0", output)

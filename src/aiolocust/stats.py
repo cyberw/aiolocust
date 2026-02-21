@@ -22,6 +22,31 @@ otel.setup_trace_exporters()
 otel.setup_meter_provider([reader])
 meter = metrics.get_meter("locust")
 ttlb_histogram = meter.create_histogram("http.client.duration")
+error_counter = defaultdict(int)
+error_counter_lock = Lock()
+
+
+def record_error(message: str):
+    with error_counter_lock:
+        if message not in error_counter and len(error_counter) >= MAX_ERROR_KEYS:
+            message = "OTHER"
+        error_counter[message] += 1
+
+
+def request(req: Request):
+    attributes = {
+        "http.url": req.url,
+        # the rest of these remain to be implemented
+        # http.method=GET,
+        # http.host=localhost,
+        # net.peer.name=localhost,
+        # net.peer.port=8080,
+        # http.status_code=200}
+    }
+    if req.error:
+        attributes["error.type"] = req.error.__class__.__name__
+        record_error(str(req.error))
+    ttlb_histogram.record(req.ttlb, attributes=attributes)
 
 
 def make_row(name: str, re: RequestEntry, start, end) -> list[str]:
@@ -35,35 +60,14 @@ def make_row(name: str, re: RequestEntry, start, end) -> list[str]:
     ]
 
 
-class Stats:
+class StatsFormatter:
     def __init__(self):
         self.start_time = time.time()
         self.last_time = self.start_time
         self.aggregate: dict[str, RequestEntry] = defaultdict(RequestEntry)
-        self.error_counter = defaultdict(int)
-        self.error_counter_lock = Lock()
-        _ = reader.get_metrics_data()  # clear reader, in case this is not the first Stats object
-
-    def record_error(self, key: str):
-        with self.error_counter_lock:
-            if key not in self.error_counter and len(self.error_counter) >= MAX_ERROR_KEYS:
-                key = "OTHER"
-            self.error_counter[key] += 1
-
-    def request(self, req: Request):
-        attributes = {
-            "http.url": req.url,
-            # the rest of these remain to be implemented
-            # http.method=GET,
-            # http.host=localhost,
-            # net.peer.name=localhost,
-            # net.peer.port=8080,
-            # http.status_code=200}
-        }
-        if req.error:
-            attributes["error.type"] = req.error.__class__.__name__
-            self.record_error(str(req.error))
-        ttlb_histogram.record(req.ttlb, attributes=attributes)
+        # clear reader, in case this is not the first Stats object
+        _ = reader.get_metrics_data()
+        error_counter.clear()
 
     def _get_entries(self) -> dict[str, RequestEntry]:
         metrics_data = reader.get_metrics_data()
@@ -138,7 +142,7 @@ class Stats:
         error_table.add_column("Count")
         error_table.add_column("Error")
 
-        for key, count in sorted(self.error_counter.items(), key=lambda item: item[1], reverse=True):
+        for key, count in sorted(error_counter.items(), key=lambda item: item[1], reverse=True):
             error_table.add_row(str(count), key)
 
         return error_table
