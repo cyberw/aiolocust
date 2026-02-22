@@ -102,7 +102,7 @@ class LocustClientSession(ClientSession):
         super().__init__(base_url=base_url, response_class=LocustResponse, **kwargs)
         self.runner: Runner = runner  # pyright: ignore[reportAttributeAccessIssue] # always set outside of unit testing
 
-    # explicitly declare this to get the correct return type and enter session
+    # explicitly declare this to get the correct return type
     async def __aenter__(self) -> LocustClientSession:
         return self
 
