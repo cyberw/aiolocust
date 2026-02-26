@@ -73,6 +73,8 @@ aiolocust is built to be smaller in scope, but capture the learnings from Locust
 
 Tests are expressed in modern, explicitly asynchronous code, instead of relying on gevent monkey patching, and implicit concurrency.
 
+It has fewer "gotcha's" and better type hinting, that should make it easier for humans as well as AIs to understand and write tests.
+
 We also plan to further emphasize the "It's just Python"-approach. For example, if you want to take precise control of the ramp up and ramp down of a test, you shouldn't need to read the documentation, you should only need to know how to write code. We'll still provide the option of using prebuilt features too of course, but we'll make an effort not to box users in, which was sometimes the case with Locust.
 
 ## OTEL Native
