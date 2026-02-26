@@ -77,11 +77,9 @@ We also plan to further emphasize the "It's just Python"-approach. For example, 
 
 ## OTEL Native
 
-aiolocust uses OTel for metrics internally and exporting them into your own monitoring solution is very easy.
+aiolocust uses OTel for metrics internally and exporting them into your own monitoring solution is easy. Out of the box, it supports standard [OTel env vars](https://opentelemetry.io/docs/specs/otel/protocol/exporter/).
 
-Out of the box, it supports standard [OTel env vars](https://opentelemetry.io/docs/specs/otel/protocol/exporter/) for export configuration.
-
-If you want traces and auto-instrumented metrics (for aiohttp or any other library you might be using), it is easy to do [from code](examples/otel/instrument_aiohttpclient.py) or [using an agent](https://opentelemetry.io/docs/zero-code/python/).
+If you want traces and auto-instrumented metrics, it is easy to do [from code](examples/otel/instrument_aiohttpclient.py) or [using an agent](https://opentelemetry.io/docs/zero-code/python/).
 
 Note: The "old" Locust supports exporting OTel traces/metrics as well, but this was "bolted on" and it used its own completely separate metrics tracking internally.
 
