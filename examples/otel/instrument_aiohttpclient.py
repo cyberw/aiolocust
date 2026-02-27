@@ -11,6 +11,6 @@ from opentelemetry.instrumentation.aiohttp_client import AioHttpClientInstrument
 AioHttpClientInstrumentor().instrument()
 
 
-async def run(client):
-    async with client.get("http://localhost:8080/") as resp:
+async def run(user):
+    async with user.client.get("http://localhost:8080/") as resp:
         pass
