@@ -1,14 +1,24 @@
 import asyncio
 import importlib.util
+import inspect
 import sys
 from pathlib import Path
 from typing import Annotated
 
 import typer
 
+from aiolocust import User
+from aiolocust.http import HttpUser
 from aiolocust.runner import Runner
 
 app = typer.Typer(add_completion=False)
+
+
+def is_user_class(item) -> bool:
+    """
+    Check if a variable is a runnable (non-abstract) User class
+    """
+    return bool(inspect.isclass(item)) and issubclass(item, User) and not inspect.isabstract(item)
 
 
 @app.command()
@@ -43,8 +53,18 @@ def main(
     # Run any top-level code
     spec.loader.exec_module(module)
 
-    if hasattr(module, "run"):
-        r = Runner()
-        asyncio.run(r.run_test(module.run, users, duration, event_loops))
+    # Return our two-tuple
+    user_classes = {name: value for name, value in vars(module).items() if is_user_class(value)}
+    if not user_classes and hasattr(module, "run"):
+
+        class SimpleUser(HttpUser):
+            async def run(self):
+                pass  # This will be overwritten immediately, but needs to be here to satisfy the abstract base class requirement
+
+        SimpleUser.run = module.run
+        user_classes = {"SimpleUser": SimpleUser}
+    if user_classes:
+        r = Runner([user for user in user_classes.values()])
+        asyncio.run(r.run_test(users, duration, event_loops))
     else:
-        typer.echo(f"Error: No run function defined in {filename}")
+        typer.echo(f"Error: No User classes or run function defined in {filename}")

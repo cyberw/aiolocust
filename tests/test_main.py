@@ -18,9 +18,12 @@ def test_main(http_server):  # noqa: ARG001
     with runner.isolated_filesystem():
         with open("my_locustfile.py", "w") as f:
             f.write("""
-async def run(client: LocustClientSession):
-    async with client.get("http://localhost:8081/") as resp:
-        pass
+from aiolocust import HttpUser
+
+class MyUser(HttpUser):
+    async def run(self):
+        async with self.client.get("http://localhost:8081/") as resp:
+            pass
 """)
         result = runner.invoke(app, ["my_locustfile.py", "--duration", "3", "-u", "2"])
         assert "http://localhost:" in result.output

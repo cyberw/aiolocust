@@ -12,16 +12,17 @@ async def test_otel_traces_exporter(http_server):  # noqa: ARG001
         with open(script_path, "w") as tempfile:
             tempfile.write("""
 from opentelemetry.instrumentation.aiohttp_client import AioHttpClientInstrumentor
-from aiolocust.http import request_hook
+from aiolocust.http import request_hook, HttpUser
 
 AioHttpClientInstrumentor().instrument(request_hook=request_hook)
 
-async def run(client):
-    async with client.get("http://localhost:8081/") as resp:
-        pass
-    async with client.get("http://localhost:8081/", name="foo") as resp:
-        pass
-    print("done!")
+class MyUser(HttpUser):
+    async def run(self):
+        async with self.client.get("http://localhost:8081/") as resp:
+            pass
+        async with self.client.get("http://localhost:8081/", name="foo") as resp:
+            pass
+        print("done!")
 """)
         proc = await asyncio.create_subprocess_exec(
             "aiolocust",
