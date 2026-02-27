@@ -24,12 +24,12 @@ There are also some [alternative ways to install](#alternative-ways-to-install).
 
 ```python
 import asyncio
-from aiolocust import LocustClientSession
+from aiolocust import HttpUser
 
-async def run(client: LocustClientSession):
-    async with client.get("http://example.com/") as resp:
+async def run(user: HttpUser):
+    async with user.client.get("http://example.com/") as resp:
         pass
-    async with client.get("http://example.com/") as resp:
+    async with user.client.get("http://example.com/") as resp:
         # extra validation, not just HTTP response code:
         assert "expected text" in await resp.text()
     await asyncio.sleep(0.1)
