@@ -70,26 +70,26 @@ class Runner:
     async def user_loop(self, user_class: type[User]):
         user_instance = user_class(runner=self)
 
-        while self.running:
-            try:
-                async with user_instance.cm():
+        async with user_instance.cm():
+            while self.running:
+                try:
                     await user_instance.run()
-            except (ClientResponseError, AssertionError, TimeoutError) as e:
-                # Record common expected errors and continue running
-                try:
-                    stats.record_error(str(e))
-                except Exception:
-                    pass
-                # self.console.print("Handled exception in user loop:")
-                # self.console.print("".join(traceback.format_exception(type(e), e, e.__traceback__)))
-            except Exception as e:
-                # Capture unexpected exceptions in user coroutines, record and print stack
-                try:
-                    stats.record_error(str(e))
-                except Exception:
-                    pass
-                self.console.print("Unhandled exception in user loop:")
-                self.console.print("".join(traceback.format_exception(type(e), e, e.__traceback__)))
+                except (ClientResponseError, AssertionError, TimeoutError) as e:
+                    # Record common expected errors and continue running
+                    try:
+                        stats.record_error(str(e))
+                    except Exception:
+                        pass
+                    # self.console.print("Handled exception in user loop:")
+                    # self.console.print("".join(traceback.format_exception(type(e), e, e.__traceback__)))
+                except Exception as e:
+                    # Capture unexpected exceptions in user coroutines, record and print stack
+                    try:
+                        stats.record_error(str(e))
+                    except Exception:
+                        pass
+                    self.console.print("Unhandled exception in user loop:")
+                    self.console.print("".join(traceback.format_exception(type(e), e, e.__traceback__)))
 
     async def user_runner(self, user: type[User], count: int):
         async with asyncio.TaskGroup() as tg:
@@ -124,5 +124,17 @@ class Runner:
         if duration:
             loop.call_later(duration, self.shutdown)
 
-        await asyncio.gather(*coros)
+        # Gather worker results but don't cancel siblings on first exception.
+        results = await asyncio.gather(*coros, return_exceptions=True)
+
+        # Record and print any exceptions that occurred in worker threads.
+        for res in results:
+            if isinstance(res, Exception):
+                try:
+                    stats.record_error(str(res))
+                except Exception:
+                    pass
+                self.console.print("Exception:")
+                self.console.print("".join(traceback.format_exception(type(res), res, res.__traceback__)))
+
         return
