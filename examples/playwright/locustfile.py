@@ -1,6 +1,8 @@
 # Note: PlaywrightUser requires Playwright to be installed.
 # This is a PoC and you're likely to encounter some issues/limitations.
 
+# combine it with --event-loops 1
+# running multiple loops using uvloop causes errors, and there's not much point anyway
 from aiolocust.pw import PlaywrightUser
 
 

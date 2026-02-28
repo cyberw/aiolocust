@@ -10,6 +10,9 @@ from aiolocust.runner import Runner
 # Setup OTel Tracer (this is probably going to need to change)
 tracer = trace.get_tracer("playwright-instrumentation")
 
+playwright_instance = None
+browser_instance = None
+
 
 class LocustPage:
     """A wrapper for the Playwright Page object to automatically generate OTel spans."""
@@ -22,10 +25,10 @@ class LocustPage:
             span.set_attribute("browser.url", url)
             try:
                 result = await self._page.goto(url, **kwargs)
-                stats.request(Request(url, 42, 42, None))
+                stats.request(Request(url, 1, 1, None))
             except Exception as e:
                 span.record_exception(e)
-                stats.request(Request(url, 42, 42, e))
+                stats.request(Request(url, 1, 1, e))
                 raise
             return result
 
@@ -34,10 +37,10 @@ class LocustPage:
             span.set_attribute("browser.selector", selector)
             try:
                 result = await self._page.click(selector, **kwargs)
-                stats.request(Request(selector, 42, 42, None))
+                stats.request(Request(selector, 1, 1, None))
             except Exception as e:
                 span.record_exception(e)
-                stats.request(Request(selector, 42, 42, e))
+                stats.request(Request(selector, 1, 1, e))
                 raise
             return result
 
@@ -50,9 +53,11 @@ class PlaywrightUser(User):
 
     @asynccontextmanager
     async def cm(self):
-        async with async_playwright() as p:  # this is probably silly, we should not have one pw instance per User
-            browser = await p.chromium.launch(
-                headless=False,
+        global playwright_instance, browser_instance
+        if playwright_instance is None:
+            playwright_instance = await async_playwright().start()
+            browser_instance = await playwright_instance.chromium.launch(
+                headless=False,  # Probably wanna set this to true later on
                 args=[
                     "--disable-blink-features=AutomationControlled",
                     "--safebrowsing-disable-auto-update",
@@ -67,9 +72,14 @@ class PlaywrightUser(User):
                     "--lang=en-US",
                     "--disable-features=LanguageDetection",
                 ],
+                handle_sigint=False,
             )
-            context = await browser.new_context()
-            raw_page = await context.new_page()
-            self.page = LocustPage(raw_page)
-            yield
-            await browser.close()
+        assert browser_instance
+        context = await browser_instance.new_context()
+        raw_page = await context.new_page()
+        self.page = LocustPage(raw_page)
+
+        yield
+
+        await raw_page.close()
+        await context.close()
