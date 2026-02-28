@@ -19,6 +19,16 @@ try:
 except ImportError:
     new_event_loop = None
 
+# Some exceptions will be raised by user code trigger a restart of the run method without propagating it further.
+# Gotta do some special logic for Playwright, because it is an optional dependency.
+try:
+    import playwright.async_api
+
+    EXPECTED_ERRORS = (ClientResponseError, AssertionError, TimeoutError, playwright.async_api.TimeoutError)
+except ImportError:
+    EXPECTED_ERRORS = (ClientResponseError, AssertionError, TimeoutError)
+
+
 # We're going to inherit from ClientSession, even though it is considered internal,
 # Because we dont want to take the performance hit and typing issues of wrapping every method
 warnings.filterwarnings(
@@ -74,16 +84,9 @@ class Runner:
             while self.running:
                 try:
                     await user_instance.run()
-                except (ClientResponseError, AssertionError, TimeoutError) as e:
-                    # Record common expected errors and continue running
-                    try:
-                        stats.record_error(str(e))
-                    except Exception:
-                        pass
-                    # self.console.print("Handled exception in user loop:")
-                    # self.console.print("".join(traceback.format_exception(type(e), e, e.__traceback__)))
+                except EXPECTED_ERRORS:
+                    pass  # these errors should already have been recorded by the User
                 except Exception as e:
-                    # Capture unexpected exceptions in user coroutines, record and print stack
                     try:
                         stats.record_error(str(e))
                     except Exception:
