@@ -22,7 +22,7 @@ except ImportError:
 # Some exceptions will be raised by user code trigger a restart of the run method without propagating it further.
 # Gotta do some special logic for Playwright, because it is an optional dependency.
 try:
-    import playwright.async_api
+    import playwright.async_api  # pyright: ignore[reportMissingImports]
 
     EXPECTED_ERRORS = (ClientResponseError, AssertionError, TimeoutError, playwright.async_api.TimeoutError)
 except ImportError:
