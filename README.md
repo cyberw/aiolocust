@@ -91,7 +91,7 @@ aiolocust is more performant than "regular" Locust because it has a smaller foot
 
 ### 1. [asyncio](https://docs.python.org/3/library/asyncio.html) + [aiohttp](https://docs.aiohttp.org/en/stable/)
 
-aiolocust's performance is *much* better than HttpUser (based on Requests), and even slightly better than FastHttpUser (based on geventhttpclient). Because it uses async programming instead of monkey patching it is more useful on modern Python and more future-proof. Specifically it allows your locustfile to easily use asyncio libraries (like Playwright), which are becoming more and more common.
+aiolocust's performance is *much* better than HttpUser (based on Requests), and even slightly better than FastHttpUser (based on geventhttpclient). Because it uses async programming instead of monkey patching it is more useful on modern Python and more future-proof. Specifically it allows your locustfile to easily use asyncio libraries (like [Playwright](examples/playwright/locustfile.py)), which are becoming more and more common.
 
 ### 2. [Freethreading/no-GIL Python](https://docs.python.org/3/howto/free-threading-python.html)
 
