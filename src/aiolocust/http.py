@@ -1,6 +1,7 @@
 import time
 from asyncio import Future
 from collections.abc import Coroutine
+from contextlib import asynccontextmanager
 from typing import TYPE_CHECKING, Any
 
 import aiohttp
@@ -9,7 +10,7 @@ from aiohttp.client import _RequestContextManager
 from opentelemetry import context
 from opentelemetry.trace import Span
 
-from aiolocust import stats
+from aiolocust import User, stats
 from aiolocust.datatypes import Request
 
 if TYPE_CHECKING:  # avoid circular import
@@ -17,6 +18,19 @@ if TYPE_CHECKING:  # avoid circular import
 
 
 SPAN_NAME_KEY = context.create_key("name")
+
+
+class HttpUser(User):
+    def __init__(self, runner: Runner | None = None, base_url=None, **kwargs):
+        super().__init__(runner)
+        self.base_url = base_url
+        self.kwargs = kwargs
+        self.client: LocustClientSession  # type: ignore[assignment] # always set in cm
+
+    @asynccontextmanager
+    async def cm(self):
+        async with LocustClientSession(self.runner, self.base_url, **self.kwargs) as self.client:
+            yield
 
 
 class LocustResponse(ClientResponse):

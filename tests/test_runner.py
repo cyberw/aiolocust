@@ -6,28 +6,29 @@ from opentelemetry.instrumentation.aiohttp_client import AioHttpClientInstrument
 from utils import assert_search
 
 from aiolocust import otel
-from aiolocust.http import LocustClientSession, request_hook
+from aiolocust.http import HttpUser, request_hook
 from aiolocust.runner import Runner
 
 WINDOWS_DELAY = 1 if os.name == "nt" else 0
 
 
 async def test_runner(http_server, capteesys):  # noqa: ARG001
-    async def run(client: LocustClientSession):
-        await asyncio.sleep(1)
-        async with client.get("http://localhost:8081/") as resp:
-            pass
-        async with client.get("http://localhost:8081/404") as resp:
-            pass
-        async with client.get("http://localhost:8081/", name="renamed") as resp:
-            resp.error = "Oh no"
-        async with client.get("http://localhost:8081/") as resp:
-            assert "foo" in await resp.text()
-        async with client.get("http://localhost:8081/") as resp:
-            assert "bar" in await resp.text()
+    class TestUser(HttpUser):
+        async def run(self):
+            await asyncio.sleep(1)
+            async with self.client.get("http://localhost:8081/") as resp:
+                pass
+            async with self.client.get("http://localhost:8081/404") as resp:
+                pass
+            async with self.client.get("http://localhost:8081/", name="renamed") as resp:
+                resp.error = "Oh no"
+            async with self.client.get("http://localhost:8081/") as resp:
+                assert "foo" in await resp.text()
+            async with self.client.get("http://localhost:8081/") as resp:
+                assert "bar" in await resp.text()
 
-    r = Runner()
-    await r.run_test(run, 1, 3 + WINDOWS_DELAY)
+    r = Runner([TestUser])
+    await r.run_test(1, 3 + WINDOWS_DELAY)
     out, err = capteesys.readouterr()
     assert err == ""
     assert "Summary" in out
@@ -41,19 +42,20 @@ async def test_runner(http_server, capteesys):  # noqa: ARG001
 
 
 async def test_runner_w_otel(http_server, capteesys):  # noqa: ARG001
-    async def run(client: LocustClientSession):
-        await asyncio.sleep(1)
-        async with client.get("http://localhost:8081/") as resp:
-            pass
-        async with client.get("http://localhost:8081/404") as resp:
-            pass
-        async with client.get("http://localhost:8081/") as resp:
-            assert "foo" in await resp.text()
-        async with client.get("http://localhost:8081/") as resp:
-            assert "bar" in await resp.text()
+    class TestUser(HttpUser):
+        async def run(self):
+            await asyncio.sleep(1)
+            async with self.client.get("http://localhost:8081/") as resp:
+                pass
+            async with self.client.get("http://localhost:8081/404") as resp:
+                pass
+            async with self.client.get("http://localhost:8081/") as resp:
+                assert "foo" in await resp.text()
+            async with self.client.get("http://localhost:8081/") as resp:
+                assert "bar" in await resp.text()
 
-    r = Runner()
-    await r.run_test(run, 1, 3 + WINDOWS_DELAY)
+    r = Runner([TestUser])
+    await r.run_test(1, 3 + WINDOWS_DELAY)
     out, err = capteesys.readouterr()
     assert err == ""
     assert "Summary" in out
@@ -72,15 +74,16 @@ async def test_runner_w_instrumentation(http_server, capfd):  # noqa: ARG001
     os.environ["OTEL_TRACES_EXPORTER"] = "console"
     otel.setup_trace_exporters()
 
-    async def run(client: LocustClientSession):
-        await asyncio.sleep(1)
-        async with client.get("http://localhost:8081/", name="foo") as resp:
-            pass
-        async with client.get("http://localhost:8081/404", name="foo") as resp:
-            pass
+    class TestUser(HttpUser):
+        async def run(self):
+            await asyncio.sleep(1)
+            async with self.client.get("http://localhost:8081/", name="foo") as resp:
+                pass
+            async with self.client.get("http://localhost:8081/404", name="foo") as resp:
+                pass
 
-    r = Runner()
-    await r.run_test(run, 1, 2)
+    r = Runner([TestUser])
+    await r.run_test(1, 2)
     out, err = capfd.readouterr()
     assert err == ""
     assert '"trace_id"' in out

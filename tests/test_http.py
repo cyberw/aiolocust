@@ -9,7 +9,7 @@ from pytest_mock.plugin import MockerFixture
 
 import aiolocust.stats
 from aiolocust.datatypes import Request
-from aiolocust.runner import LocustClientSession
+from aiolocust.http import LocustClientSession
 
 
 async def test_basic(httpserver: HTTPServer):

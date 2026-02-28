@@ -2,14 +2,13 @@ import asyncio
 import os
 import signal
 import sys
+import traceback
 import warnings
-from collections.abc import Callable
 
 from aiohttp import ClientResponseError
 from rich.console import Console
 
-from aiolocust import stats
-from aiolocust.http import LocustClientSession
+from aiolocust import User, stats
 
 # uvloop is faster than the default pure-python asyncio event loop
 # so if it is installed, we're going to be using that one
@@ -46,12 +45,13 @@ def distribute_evenly(total, num_buckets) -> list[int]:
 
 
 class Runner:
-    def __init__(self):
+    def __init__(self, users: list[type[User]]):
         signal.signal(signal.SIGINT, self.signal_handler)
         self.running = False
         self.start_time = 0
         self.sf = stats.StatsFormatter()
         self.console = Console()
+        self.users = users
 
     async def stats_printer(self):
         first = True
@@ -67,20 +67,36 @@ class Runner:
         if stats.error_counter:
             self.console.print(self.sf.get_error_table())
 
-    async def user_loop(self, user):
-        async with LocustClientSession(self) as client:
+    async def user_loop(self, user_class: type[User]):
+        user_instance = user_class(runner=self)
+
+        async with user_instance.cm():
             while self.running:
                 try:
-                    await user(client)
-                except (ClientResponseError, AssertionError):
-                    pass
+                    await user_instance.run()
+                except (ClientResponseError, AssertionError, TimeoutError) as e:
+                    # Record common expected errors and continue running
+                    try:
+                        stats.record_error(str(e))
+                    except Exception:
+                        pass
+                    # self.console.print("Handled exception in user loop:")
+                    # self.console.print("".join(traceback.format_exception(type(e), e, e.__traceback__)))
+                except Exception as e:
+                    # Capture unexpected exceptions in user coroutines, record and print stack
+                    try:
+                        stats.record_error(str(e))
+                    except Exception:
+                        pass
+                    self.console.print("Unhandled exception in user loop:")
+                    self.console.print("".join(traceback.format_exception(type(e), e, e.__traceback__)))
 
-    async def user_runner(self, user, count):
+    async def user_runner(self, user: type[User], count: int):
         async with asyncio.TaskGroup() as tg:
             for _ in range(count):
                 tg.create_task(self.user_loop(user))
 
-    def thread_worker(self, user, count):
+    def thread_worker(self, user: type[User], count: int):
         return asyncio.run(self.user_runner(user, count), loop_factory=new_event_loop)
 
     def signal_handler(self, _sig, _frame):
@@ -89,9 +105,7 @@ class Runner:
         # stop everything immediately on second Ctrl-C
         signal.signal(signal.SIGINT, original_sigint_handler)
 
-    async def run_test(
-        self, user: Callable, user_count: int, duration: int | None = None, event_loops: int | None = None
-    ):
+    async def run_test(self, user_count: int, duration: int | None = None, event_loops: int | None = None):
         self.running = True
 
         if event_loops is None:
@@ -101,14 +115,26 @@ class Runner:
                 event_loops = max(cpu_count // 2, 1)
             else:
                 event_loops = 1
-        loop = asyncio.get_running_loop()
         users_per_worker = distribute_evenly(user_count, event_loops)
 
-        coros = [asyncio.to_thread(self.thread_worker, user, i) for i in users_per_worker]
-        loop.create_task(self.stats_printer())
+        coros = [asyncio.to_thread(self.thread_worker, self.users[0], i) for i in users_per_worker]
 
+        loop = asyncio.get_running_loop()
+        loop.create_task(self.stats_printer())
         if duration:
             loop.call_later(duration, self.shutdown)
 
-        await asyncio.gather(*coros)
+        # Gather worker results but don't cancel siblings on first exception.
+        results = await asyncio.gather(*coros, return_exceptions=True)
+
+        # Record and print any exceptions that occurred in worker threads.
+        for res in results:
+            if isinstance(res, Exception):
+                try:
+                    stats.record_error(str(res))
+                except Exception:
+                    pass
+                self.console.print("Exception:")
+                self.console.print("".join(traceback.format_exception(type(res), res, res.__traceback__)))
+
         return
