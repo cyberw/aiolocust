@@ -8,9 +8,9 @@ from aiolocust.runner import Runner
 
 class MyUser(PlaywrightUser):
     async def run(self):
-        await self.client.goto("https://www.microsoft.com/")
-        await self.client.click("#uhfLogo > img", timeout=10000)
-        await self.client.click("this_doesnt_exist", timeout=10)
+        await self.page.goto("https://www.microsoft.com/")
+        await self.page.click("#uhfLogo > img", timeout=10000)
+        await self.page.click("this_doesnt_exist", timeout=10)
 
 
 # make this file runnable with "python advanced.py"

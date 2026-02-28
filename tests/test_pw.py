@@ -10,9 +10,9 @@
 # async def test_runner(http_server, capteesys):  # noqa: ARG001
 #     class TestUser(PlaywrightUser):
 #         async def run(self):
-#             await self.client.goto("https://www.microsoft.com/")
-#             await self.client.click("#uhfLogo > img", timeout=10000)
-#             await self.client.click("this_doesnt_exist", timeout=10)
+#             await self.page.goto("https://www.microsoft.com/")
+#             await self.page.click("#uhfLogo > img", timeout=10000)
+#             await self.page.click("this_doesnt_exist", timeout=10)
 
 #     r = Runner([TestUser])
 #     await r.run_test(1, 4 + WINDOWS_DELAY)

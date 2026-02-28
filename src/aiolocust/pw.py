@@ -46,7 +46,7 @@ class PlaywrightUser(User):
     def __init__(self, runner: Runner | None = None, **kwargs):
         super().__init__(runner)
         self.kwargs = kwargs
-        self.client: LocustPage  # type: ignore[assignment] # always set in cm
+        self.page: LocustPage  # type: ignore[assignment] # always set in cm
 
     @asynccontextmanager
     async def cm(self):
@@ -70,6 +70,6 @@ class PlaywrightUser(User):
             )
             context = await browser.new_context()
             raw_page = await context.new_page()
-            self.client = LocustPage(raw_page)
+            self.page = LocustPage(raw_page)
             yield
             await browser.close()
