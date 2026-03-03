@@ -132,7 +132,7 @@ jobs:
 
     publish_pypi:
         name: Publish to PyPI
-        needs: [linux, windows, macos]
+        needs: [linux-and-lint, windows, macos]
         if: github.repository_owner == 'cyberw' && startsWith(github.event.ref, 'refs/tags')
         runs-on: ubuntu-latest
 
