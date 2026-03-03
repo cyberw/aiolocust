@@ -1,7 +1,9 @@
 import asyncio
 import importlib.util
 import inspect
+import logging
 import sys
+from enum import Enum
 from pathlib import Path
 from typing import Annotated
 
@@ -9,9 +11,19 @@ import typer
 
 from aiolocust import User
 from aiolocust.http import HttpUser
+from aiolocust.otel import setup_logging
 from aiolocust.runner import Runner
 
+
+class LogLevel(str, Enum):
+    debug = "debug"
+    info = "info"
+    warning = "warning"
+    error = "error"
+
+
 app = typer.Typer(add_completion=False)
+logger = logging.getLogger(__name__)
 
 
 def is_user_class(item) -> bool:
@@ -26,6 +38,9 @@ def main(
     filename: Annotated[str, typer.Argument(help="The test to run")] = "locustfile.py",
     users: Annotated[int, typer.Option("-u", "--users", help="The number of concurrent VUs")] = 1,
     duration: Annotated[int | None, typer.Option("-d", "--duration", help="Stop the test after X seconds")] = None,
+    log_level: Annotated[
+        LogLevel, typer.Option("--log-level", help="Set the logging level", case_sensitive=False)
+    ] = LogLevel.info,
     event_loops: Annotated[
         int | None,
         typer.Option(
@@ -33,6 +48,10 @@ def main(
         ),
     ] = None,
 ):
+    log_level_id = getattr(logging, log_level.value.upper())
+    setup_logging(log_level_id)
+    logger.debug(f"Running with users={users}, duration={duration}, event_loops={event_loops}")
+
     file_path = Path(filename).resolve()
     if not file_path.exists():
         typer.echo(f"Error: Could not find the file at {file_path}")
