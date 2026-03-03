@@ -1,21 +1,9 @@
 [project]
 name = "aiolocust"
 version = "0.1.0" # updated from github action on tags
-description = "Add your description here"
+description = "High performance Python-based load testing tool"
 readme = "README.md"
-authors = [
-    { name = "Lars Holmberg", email = "lars.holmberg@redshirt.se" }
-]
-classifiers = [
-    "Development Status :: 3 - Alpha",
-    "License :: OSI Approved :: MIT License",
-    "Operating System :: OS Independent",
-    "Programming Language :: Python",
-    "Intended Audience :: Developers",
-    "Intended Audience :: System Administrators",
-    "Topic :: Software Development :: Testing",
-    "Topic :: Software Development :: Testing :: Traffic Generation",
-]
+authors = [{ name = "Lars Holmberg", email = "lars.holmberg@redshirt.se" }]
 requires-python = ">=3.14"
 dependencies = [
     "aiohttp>=3.13.3",
@@ -26,6 +14,16 @@ dependencies = [
     "opentelemetry-api>=1.39.1",
     "opentelemetry-sdk>=1.39.1",
     "opentelemetry-instrumentation-aiohttp-client>=0.60b1",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Intended Audience :: Developers",
+    "Intended Audience :: System Administrators",
+    "Topic :: Software Development :: Testing",
+    "Topic :: Software Development :: Testing :: Traffic Generation",
 ]
 
 [tool.uv]
