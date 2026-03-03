@@ -1,3 +1,4 @@
+import os
 import signal
 
 from typer.testing import CliRunner
@@ -6,7 +7,10 @@ from aiolocust.main import app
 
 
 def _timeout_handler(_signum, _frame):
-    raise TimeoutError("test timed out after 10 seconds")
+    if bool(os.environ.get("VSCODE_CLI")):
+        pass  # disable timeout when debugging
+    else:
+        raise TimeoutError("test timed out after 10 seconds")
 
 
 def test_main(http_server):  # noqa: ARG001
