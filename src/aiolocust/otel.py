@@ -68,10 +68,7 @@ def setup_logging(level: int = logging.INFO):
 
     console_handler = logging.StreamHandler()
     console_handler.setFormatter(logging.Formatter("[%(asctime)s] %(levelname)s/%(name)s: %(message)s"))
-    root_logger = logging.getLogger()
-    root_logger.setLevel(level)
-    root_logger.addHandler(console_handler)
-    root_logger.addHandler(otel_handler)
+    logging.basicConfig(handlers=[otel_handler, console_handler], level=level)
 
 
 def setup_trace_exporters():
