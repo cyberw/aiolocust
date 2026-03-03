@@ -50,5 +50,4 @@ class MyUser(HttpUser):
 
 
 if __name__ == "__main__":
-    r = Runner([MyUser])
-    asyncio.run(r.run_test(1, 2))
+    Runner([MyUser]).run_test(1, 2)
