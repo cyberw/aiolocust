@@ -12,7 +12,7 @@ from aiolocust.runner import Runner
 WINDOWS_DELAY = 1 if os.name == "nt" else 0
 
 
-async def test_runner(http_server, capteesys):  # noqa: ARG001
+def test_runner(http_server, capteesys):  # noqa: ARG001
     class TestUser(HttpUser):
         async def run(self):
             await asyncio.sleep(1)
@@ -27,8 +27,7 @@ async def test_runner(http_server, capteesys):  # noqa: ARG001
             async with self.client.get("http://localhost:8081/") as resp:
                 assert "bar" in await resp.text()
 
-    r = Runner([TestUser])
-    await r.run_test(1, 3 + WINDOWS_DELAY)
+    Runner([TestUser]).run_test(1, 3 + WINDOWS_DELAY)
     out, err = capteesys.readouterr()
     assert err == ""
     assert "Summary" in out
@@ -41,7 +40,7 @@ async def test_runner(http_server, capteesys):  # noqa: ARG001
     assert "bar" not in out
 
 
-async def test_runner_w_otel(http_server, capteesys):  # noqa: ARG001
+def test_runner_w_otel(http_server, capteesys):  # noqa: ARG001
     class TestUser(HttpUser):
         async def run(self):
             await asyncio.sleep(1)
@@ -54,8 +53,7 @@ async def test_runner_w_otel(http_server, capteesys):  # noqa: ARG001
             async with self.client.get("http://localhost:8081/") as resp:
                 assert "bar" in await resp.text()
 
-    r = Runner([TestUser])
-    await r.run_test(1, 3 + WINDOWS_DELAY)
+    Runner([TestUser]).run_test(1, 3 + WINDOWS_DELAY)
     out, err = capteesys.readouterr()
     assert err == ""
     assert "Summary" in out
@@ -69,7 +67,7 @@ async def test_runner_w_otel(http_server, capteesys):  # noqa: ARG001
 @pytest.mark.skipif(
     condition=not bool(os.environ.get("VSCODE_CLI")), reason="Only works when run individually, not sure why"
 )
-async def test_runner_w_instrumentation(http_server, capfd):  # noqa: ARG001
+def test_runner_w_instrumentation(http_server, capfd):  # noqa: ARG001
     AioHttpClientInstrumentor().instrument(request_hook=request_hook)
     os.environ["OTEL_TRACES_EXPORTER"] = "console"
     otel.setup_trace_exporters()
@@ -82,8 +80,7 @@ async def test_runner_w_instrumentation(http_server, capfd):  # noqa: ARG001
             async with self.client.get("http://localhost:8081/404", name="foo") as resp:
                 pass
 
-    r = Runner([TestUser])
-    await r.run_test(1, 2)
+    Runner([TestUser]).run_test(1, 2)
     out, err = capfd.readouterr()
     assert err == ""
     assert '"trace_id"' in out

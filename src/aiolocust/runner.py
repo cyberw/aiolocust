@@ -115,7 +115,10 @@ class Runner:
         logger.info("\nStopping...")
         self.shutdown()
 
-    async def run_test(self, user_count: int, duration: int | None = None, event_loops: int | None = None):
+    def run_test(self, user_count: int, duration: int | None = None, event_loops: int | None = None):
+        asyncio.run(self.run_test_async(user_count, duration, event_loops))
+
+    async def run_test_async(self, user_count: int, duration: int | None = None, event_loops: int | None = None):
         self.running = True
 
         if event_loops is None:

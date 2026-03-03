@@ -1,4 +1,3 @@
-import asyncio
 import importlib.util
 import inspect
 import logging
@@ -84,6 +83,6 @@ def main(
         user_classes = {"SimpleUser": SimpleUser}
     if user_classes:
         r = Runner([user for user in user_classes.values()])
-        asyncio.run(r.run_test(users, duration, event_loops))
+        r.run_test(users, duration, event_loops)
     else:
         typer.echo(f"Error: No User classes or run function defined in {filename}")

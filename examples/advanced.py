@@ -3,7 +3,6 @@
 # makes it runnable (on unix-like systems) using just: ./advanced.py
 # You can still pass regular parameters like --duration etc
 
-import asyncio
 
 from aiolocust import Runner
 from aiolocust.http import HttpUser
@@ -34,6 +33,6 @@ class MyUser(HttpUser):
         # busy_loop(0.1)
 
 
-# make this file runnable with "python advanced.py"
+# make this file runnable as "python advanced.py"
 if __name__ == "__main__":
-    asyncio.run(Runner([MyUser]).run_test(1, 1))
+    Runner([MyUser]).run_test(1, 1)
