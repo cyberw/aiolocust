@@ -58,3 +58,49 @@ class MyUser(HttpUser):
             assert '"name": "foo"' in output  # using explicit name
             assert "done!" in output
             assert await proc.wait() == 0
+
+
+async def test_loglevel(http_server):  # noqa: ARG001
+    with TemporaryDirectory() as tmp_dir:
+        script_path = os.path.join(tmp_dir, "my_script.py")
+
+        with open(script_path, "w") as tempfile:
+            tempfile.write("""
+import logging
+logger = logging.getLogger(__name__)
+
+async def run(user):
+    logger.warning("warning level log message")
+    logger.info("info level log message")
+    async with user.client.get("http://localhost:8081/") as resp:
+        pass
+""")
+        proc = await asyncio.create_subprocess_exec(
+            "aiolocust",
+            tempfile.name,
+            "--duration",
+            "1",
+            "--log-level",
+            "warning",
+            env={
+                "OTEL_TRACES_EXPORTER": "console",
+                **os.environ,
+            },
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+        )
+        try:
+            stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=4)
+        except TimeoutError:
+            proc.terminate()
+            stdout, stderr = await proc.communicate()
+            output = stdout.decode(errors="replace")
+            print(output)
+            pytest.fail("process never terminated")
+        else:
+            err = stderr.decode(errors="replace")
+            print(err)
+            output = stdout.decode(errors="replace")
+            assert "warning level log message" in err
+            assert "info level log message" not in err
+            assert await proc.wait() == 0
