@@ -1,6 +1,10 @@
+import logging
 import os
 
 from opentelemetry import metrics, trace
+from opentelemetry._logs import set_logger_provider
+from opentelemetry.sdk._logs import LoggerProvider, LoggingHandler
+from opentelemetry.sdk._logs.export import BatchLogRecordProcessor, ConsoleLogRecordExporter
 from opentelemetry.sdk.metrics import MeterProvider
 from opentelemetry.sdk.metrics.export import ConsoleMetricExporter, MetricReader, PeriodicExportingMetricReader
 from opentelemetry.sdk.resources import Resource
@@ -14,9 +18,60 @@ resource = Resource.create(
     }
 )
 
+
+logger_provider = LoggerProvider(resource=resource)
+set_logger_provider(logger_provider)
 tracer_provider = TracerProvider(resource=resource)
 trace.set_tracer_provider(tracer_provider)
 tracer = tracer_provider.get_tracer("aiolocust")
+
+
+def setup_logging(level: int = logging.INFO):
+    otel_handler = LoggingHandler(level=level, logger_provider=logger_provider)
+
+    logs_exporters = {e.strip().lower() for e in os.getenv("OTEL_LOGS_EXPORTER", "none").split(",") if e.strip()}
+    for exporter in logs_exporters:
+        if exporter == "otlp":
+            protocol = (
+                os.getenv("OTEL_EXPORTER_OTLP_LOGS_PROTOCOL", os.getenv("OTEL_EXPORTER_OTLP_PROTOCOL", "grpc"))
+                .lower()
+                .strip()
+            )
+            try:
+                if protocol == "grpc":
+                    from opentelemetry.exporter.otlp.proto.grpc._log_exporter import OTLPLogExporter  # type: ignore
+                elif protocol == "http/protobuf" or protocol == "http":
+                    from opentelemetry.exporter.otlp.proto.http._log_exporter import OTLPLogExporter  # type: ignore
+                else:
+                    print(
+                        f"Unknown OpenTelemetry otlp logs exporter protocol '{protocol}'. Use 'grpc' or 'http/protobuf'"
+                    )
+                    continue
+            except ImportError:
+                print(
+                    f"OpenTelemetry otlp exporter for '{protocol}' is not available. Please install the required package: opentelemetry-exporter-otlp-proto-{'grpc' if protocol == 'grpc' else 'http'}"
+                )
+                continue
+
+            otlp_exporter = OTLPLogExporter()
+            logger_provider.add_log_record_processor(BatchLogRecordProcessor(otlp_exporter))
+        elif exporter == "console":
+            logger_provider.add_log_record_processor(
+                BatchLogRecordProcessor(ConsoleLogRecordExporter(), schedule_delay_millis=100)
+            )
+
+        elif exporter == "none":
+            continue
+
+        else:
+            print(f"Unknown logs exporter '{exporter}'. Ignored")
+
+    console_handler = logging.StreamHandler()
+    console_handler.setFormatter(logging.Formatter("[%(asctime)s] %(levelname)s/%(name)s: %(message)s"))
+    root_logger = logging.getLogger()
+    root_logger.setLevel(level)
+    root_logger.addHandler(console_handler)
+    root_logger.addHandler(otel_handler)
 
 
 def setup_trace_exporters():

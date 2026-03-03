@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import os
 import signal
 import sys
@@ -8,7 +9,7 @@ import warnings
 from aiohttp import ClientResponseError
 from rich.console import Console
 
-from aiolocust import User, stats
+from aiolocust import User, otel, stats
 
 # uvloop is faster than the default pure-python asyncio event loop
 # so if it is installed, we're going to be using that one
@@ -18,6 +19,8 @@ try:
     new_event_loop = uvloop.new_event_loop
 except ImportError:
     new_event_loop = None
+
+logger = logging.getLogger(__name__)
 
 # Some exceptions will be raised by user code trigger a restart of the run method without propagating it further.
 # Gotta do some special logic for Playwright, because it is an optional dependency.
@@ -38,8 +41,10 @@ warnings.filterwarnings(
     module="aiolocust",
 )
 
+
 if sys._is_gil_enabled():
-    raise RuntimeError("aiolocust requires a freethreading Python build")
+    # Note: logging has not yet been configured, so it won't get proper formatting
+    logger.warning("aiolocust requires a freethreading Python build")
 
 
 original_sigint_handler = signal.getsignal(signal.SIGINT)
@@ -76,6 +81,7 @@ class Runner:
         self.console.print(self.sf.get_table(True))
         if stats.error_counter:
             self.console.print(self.sf.get_error_table())
+        otel.logger_provider.shutdown()
 
     async def user_loop(self, user_class: type[User]):
         user_instance = user_class(runner=self)
@@ -91,8 +97,10 @@ class Runner:
                         stats.record_error(str(e))
                     except Exception:
                         pass
-                    self.console.print("Unhandled exception in user loop:")
-                    self.console.print("".join(traceback.format_exception(type(e), e, e.__traceback__)))
+                    logger.error(
+                        "Unhandled exception in user loop: "
+                        + "".join(traceback.format_exception(type(e), e, e.__traceback__))
+                    )
 
     async def user_runner(self, user: type[User], count: int):
         async with asyncio.TaskGroup() as tg:
@@ -103,10 +111,9 @@ class Runner:
         return asyncio.run(self.user_runner(user, count), loop_factory=new_event_loop)
 
     def signal_handler(self, _sig, _frame):
-        print("\nStopping...")
+        signal.signal(signal.SIGINT, original_sigint_handler)  # stop immediately on second Ctrl-C
+        logger.info("\nStopping...")
         self.shutdown()
-        # stop everything immediately on second Ctrl-C
-        signal.signal(signal.SIGINT, original_sigint_handler)
 
     async def run_test(self, user_count: int, duration: int | None = None, event_loops: int | None = None):
         self.running = True
@@ -137,7 +144,6 @@ class Runner:
                     stats.record_error(str(res))
                 except Exception:
                     pass
-                self.console.print("Exception:")
-                self.console.print("".join(traceback.format_exception(type(res), res, res.__traceback__)))
+                logger.error("".join(traceback.format_exception(type(res), res, res.__traceback__)))
 
         return
