@@ -76,7 +76,7 @@ async def run(user):
 """)
         result = runner.invoke(app, ["my_locustfile.py", "--duration", "1", "--log-level", "warning"])
         print(result.output)
-        assert "warning level log message" in result.output
+        assert "] my_locustfile:my_locustfile.py:6 warning level log message" in result.output
         assert "info level log message" not in result.output
         assert result.exit_code == 0
 
