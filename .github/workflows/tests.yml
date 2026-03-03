@@ -14,7 +14,7 @@ on:
             - "**.md"
 
 jobs:
-    linux:
+    linux-and-lint:
         runs-on: ubuntu-latest
 
         steps:
