@@ -111,7 +111,7 @@ jobs:
               uses: astral-sh/setup-uv@v7
 
             - name: pytest
-              run: uv run pytest tests
+              run: uv run pytest --full-trace tests
 
     macos:
         runs-on: macos-latest
