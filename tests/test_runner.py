@@ -62,7 +62,7 @@ def test_timeout_catching(http_server, capteesys):  # noqa: ARG001
         @asynccontextmanager
         async def cm(self):
             async with LocustClientSession(
-                self.runner, self.base_url, timeout=aiohttp.ClientTimeout(0.001)
+                self.runner, self.base_url, timeout=aiohttp.ClientTimeout(0.0001)
             ) as self.client:
                 yield
 

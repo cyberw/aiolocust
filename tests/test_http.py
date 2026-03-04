@@ -74,7 +74,7 @@ async def test_timeout(httpserver: HTTPServer, mocker: MockerFixture):
             pass
 
     with pytest.raises(asyncio.TimeoutError):
-        async with LocustClientSession(timeout=aiohttp.ClientTimeout(0.001)) as client:
+        async with LocustClientSession(timeout=aiohttp.ClientTimeout(0.0001)) as client:
             await _(client)
 
     r = aiolocust.stats.request.call_args.args[0]
