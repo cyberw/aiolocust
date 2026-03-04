@@ -127,7 +127,10 @@ async def run(user):
         )
         try:
             await asyncio.sleep(1)
-            proc.send_signal(signal.SIGINT)
+            if os.name == "nt":
+                proc.send_signal(signal.CTRL_C_EVENT)
+            else:
+                proc.send_signal(signal.SIGINT)
             stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=3)
         except TimeoutError:
             proc.kill()
