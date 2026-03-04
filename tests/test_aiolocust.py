@@ -1,6 +1,7 @@
 import asyncio
 import os
 import signal
+import unittest
 from tempfile import TemporaryDirectory
 
 import pytest
@@ -107,6 +108,7 @@ async def run(user):
             assert await proc.wait() == 0
 
 
+@unittest.skipIf(os.name == "nt", reason="Signal handling on windows is hard")
 async def test_sigint(http_server):  # noqa: ARG001
     with TemporaryDirectory() as tmp_dir:
         script_path = os.path.join(tmp_dir, "my_script.py")
