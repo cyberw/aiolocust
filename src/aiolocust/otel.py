@@ -4,7 +4,8 @@ import sys
 
 from opentelemetry import metrics, trace
 from opentelemetry._logs import set_logger_provider
-from opentelemetry.sdk._logs import LoggerProvider, LoggingHandler
+from opentelemetry.instrumentation.logging.handler import LoggingHandler
+from opentelemetry.sdk._logs import LoggerProvider
 from opentelemetry.sdk._logs.export import BatchLogRecordProcessor, ConsoleLogRecordExporter
 from opentelemetry.sdk.metrics import MeterProvider
 from opentelemetry.sdk.metrics.export import ConsoleMetricExporter, MetricReader, PeriodicExportingMetricReader
@@ -51,7 +52,11 @@ def setup_logging(level: int = logging.INFO):
                     )
                     continue
             except ImportError:
-                if level == logging.INFO and os.getenv("OTEL_LOGS_EXPORTER", ""):
+                if (
+                    level == logging.INFO
+                    and os.getenv("OTEL_LOGS_EXPORTER", "")
+                    or os.getenv("OTEL_EXPORTER_OTLP_PROTOCOL", "")
+                ):
                     print(
                         f"OpenTelemetry otlp exporter for '{protocol}' is not available. Please install the required package: opentelemetry-exporter-otlp-proto-{'grpc' if protocol == 'grpc' else 'http'}",
                     )
