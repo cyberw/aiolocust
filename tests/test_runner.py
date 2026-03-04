@@ -40,6 +40,19 @@ def test_runner(http_server, capteesys):  # noqa: ARG001
     assert "bar" not in out
 
 
+def test_runner_unhandled_error(http_server, capteesys):  # noqa: ARG001
+    class TestUser(HttpUser):
+        async def run(self):
+            await asyncio.sleep(1)
+            raise Exception("an error")
+
+    Runner([TestUser]).run_test(1, 1)
+    out, err = capteesys.readouterr()
+    assert err == ""
+    assert "Summary" in out
+    assert_search(r"[12] .* an error", out)
+
+
 def test_runner_w_otel(http_server, capteesys):  # noqa: ARG001
     class TestUser(HttpUser):
         async def run(self):
