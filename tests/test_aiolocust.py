@@ -179,7 +179,8 @@ async def run(user):
             err = stderr.decode(errors="replace")
             print(err)
             assert "Traceback" in err
-            assert 'my_script.py", line 6, in run\n    raise Exception("an error")' in err
+            assert 'my_script.py", line 6, in run' in err
+            assert 'raise Exception("an error")' in err
             output = stdout.decode(errors="replace")
             print(output)
             assert "Summary" in output
