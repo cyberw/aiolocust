@@ -1,5 +1,6 @@
 import logging
 import os
+import sys
 
 from opentelemetry import metrics, trace
 from opentelemetry._logs import set_logger_provider
@@ -10,6 +11,8 @@ from opentelemetry.sdk.metrics.export import ConsoleMetricExporter, MetricReader
 from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor, ConsoleSpanExporter, SimpleSpanProcessor
+from rich.console import Console
+from rich.logging import RichHandler
 
 resource = Resource.create(
     {
@@ -66,9 +69,23 @@ def setup_logging(level: int = logging.INFO):
         else:
             print(f"Unknown logs exporter '{exporter}'. Ignored")
 
-    console_handler = logging.StreamHandler()
-    console_handler.setFormatter(logging.Formatter("[%(asctime)s] %(levelname)s/%(name)s: %(message)s"))
-    logging.basicConfig(handlers=[otel_handler, console_handler], level=level)
+    # Use RichHandler only when stderr is a TTY (interactive) to avoid double-formatting.
+    if sys.stderr.isatty():
+        logging.basicConfig(
+            handlers=[otel_handler, RichHandler(level, console=Console(stderr=True))],
+            datefmt="[%X]",
+            level=level,
+            format="%(message)s",
+        )
+    else:
+        stream_handler = logging.StreamHandler(sys.stderr)
+        stream_handler.setFormatter(logging.Formatter("[%(asctime)s] %(levelname)s/%(name)s: %(message)s"))
+        logging.basicConfig(
+            handlers=[otel_handler, stream_handler],
+            datefmt="[%X]",
+            level=level,
+            format="%(message)s",
+        )
 
 
 def setup_trace_exporters():
