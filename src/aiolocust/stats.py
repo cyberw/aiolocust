@@ -110,15 +110,15 @@ class StatsFormatter:
 
         if not final_summary:
             return table
-        else:
-            summary_total = RequestEntry()
 
-            for url, re in self.aggregate.items():
-                summary_total += re
-                summary_table.append(make_row(url, re, self.start_time, now))
-            summary_table.append(make_row("Total", summary_total, self.start_time, now))
+        summary_total = RequestEntry()
 
-            return summary_table
+        for url, re in self.aggregate.items():
+            summary_total += re
+            summary_table.append(make_row(url, re, self.start_time, now))
+        summary_table.append(make_row("Total", summary_total, self.start_time, now))
+
+        return summary_table
 
     def get_table(self, final_summary=False):
         table = Table(show_edge=False)
