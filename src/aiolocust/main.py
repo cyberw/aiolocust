@@ -2,7 +2,7 @@ import importlib.util
 import inspect
 import logging
 import sys
-from enum import Enum
+from enum import StrEnum
 from pathlib import Path
 from typing import Annotated
 
@@ -14,7 +14,7 @@ from aiolocust.otel import setup_logging
 from aiolocust.runner import Runner
 
 
-class LogLevel(str, Enum):
+class LogLevel(StrEnum):
     debug = "debug"
     info = "info"
     warning = "warning"
