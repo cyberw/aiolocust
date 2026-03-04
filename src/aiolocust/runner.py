@@ -78,9 +78,7 @@ class Runner:
 
     def shutdown(self):
         self.running = False
-        self.console.print(self.sf.get_table(True))
-        if stats.error_counter:
-            self.console.print(self.sf.get_error_table())
+
         otel.logger_provider.shutdown()
 
     async def user_loop(self, user_class: type[User]):
@@ -148,5 +146,9 @@ class Runner:
                 except Exception:
                     pass
                 logger.error("".join(traceback.format_exception(type(res), res, res.__traceback__)))
+
+        self.console.print(self.sf.get_table(True))
+        if stats.error_counter:
+            self.console.print(self.sf.get_error_table())
 
         return
