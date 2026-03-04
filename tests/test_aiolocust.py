@@ -5,6 +5,7 @@ import unittest
 from tempfile import TemporaryDirectory
 
 import pytest
+from utils import assert_search
 
 
 async def test_otel_traces_exporter(http_server):  # noqa: ARG001
@@ -144,3 +145,43 @@ async def run(user):
             output = stdout.decode(errors="replace")
             assert "Summary" in output
             assert await proc.wait() == 0
+
+
+async def test_unhandled_error_logging(http_server):  # noqa: ARG001
+    with TemporaryDirectory() as tmp_dir:
+        script_path = os.path.join(tmp_dir, "my_script.py")
+
+        with open(script_path, "w") as tempfile:
+            tempfile.write("""
+import asyncio
+
+async def run(user):
+    await asyncio.sleep(1)
+    raise Exception("an error")
+""")
+        proc = await asyncio.create_subprocess_exec(
+            "aiolocust",
+            tempfile.name,
+            "--duration",
+            "1",
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+        )
+        try:
+            stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=3)
+        except TimeoutError:
+            proc.kill()
+            stdout, stderr = await proc.communicate()
+            output = stdout.decode(errors="replace")
+            print(output)
+            pytest.fail("process never terminated")
+        else:
+            err = stderr.decode(errors="replace")
+            print(err)
+            assert "Traceback" in err
+            assert 'my_script.py", line 6, in run\n    raise Exception("an error")' in err
+            output = stdout.decode(errors="replace")
+            print(output)
+            assert "Summary" in output
+            assert await proc.wait() == 0
+            assert_search(r"[12] .* an error", output)
