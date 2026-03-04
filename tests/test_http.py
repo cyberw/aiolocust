@@ -1,5 +1,7 @@
+import asyncio
 from unittest.mock import MagicMock
 
+import aiohttp
 import pytest
 import pytest_aiohttp
 from aiohttp import ClientConnectorError, WSMsgType, web
@@ -60,6 +62,23 @@ async def test_hard_fails_raise_and_log(mocker: MockerFixture):
     assert isinstance(aiolocust.stats.request, MagicMock)  # for type hinting
     r = aiolocust.stats.request.call_args.args[0]
     assert isinstance(r.error, ClientConnectorError)
+
+
+async def test_timeout(httpserver: HTTPServer, mocker: MockerFixture):
+    httpserver.expect_request("/").respond_with_data("")
+    mocker.patch("aiolocust.stats.request")
+    assert isinstance(aiolocust.stats.request, MagicMock)  # for type hinting
+
+    async def _(client: LocustClientSession):
+        async with client.get(httpserver.url_for("/"), name="foo") as resp:
+            pass
+
+    with pytest.raises(asyncio.TimeoutError):
+        async with LocustClientSession(timeout=aiohttp.ClientTimeout(0.001)) as client:
+            await _(client)
+
+    r = aiolocust.stats.request.call_args.args[0]
+    assert r.url == "foo"
 
 
 async def test_404(httpserver: HTTPServer, mocker: MockerFixture):

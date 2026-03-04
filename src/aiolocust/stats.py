@@ -45,7 +45,7 @@ def request(req: Request):
     }
     if req.error:
         attributes["error.type"] = req.error.__class__.__name__
-        record_error(str(req.error))
+        record_error(str(req.error) or req.error.__class__.__name__)
     ttlb_histogram.record(req.ttlb, attributes=attributes)
 
 
