@@ -91,10 +91,7 @@ class Runner:
                 except EXPECTED_ERRORS:
                     pass  # these errors should already have been recorded by the User
                 except Exception as e:
-                    try:
-                        stats.record_error(str(e))
-                    except Exception:
-                        pass
+                    stats.record_error(str(e))
                     logger.error(
                         "Unhandled exception in user loop: "
                         + "".join(traceback.format_exception(type(e), e, e.__traceback__))
