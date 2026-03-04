@@ -79,7 +79,7 @@ class StatsFormatter:
                         if not point.attributes:
                             raise Exception(f"A data point had no attributes, that should never happen. Point: {point}")
                         if not isinstance(point, HistogramDataPoint):
-                            raise Exception(f"Unexpected datapoint type: {point}")
+                            continue  # maybe we should log this, but we don't want to kill performance either
                         if name := point.attributes.get("http.url"):
                             entries[str(name)] += RequestEntry(
                                 point.count,

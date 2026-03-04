@@ -9,9 +9,9 @@ dependencies = [
     "uvloop>=0.22.1 ; sys_platform == 'linux'",
     "uvloop>=0.22.1 ; sys_platform == 'darwin'",
     "typer>=0.21.1",
-    "opentelemetry-api>=1.39.1",
-    "opentelemetry-sdk>=1.39.1",
-    "opentelemetry-instrumentation-aiohttp-client>=0.60b1",
+    "opentelemetry-api>=1.40.0",
+    "opentelemetry-sdk>=1.40.0",
+    "opentelemetry-instrumentation-aiohttp-client>=0.61b0",
 ]
 readme = "README.md"
 authors = [{ name = "Lars Holmberg", email = "lars.holmberg@redshirt.se" }]
