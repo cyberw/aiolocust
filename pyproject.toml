@@ -12,6 +12,7 @@ dependencies = [
     "opentelemetry-api>=1.40.0",
     "opentelemetry-sdk>=1.40.0",
     "opentelemetry-instrumentation-aiohttp-client>=0.61b0",
+    "opentelemetry-instrumentation-logging>=0.61b0",
 ]
 readme = "README.md"
 authors = [{ name = "Lars Holmberg", email = "lars.holmberg@redshirt.se" }]
