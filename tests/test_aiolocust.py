@@ -1,5 +1,6 @@
 import asyncio
 import os
+import signal
 from tempfile import TemporaryDirectory
 
 import pytest
@@ -103,4 +104,38 @@ async def run(user):
             output = stdout.decode(errors="replace")
             assert "warning level log message" in err
             assert "info level log message" not in err
+            assert await proc.wait() == 0
+
+
+async def test_sigint(http_server):  # noqa: ARG001
+    with TemporaryDirectory() as tmp_dir:
+        script_path = os.path.join(tmp_dir, "my_script.py")
+
+        with open(script_path, "w") as tempfile:
+            tempfile.write("""
+async def run(user):
+    async with user.client.get("http://localhost:8081/") as resp:
+        pass
+""")
+        proc = await asyncio.create_subprocess_exec(
+            "aiolocust",
+            tempfile.name,
+            "--duration",
+            "10",
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+        )
+        try:
+            await asyncio.sleep(1)
+            proc.send_signal(signal.SIGINT)
+            stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=3)
+        except TimeoutError:
+            proc.kill()
+            stdout, stderr = await proc.communicate()
+            output = stdout.decode(errors="replace")
+            print(output)
+            pytest.fail("process never terminated")
+        else:
+            output = stdout.decode(errors="replace")
+            assert "Summary" in output
             assert await proc.wait() == 0
