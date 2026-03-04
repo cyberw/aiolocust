@@ -130,7 +130,7 @@ def setup_meter_provider(metric_readers: list[MetricReader]):
     for exporter in metrics_exporters:
         if exporter == "otlp":
             protocol = (
-                os.getenv("OTEL_EXPORTER_OTLP_METRICS_PROTOCOL", os.getenv("OTEL_EXPORTER_OTLP_PROTOCOL", "none"))
+                os.getenv("OTEL_EXPORTER_OTLP_METRICS_PROTOCOL", os.getenv("OTEL_EXPORTER_OTLP_PROTOCOL", "grpc"))
                 .lower()
                 .strip()
             )
