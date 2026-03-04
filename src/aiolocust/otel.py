@@ -32,11 +32,11 @@ tracer = tracer_provider.get_tracer("aiolocust")
 def setup_logging(level: int = logging.INFO):
     otel_handler = LoggingHandler(level=level, logger_provider=logger_provider)
 
-    logs_exporters = {e.strip().lower() for e in os.getenv("OTEL_LOGS_EXPORTER", "none").split(",") if e.strip()}
+    logs_exporters = {e.strip().lower() for e in os.getenv("OTEL_LOGS_EXPORTER", "otlp").split(",") if e.strip()}
     for exporter in logs_exporters:
         if exporter == "otlp":
             protocol = (
-                os.getenv("OTEL_EXPORTER_OTLP_LOGS_PROTOCOL", os.getenv("OTEL_EXPORTER_OTLP_PROTOCOL", "grpc"))
+                os.getenv("OTEL_EXPORTER_OTLP_LOGS_PROTOCOL", os.getenv("OTEL_EXPORTER_OTLP_PROTOCOL", "http/protobuf"))
                 .lower()
                 .strip()
             )
@@ -51,9 +51,10 @@ def setup_logging(level: int = logging.INFO):
                     )
                     continue
             except ImportError:
-                print(
-                    f"OpenTelemetry otlp exporter for '{protocol}' is not available. Please install the required package: opentelemetry-exporter-otlp-proto-{'grpc' if protocol == 'grpc' else 'http'}"
-                )
+                if level == logging.INFO and os.getenv("OTEL_LOGS_EXPORTER", ""):
+                    print(
+                        f"OpenTelemetry otlp exporter for '{protocol}' is not available. Please install the required package: opentelemetry-exporter-otlp-proto-{'grpc' if protocol == 'grpc' else 'http'}",
+                    )
                 continue
 
             otlp_exporter = OTLPLogExporter()
@@ -89,11 +90,14 @@ def setup_logging(level: int = logging.INFO):
 
 
 def setup_trace_exporters():
-    traces_exporters = {e.strip().lower() for e in os.getenv("OTEL_TRACES_EXPORTER", "none").split(",") if e.strip()}
+    logger = logging.getLogger(__name__)
+    traces_exporters = {e.strip().lower() for e in os.getenv("OTEL_TRACES_EXPORTER", "otlp").split(",") if e.strip()}
     for exporter in traces_exporters:
         if exporter == "otlp":
             protocol = (
-                os.getenv("OTEL_EXPORTER_OTLP_TRACES_PROTOCOL", os.getenv("OTEL_EXPORTER_OTLP_PROTOCOL", "grpc"))
+                os.getenv(
+                    "OTEL_EXPORTER_OTLP_TRACES_PROTOCOL", os.getenv("OTEL_EXPORTER_OTLP_PROTOCOL", "http/protobuf")
+                )
                 .lower()
                 .strip()
             )
@@ -108,8 +112,10 @@ def setup_trace_exporters():
                     )
                     continue
             except ImportError:
-                print(
-                    f"OpenTelemetry otlp exporter for '{protocol}' is not available. Please install the required package: opentelemetry-exporter-otlp-proto-{'grpc' if protocol == 'grpc' else 'http'}"
+                level = logging.INFO if os.getenv("OTEL_TRACES_EXPORTER", "") else logging.DEBUG
+                logger.log(
+                    level,
+                    f"OpenTelemetry otlp exporter for '{protocol}' is not available. Please install the required package: opentelemetry-exporter-otlp-proto-{'grpc' if protocol == 'grpc' else 'http'}",
                 )
                 continue
 
@@ -126,11 +132,14 @@ def setup_trace_exporters():
 
 
 def setup_meter_provider(metric_readers: list[MetricReader]):
-    metrics_exporters = {e.strip().lower() for e in os.getenv("OTEL_METRICS_EXPORTER", "none").split(",") if e.strip()}
+    logger = logging.getLogger(__name__)
+    metrics_exporters = {e.strip().lower() for e in os.getenv("OTEL_METRICS_EXPORTER", "otlp").split(",") if e.strip()}
     for exporter in metrics_exporters:
         if exporter == "otlp":
             protocol = (
-                os.getenv("OTEL_EXPORTER_OTLP_METRICS_PROTOCOL", os.getenv("OTEL_EXPORTER_OTLP_PROTOCOL", "grpc"))
+                os.getenv(
+                    "OTEL_EXPORTER_OTLP_METRICS_PROTOCOL", os.getenv("OTEL_EXPORTER_OTLP_PROTOCOL", "http/protobuf")
+                )
                 .lower()
                 .strip()
             )
@@ -149,8 +158,10 @@ def setup_meter_provider(metric_readers: list[MetricReader]):
                     )
                     continue
             except ImportError:
-                print(
-                    f"OpenTelemetry otlp exporter for '{protocol}' is not available. Please install the required package: opentelemetry-exporter-otlp-proto-{'grpc' if protocol == 'grpc' else 'http'}"
+                level = logging.INFO if os.getenv("OTEL_METRICS_EXPORTER", "") else logging.DEBUG
+                logger.log(
+                    level,
+                    f"OpenTelemetry otlp exporter for '{protocol}' is not available. Please install the required package: opentelemetry-exporter-otlp-proto-{'grpc' if protocol == 'grpc' else 'http'}",
                 )
                 continue
 
