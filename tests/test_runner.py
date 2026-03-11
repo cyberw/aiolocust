@@ -8,7 +8,7 @@ from utils import assert_search
 
 from aiolocust import otel
 from aiolocust.http import HttpUser, LocustClientSession, request_hook
-from aiolocust.runner import Runner
+from aiolocust.runner import Runner, Stage, desired_user_count
 
 WINDOWS_DELAY = 1 if os.name == "nt" else 0
 
@@ -28,7 +28,7 @@ def test_runner(http_server, capteesys):  # noqa: ARG001
             async with self.client.get("http://localhost:8081/") as resp:
                 assert "bar" in await resp.text()
 
-    Runner([TestUser]).run_test(1, 3 + WINDOWS_DELAY)
+    Runner([TestUser], 1, 3 + WINDOWS_DELAY).run_test()
     out, err = capteesys.readouterr()
     assert err == ""
     assert "Summary" in out
@@ -47,7 +47,7 @@ def test_runner_unhandled_error(http_server, capteesys):  # noqa: ARG001
             await asyncio.sleep(1)
             raise Exception("an error")
 
-    Runner([TestUser]).run_test(1, 1)
+    Runner([TestUser], 1, 1).run_test()
     out, err = capteesys.readouterr()
     assert err == ""
     assert "Summary" in out
@@ -72,7 +72,7 @@ def test_timeout_catching(http_server, capteesys):  # noqa: ARG001
                 pass
             raise Exception("We'll never get here")
 
-    Runner([TestUser]).run_test(1, 1)
+    Runner([TestUser], 1, 1).run_test()
     out, err = capteesys.readouterr()
     assert err == ""
     assert "Summary" in out
@@ -94,7 +94,7 @@ def test_runner_w_otel(http_server, capteesys):  # noqa: ARG001
             async with self.client.get("http://localhost:8081/") as resp:
                 assert "bar" in await resp.text()
 
-    Runner([TestUser]).run_test(1, 3 + WINDOWS_DELAY)
+    Runner([TestUser], 1, 3 + WINDOWS_DELAY).run_test()
     out, err = capteesys.readouterr()
     assert err == ""
     assert "Summary" in out
@@ -121,7 +121,7 @@ def test_runner_w_instrumentation(http_server, capfd):  # noqa: ARG001
             async with self.client.get("http://localhost:8081/404", name="foo") as resp:
                 pass
 
-    Runner([TestUser]).run_test(1, 2)
+    Runner([TestUser], 1, 2).run_test()
     out, err = capfd.readouterr()
     assert err == ""
     assert '"trace_id"' in out
@@ -132,3 +132,26 @@ def test_runner_w_instrumentation(http_server, capfd):  # noqa: ARG001
     assert "Error" in out
     assert_search(r"[12] .* 404,", out)
     assert "bar" not in out
+
+
+def test_desired_user_count():
+    stages = [
+        Stage(duration=2, target=2),
+        Stage(duration=2, target=2),
+        Stage(duration=2, target=4),
+        Stage(duration=2, target=0),
+        Stage(duration=2, target=10),
+    ]
+    assert desired_user_count(stages, 0) == 0
+    assert desired_user_count(stages, 0.1) == 1  # using math.ceil to avoid 0 users at the start of the test
+    assert desired_user_count(stages, 2) == 2
+    assert desired_user_count(stages, 3) == 2  # no change in second stage
+    assert desired_user_count(stages, 4) == 2
+    assert desired_user_count(stages, 5) == 3  # halfway through third stage
+    assert desired_user_count(stages, 6) == 4
+    assert desired_user_count(stages, 7) == 2  # halfway through ramp down stage
+    assert desired_user_count(stages, 8) == 0  # end of ramp down stage
+    assert desired_user_count(stages, 9) == 5  # can ramp up again after ramping down to 0
+    assert desired_user_count(stages, 9.3) == 7  # floats are nice
+    assert desired_user_count(stages, 10) == 10
+    assert desired_user_count(stages, 999) is None

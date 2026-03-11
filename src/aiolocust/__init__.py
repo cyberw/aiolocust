@@ -5,6 +5,7 @@ from contextlib import asynccontextmanager
 class User(ABC):
     def __init__(self, runner: Runner | None = None, **kwargs):
         self.runner = runner
+        self.running = True
 
     @abstractmethod
     async def run(self): ...

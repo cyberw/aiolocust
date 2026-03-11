@@ -1,6 +1,8 @@
 import importlib.util
 import inspect
+import json
 import logging
+import os
 import sys
 from enum import StrEnum
 from pathlib import Path
@@ -32,6 +34,17 @@ def is_user_class(item) -> bool:
     return bool(inspect.isclass(item)) and issubclass(item, User) and not inspect.isabstract(item)
 
 
+def load_config(input_string):
+    if os.path.isfile(input_string):
+        with open(input_string) as f:
+            return json.load(f)
+    try:
+        return json.loads(input_string)
+    except json.JSONDecodeError as e:
+        print(f"Config is not valid JSON: {e}")
+        raise
+
+
 @app.command()
 def main(
     filename: Annotated[str, typer.Argument(help="The test to run")] = "locustfile.py",
@@ -40,6 +53,7 @@ def main(
     log_level: Annotated[
         LogLevel, typer.Option("--log-level", help="Set the logging level", case_sensitive=False)
     ] = LogLevel.info,
+    config: Annotated[dict | None, typer.Option(parser=load_config)] = None,
     event_loops: Annotated[
         int | None,
         typer.Option(
@@ -81,8 +95,16 @@ def main(
 
         SimpleUser.run = module.run
         user_classes = {"SimpleUser": SimpleUser}
+
+    logger.debug(f"config: {config}")
     if user_classes:
-        r = Runner([user for user in user_classes.values()])
-        r.run_test(users, duration, event_loops)
+        r = Runner(
+            [user for user in user_classes.values()],
+            user_count=users,
+            duration=duration,
+            config=config,
+            event_loops=event_loops,
+        )
+        r.run_test()
     else:
         typer.echo(f"Error: No User classes or run function defined in {filename}")

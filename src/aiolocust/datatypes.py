@@ -42,3 +42,9 @@ class RequestEntry:
     @property
     def error_percentage(self) -> float:
         return self.errorcount / self.count * 100.0 if self.count > 0 else 0.0
+
+
+@dataclass
+class Stage:
+    duration: float
+    target: int
