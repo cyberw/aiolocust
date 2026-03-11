@@ -9,7 +9,8 @@ import pytest
 from utils import assert_search
 
 
-async def test_otel_traces_exporter(http_server):  # noqa: ARG001
+@unittest.skipIf(os.name == "nt", reason="otel instrumentation seems to have some issues with freethreading on Windows")
+async def test_otel_autoinstrumentation(http_server):  # noqa: ARG001
     with TemporaryDirectory() as tmp_dir:
         script_path = os.path.join(tmp_dir, "my_script.py")
 
