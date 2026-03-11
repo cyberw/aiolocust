@@ -50,4 +50,4 @@ class MyUser(HttpUser):
 
 
 if __name__ == "__main__":
-    Runner([MyUser]).run_test(1, 2)
+    Runner([MyUser], 1, 2).run_test()

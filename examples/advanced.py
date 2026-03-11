@@ -35,4 +35,4 @@ class MyUser(HttpUser):
 
 # make this file runnable as "python advanced.py"
 if __name__ == "__main__":
-    Runner([MyUser]).run_test(1, 1)
+    Runner([MyUser], 1, 1).run_test()

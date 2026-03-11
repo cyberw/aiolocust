@@ -1,6 +1,8 @@
 import importlib.util
 import inspect
+import json
 import logging
+import os
 import sys
 from enum import StrEnum
 from pathlib import Path
@@ -32,14 +34,29 @@ def is_user_class(item) -> bool:
     return bool(inspect.isclass(item)) and issubclass(item, User) and not inspect.isabstract(item)
 
 
+def load_config(input_string):
+    if os.path.isfile(input_string):
+        with open(input_string) as f:
+            return json.load(f)
+    try:
+        return json.loads(input_string)
+    except json.JSONDecodeError as e:
+        print(f"Config is not valid JSON: {e}")
+        raise
+
+
 @app.command()
 def main(
     filename: Annotated[str, typer.Argument(help="The test to run")] = "locustfile.py",
     users: Annotated[int, typer.Option("-u", "--users", help="The number of concurrent VUs")] = 1,
     duration: Annotated[int | None, typer.Option("-d", "--duration", help="Stop the test after X seconds")] = None,
+    rate: Annotated[
+        float | None, typer.Option("-r", "--rate", help="Rate to spawn users at (users per second).")
+    ] = None,
     log_level: Annotated[
         LogLevel, typer.Option("--log-level", help="Set the logging level", case_sensitive=False)
     ] = LogLevel.info,
+    config: Annotated[dict | None, typer.Option(parser=load_config)] = None,
     event_loops: Annotated[
         int | None,
         typer.Option(
@@ -49,7 +66,6 @@ def main(
 ):
     log_level_id = getattr(logging, log_level.value.upper())
     setup_logging(log_level_id)
-    logger.debug(f"Running with users={users}, duration={duration}, event_loops={event_loops}")
 
     file_path = Path(filename).resolve()
     if not file_path.exists():
@@ -81,8 +97,16 @@ def main(
 
         SimpleUser.run = module.run
         user_classes = {"SimpleUser": SimpleUser}
+
     if user_classes:
-        r = Runner([user for user in user_classes.values()])
-        r.run_test(users, duration, event_loops)
+        r = Runner(
+            [user for user in user_classes.values()],
+            user_count=users,
+            duration=duration,
+            rate=rate,
+            config=config,
+            event_loops=event_loops,
+        )
+        r.run_test()
     else:
         typer.echo(f"Error: No User classes or run function defined in {filename}")

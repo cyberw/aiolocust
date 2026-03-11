@@ -31,7 +31,7 @@ classifiers = [
 package = true
 
 [build-system]
-requires = ["uv_build>=0.9.7,<0.10.0"]
+requires = ["uv_build>=0.10.0,<0.11.0"]
 build-backend = "uv_build"
 
 [tool.ruff]
@@ -49,7 +49,7 @@ dev = [
     "pytest-asyncio>=1.3.0",
     "pytest-httpserver>=1.1.3",
     "pytest-mock>=3.15.1",
-    "ruff>=0.14.10",
+    "ruff>=0.15.5",
 ]
 
 [project.scripts]
