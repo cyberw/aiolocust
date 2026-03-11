@@ -108,7 +108,7 @@ class Runner:
 
         if config and "stages" in config:
             self.stages = [Stage(**item) for item in config["stages"]]
-            if user_count > 1 or duration or rate != 1.0:
+            if user_count > 1 or duration or rate:
                 logger.info("Both stages and user_count/duration/rate were specified, stages will take precedence")
         else:
             ramp_up_time = user_count / rate if rate else 0
