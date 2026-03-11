@@ -66,7 +66,6 @@ def main(
 ):
     log_level_id = getattr(logging, log_level.value.upper())
     setup_logging(log_level_id)
-    logger.debug(f"Running with users={users}, duration={duration}, event_loops={event_loops}")
 
     file_path = Path(filename).resolve()
     if not file_path.exists():
@@ -99,7 +98,6 @@ def main(
         SimpleUser.run = module.run
         user_classes = {"SimpleUser": SimpleUser}
 
-    logger.debug(f"config: {config}")
     if user_classes:
         r = Runner(
             [user for user in user_classes.values()],

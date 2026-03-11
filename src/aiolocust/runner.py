@@ -116,6 +116,7 @@ class Runner:
                 Stage(ramp_up_time, user_count),
                 Stage(duration - ramp_up_time if duration else 99999999, user_count),
             ]
+        logger.debug(f"Stages: {self.stages}")
 
         self.users = users
         if event_loops is None:
@@ -184,7 +185,7 @@ class Runner:
         workers = [LoopWorker() for _ in range(self.event_loops)]
         for w in workers:
             w.start()
-
+        logger.debug(f"Running with {self.event_loops} event loops")
         await asyncio.sleep(0.1)
 
         loop = asyncio.get_running_loop()
