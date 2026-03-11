@@ -155,3 +155,4 @@ def test_desired_user_count():
     assert desired_user_count(stages, 9.3) == 7  # floats are nice
     assert desired_user_count(stages, 10) == 10
     assert desired_user_count(stages, 999) is None
+    assert desired_user_count([Stage(0, 100), Stage(1, 100)], 0.001) == 100  # correctly handles instant ramp up
