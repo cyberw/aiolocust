@@ -1,4 +1,5 @@
 import asyncio
+import json
 import os
 import signal
 import unittest
@@ -186,3 +187,50 @@ async def run(user):
             assert "Summary" in output
             assert await proc.wait() == 0
             assert_search(r"[12] .* an error", output)
+
+
+async def test_config_and_stages(http_server):  # noqa: ARG001
+    with TemporaryDirectory() as tmp_dir:
+        with open(os.path.join(tmp_dir, "my_script.py"), "w") as tempfile:
+            tempfile.write("""
+import asyncio
+
+async def run(user):
+    async with user.client.get("http://localhost:8081/") as resp:
+        pass
+    if user.running:
+        await asyncio.sleep(1)
+""")
+        with open(os.path.join(tmp_dir, "my_config.json"), "w") as configfile:
+            json.dump(
+                {
+                    "stages": [{"duration": 3, "target": 1}, {"duration": 1, "target": 20}],
+                },
+                configfile,
+            )
+
+        proc = await asyncio.create_subprocess_exec(
+            "aiolocust",
+            tempfile.name,
+            "--config",
+            configfile.name,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+        )
+        try:
+            stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=6)
+        except TimeoutError:
+            proc.kill()
+            stdout, stderr = await proc.communicate()
+            output = stdout.decode(errors="replace")
+            print(output)
+            pytest.fail("process never terminated")
+        else:
+            err = stderr.decode(errors="replace")
+            print(err)
+            output = stdout.decode(errors="replace")
+            print(output)
+            assert "Summary" in output
+            assert await proc.wait() == 0
+            assert_search(r"0\.[0-9]*/s", output)  # first one
+            assert_search(r"[2-9]\.[0-9]*/s", output)  # last one
