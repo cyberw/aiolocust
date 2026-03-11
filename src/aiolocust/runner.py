@@ -202,7 +202,7 @@ class Runner:
             change = new_user_count - self.previous_user_count
             if change > 0:
                 for i in range(change):
-                    worker = workers[i + self.previous_user_count % self.event_loops]
+                    worker = workers[(i + self.previous_user_count) % self.event_loops]
                     self.add_user(worker)
             elif change < 0:
                 for i in range(-change):
