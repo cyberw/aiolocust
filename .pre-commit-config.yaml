@@ -6,7 +6,8 @@ repos:
       - id: ruff
         args: [--fix]
       - id: ruff-format
-  - repo: https://github.com/ComPWA/pyright-pre-commit
-    rev: v1.1.407
-    hooks:
-      - id: pyright
+  # commented out for now, because it doesnt understand uv
+  # - repo: https://github.com/ComPWA/pyright-pre-commit
+  #   rev: v1.1.407
+  #   hooks:
+  #     - id: pyright
