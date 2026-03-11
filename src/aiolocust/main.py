@@ -36,8 +36,15 @@ def is_user_class(item) -> bool:
 
 def load_config(input_string):
     if os.path.isfile(input_string):
-        with open(input_string) as f:
-            return json.load(f)
+        try:
+            with open(input_string) as f:
+                return json.load(f)
+        except json.JSONDecodeError as e:
+            print(f"Config file is not valid JSON: {e}")
+            raise
+        except Exception as e:
+            print(f"Could not load file: {e}")
+            raise
     try:
         return json.loads(input_string)
     except json.JSONDecodeError as e:
@@ -56,7 +63,14 @@ def main(
     log_level: Annotated[
         LogLevel, typer.Option("--log-level", help="Set the logging level", case_sensitive=False)
     ] = LogLevel.info,
-    config: Annotated[dict | None, typer.Option(parser=load_config)] = None,
+    config: Annotated[
+        dict | None,
+        typer.Option(
+            metavar="JSON",
+            parser=load_config,
+            help='JSON string or path to JSON file, e.g. \n\n{"stages": [{"duration": 10, "target": 10}, {"duration": 5, "target": 0}]}',
+        ),
+    ] = None,
     event_loops: Annotated[
         int | None,
         typer.Option(
