@@ -50,6 +50,9 @@ def main(
     filename: Annotated[str, typer.Argument(help="The test to run")] = "locustfile.py",
     users: Annotated[int, typer.Option("-u", "--users", help="The number of concurrent VUs")] = 1,
     duration: Annotated[int | None, typer.Option("-d", "--duration", help="Stop the test after X seconds")] = None,
+    rate: Annotated[
+        float | None, typer.Option("-r", "--rate", help="Rate to spawn users at (users per second).")
+    ] = None,
     log_level: Annotated[
         LogLevel, typer.Option("--log-level", help="Set the logging level", case_sensitive=False)
     ] = LogLevel.info,
@@ -102,6 +105,7 @@ def main(
             [user for user in user_classes.values()],
             user_count=users,
             duration=duration,
+            rate=rate,
             config=config,
             event_loops=event_loops,
         )

@@ -96,7 +96,7 @@ class Runner:
         users: list[type[User]],
         user_count: int = 1,
         duration: int | None = None,
-        rate: float = 1.0,
+        rate: float | None = None,
         config: dict | None = None,
         event_loops: int | None = None,
     ):
@@ -106,14 +106,15 @@ class Runner:
         self.sf = stats.StatsFormatter()
         self.console = Console()
 
-        self.stages = [Stage(**item) for item in config["stages"]] if config and "stages" in config else None
-        if self.stages:
+        if config and "stages" in config:
+            self.stages = [Stage(**item) for item in config["stages"]]
             if user_count > 1 or duration or rate != 1.0:
                 logger.info("Both stages and user_count/duration/rate were specified, stages will take precedence")
         else:
+            ramp_up_time = user_count / rate if rate else 0
             self.stages = [
-                Stage(user_count / rate, user_count),
-                Stage(duration - user_count / rate if duration else 99999999, user_count),
+                Stage(ramp_up_time, user_count),
+                Stage(duration - ramp_up_time if duration else 99999999, user_count),
             ]
 
         self.users = users
