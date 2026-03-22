@@ -1,3 +1,4 @@
+import sys
 import threading
 from dataclasses import dataclass
 
@@ -54,12 +55,12 @@ class Stage:
 class SafeCounter:
     """A thread-safe counter."""
 
-    def __init__(self, limit):
+    def __init__(self, limit: int | None = None):
         self.value = 0
-        self.limit = limit
+        self.limit = limit if limit is not None else sys.maxsize
         self.lock = threading.Lock()
 
-    def increment(self) -> bool:  # returns False if limit has been reached
+    def increment(self) -> bool:
         with self.lock:
             if self.value < self.limit:
                 self.value += 1
