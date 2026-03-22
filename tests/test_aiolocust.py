@@ -32,10 +32,8 @@ class MyUser(HttpUser):
         proc = await asyncio.create_subprocess_exec(
             "aiolocust",
             tempfile.name,
-            "--duration",
-            "2",
-            "-u",
-            "2",
+            "--iterations",
+            "1",
             env={
                 "OTEL_TRACES_EXPORTER": "console",
                 **os.environ,
