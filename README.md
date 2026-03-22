@@ -101,11 +101,11 @@ aiolocust is more performant than "regular" Locust because it has a smaller foot
 
 ### 1. [asyncio](https://docs.python.org/3/library/asyncio.html) + [aiohttp](https://docs.aiohttp.org/en/stable/)
 
-aiolocust's performance is *much* better than HttpUser (based on Requests), and even slightly better than FastHttpUser (based on geventhttpclient). Because it uses async programming instead of monkey patching it is more useful on modern Python and more future-proof. Specifically it allows your locustfile to easily use asyncio libraries (like [Playwright](examples/playwright/locustfile.py)), which are becoming more and more common.
+aiolocust's performance is *much* better than HttpUser (based on python-requests), and even slightly better than FastHttpUser (based on geventhttpclient). Because it uses asyncio instead of monkey patching it allows you to use other asyncio libraries (like [Playwright](examples/playwright/locustfile.py)), which are becoming more and more common.
 
 ### 2. [Freethreading/no-GIL Python](https://docs.python.org/3/howto/free-threading-python.html)
 
-This means that you don't need to launch one Locust process per CPU core. And even if your load tests happen to do some heavy computations, they are less likely to impact each other, as one thread will not block Python from concurrently working on another one.
+This means that you don't need to launch one Locust process per CPU core. And even if your scripts happen to do some heavy computations, they are less likely to impact each other, as one thread will not block Python from concurrently working on another one.
 
 Users/threads can also communicate easily with each other, as they are in the same process, unlike in the old Locust implementation where you were forced to use ZeroMQ messaging between master and worker processes and worker-to-worker communication was nearly impossible.
 
@@ -113,7 +113,6 @@ Users/threads can also communicate easily with each other, as they are in the sa
 
 * A WebUI
 * Support for distributed tests
-* Polish. This is not ready for production use yet.
 
 ## Alternative ways to install
 
