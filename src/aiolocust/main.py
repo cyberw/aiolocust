@@ -59,6 +59,9 @@ def main(
     users: Annotated[int, typer.Option("-u", "--users", help="Number of concurrent VUs (peak)")] = 1,
     duration: Annotated[int | None, typer.Option("-d", "--duration", help="Time to run the test (seconds)")] = None,
     rate: Annotated[float | None, typer.Option("-r", "--rate", help="Number of users to spawn (per second)")] = None,
+    iterations: Annotated[
+        int | None, typer.Option("-i", "--iterations", help="Max total number of iterations to run")
+    ] = None,
     instrument: Annotated[
         bool,
         typer.Option(
@@ -138,6 +141,7 @@ def main(
             user_count=users,
             duration=duration,
             rate=rate,
+            iterations=iterations,
             config=config,
             event_loops=event_loops,
         )

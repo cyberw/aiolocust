@@ -1,3 +1,4 @@
+import threading
 from dataclasses import dataclass
 
 
@@ -48,3 +49,19 @@ class RequestEntry:
 class Stage:
     duration: float
     target: int
+
+
+class SafeCounter:
+    """A thread-safe counter."""
+
+    def __init__(self, limit):
+        self.value = 0
+        self.limit = limit
+        self.lock = threading.Lock()
+
+    def increment(self) -> bool:  # returns False if limit has been reached
+        with self.lock:
+            if self.value < self.limit:
+                self.value += 1
+                return False
+            return True

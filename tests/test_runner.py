@@ -134,6 +134,23 @@ def test_runner_w_instrumentation(http_server, capfd):  # noqa: ARG001
     assert "bar" not in out
 
 
+def test_runner_iterations(http_server, capteesys):  # noqa: ARG001
+    class TestUser(HttpUser):
+        async def run(self):
+            async with self.client.get("http://localhost:8081/") as resp:
+                pass
+            async with self.client.get("http://localhost:8081/") as resp:
+                assert "foo" in await resp.text()
+
+    Runner([TestUser], user_count=2, iterations=10).run_test()
+    out, err = capteesys.readouterr()
+    assert err == ""
+    assert "Summary" in out
+    assert " http://localhost:8081/ │    20 │ 10 (50.0%)" in out
+    assert "Error" in out
+    assert_search(r"10 .* assert 'foo' in 'OK'", out)
+
+
 def test_desired_user_count():
     stages = [
         Stage(duration=2, target=2),
