@@ -8,6 +8,7 @@ from enum import StrEnum
 from pathlib import Path
 from typing import Annotated
 
+import click
 import typer
 
 from aiolocust import User
@@ -87,7 +88,14 @@ def main(
 
     file_path = Path(filename).resolve()
     if not file_path.exists():
-        typer.echo(f"Error: Could not find the file at {file_path}")
+        if filename == "locustfile.py":
+            typer.echo(
+                "Welcome to aiolocust! Create a locustfile.py in your current directory or specify a different one as an argument."
+            )
+            ctx = click.get_current_context()
+            typer.echo(ctx.get_help())
+        else:
+            typer.echo(f"Error: Could not find the file at {file_path}")
         raise typer.Exit(code=1)
 
     module_name = file_path.stem

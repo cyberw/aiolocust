@@ -15,7 +15,7 @@ We recommend using [uv](https://docs.astral.sh/uv/getting-started/installation/)
 
 ```text
 uv tool install aiolocust
-aiolocust --help
+aiolocust
 ```
 
 There are also some [alternative ways to install](#alternative-ways-to-install).
@@ -121,7 +121,7 @@ If your tests need additional packages, or you want to structure your code in a 
 ```text
 uv init --python 3.14t
 uv add aiolocust
-uv run aiolocust --help
+uv run aiolocust
 ```
 
 Install for developing the tool itself, or just getting the latest changes before they make it into a release:
@@ -129,12 +129,12 @@ Install for developing the tool itself, or just getting the latest changes befor
 ```text
 git clone https://github.com/cyberw/aiolocust.git
 cd aiolocust
-uv run aiolocust --help
+uv run aiolocust
 ```
 
-You can still use good old pip as well, just remember that you need a freethreading Python build:
+You can still use good ol' pip as well, just remember that you need a freethreading Python build:
 
 ```text
 pip install aiolocust
-aiolocust --help
+aiolocust
 ```
