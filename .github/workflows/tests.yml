@@ -62,7 +62,7 @@ jobs:
               env:
                   OTEL_TRACES_EXPORTER: console
               run: |
-                  uv run aiolocust examples/otel/instrument_aiohttpclient.py -d 1 | tee locust_output.txt
+                  uv run aiolocust --instrument -d 1 | tee locust_output.txt
                   grep -E '"name": "GET"' locust_output.txt
                   # advanced
                   uv run aiolocust examples/otel/instrument_aiohttpclient_span_manipulation.py -d 1 | tee locust_output.txt

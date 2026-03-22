@@ -55,11 +55,15 @@ def load_config(input_string):
 @app.command()
 def main(
     filename: Annotated[str, typer.Argument(help="The test to run")] = "locustfile.py",
-    users: Annotated[int, typer.Option("-u", "--users", help="The number of concurrent VUs")] = 1,
-    duration: Annotated[int | None, typer.Option("-d", "--duration", help="Stop the test after X seconds")] = None,
-    rate: Annotated[
-        float | None, typer.Option("-r", "--rate", help="Rate to spawn users at (users per second).")
-    ] = None,
+    users: Annotated[int, typer.Option("-u", "--users", help="Number of concurrent VUs (peak)")] = 1,
+    duration: Annotated[int | None, typer.Option("-d", "--duration", help="Time to run the test (seconds)")] = None,
+    rate: Annotated[float | None, typer.Option("-r", "--rate", help="Number of users to spawn (per second)")] = None,
+    instrument: Annotated[
+        bool,
+        typer.Option(
+            "--instrument", help="Capture aiohttp traces and metrics using AioHttpClientInstrumentor().instrument()"
+        ),
+    ] = False,
     log_level: Annotated[
         LogLevel, typer.Option("--log-level", help="Set the logging level", case_sensitive=False)
     ] = LogLevel.info,
@@ -100,6 +104,14 @@ def main(
 
     # Run any top-level code
     spec.loader.exec_module(module)
+
+    # apply --instrument option after loading script, so that any code based instrumentation takes precedence
+    if instrument:
+        from opentelemetry.instrumentation.aiohttp_client import AioHttpClientInstrumentor
+
+        from aiolocust.http import request_hook
+
+        AioHttpClientInstrumentor().instrument(request_hook=request_hook)
 
     # Return our two-tuple
     user_classes = {name: value for name, value in vars(module).items() if is_user_class(value)}

@@ -79,11 +79,21 @@ We also plan to further emphasize the "It's just Python"-approach. For example, 
 
 ## OTEL Native
 
-aiolocust uses OTel for metrics internally and exporting them into your own monitoring solution is easy. Out of the box, it supports standard [OTel env vars](https://opentelemetry.io/docs/specs/otel/protocol/exporter/).
+aiolocust uses OTel for metrics internally and exporting them into your own monitoring solution is easy. By default, it creates a `http.client.duration` histogram.
 
-If you want traces and auto-instrumented metrics, it is easy to do [from code](examples/otel/instrument_aiohttpclient.py) or [using an agent](https://opentelemetry.io/docs/zero-code/python/).
+If you also want to generate traces, logs and other standard metrics, you can either use the `--instrument` command line option, do it [from code](examples/otel/instrument_aiohttpclient_span_manipulation.py) for increased flexibility, or use an agent for [zero-code instrumentation](https://opentelemetry.io/docs/zero-code/python/).
 
-Note: The "old" Locust supports exporting OTel traces/metrics as well, but this was "bolted on" and it used its own completely separate metrics tracking internally.
+aiolocust supports standard OTel env vars for exporter configuration, for example:
+
+```text
+OTEL_TRACES_EXPORTER=console aiolocust --instrument
+```
+
+Here's a more complete example, for Splunk:
+
+```text
+OTEL_METRIC_EXPORT_INTERVAL=1000 OTEL_EXPORTER_OTLP_TRACES_ENDPOINT="https://ingest.us1.signalfx.com/v2/trace/otlp" OTEL_EXPORTER_OTLP_METRICS_ENDPOINT="https://ingest.us1.signalfx.com/v2/datapoint/otlp" OTEL_EXPORTER_OTLP_HEADERS="X-SF-TOKEN=..." OTEL_EXPORTER_OTLP_METRICS_PROTOCOL="http" OTEL_METRIC_EXPORT_INTERVAL=500 aiolocust --instrument
+```
 
 ## High performance
 
@@ -91,11 +101,11 @@ aiolocust is more performant than "regular" Locust because it has a smaller foot
 
 ### 1. [asyncio](https://docs.python.org/3/library/asyncio.html) + [aiohttp](https://docs.aiohttp.org/en/stable/)
 
-aiolocust's performance is *much* better than HttpUser (based on Requests), and even slightly better than FastHttpUser (based on geventhttpclient). Because it uses async programming instead of monkey patching it is more useful on modern Python and more future-proof. Specifically it allows your locustfile to easily use asyncio libraries (like [Playwright](examples/playwright/locustfile.py)), which are becoming more and more common.
+aiolocust's performance is *much* better than HttpUser (based on python-requests), and even slightly better than FastHttpUser (based on geventhttpclient). Because it uses asyncio instead of monkey patching it allows you to use other asyncio libraries (like [Playwright](examples/playwright/locustfile.py)), which are becoming more and more common.
 
 ### 2. [Freethreading/no-GIL Python](https://docs.python.org/3/howto/free-threading-python.html)
 
-This means that you don't need to launch one Locust process per CPU core. And even if your load tests happen to do some heavy computations, they are less likely to impact each other, as one thread will not block Python from concurrently working on another one.
+This means that you don't need to launch one Locust process per CPU core. And even if your scripts happen to do some heavy computations, they are less likely to impact each other, as one thread will not block Python from concurrently working on another one.
 
 Users/threads can also communicate easily with each other, as they are in the same process, unlike in the old Locust implementation where you were forced to use ZeroMQ messaging between master and worker processes and worker-to-worker communication was nearly impossible.
 
@@ -103,7 +113,6 @@ Users/threads can also communicate easily with each other, as they are in the sa
 
 * A WebUI
 * Support for distributed tests
-* Polish. This is not ready for production use yet.
 
 ## Alternative ways to install
 
