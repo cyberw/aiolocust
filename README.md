@@ -79,11 +79,21 @@ We also plan to further emphasize the "It's just Python"-approach. For example, 
 
 ## OTEL Native
 
-aiolocust uses OTel for metrics internally and exporting them into your own monitoring solution is easy. Out of the box, it supports standard [OTel env vars](https://opentelemetry.io/docs/specs/otel/protocol/exporter/).
+aiolocust uses OTel for metrics internally and exporting them into your own monitoring solution is easy. By default, it creates a `http.client.duration` histogram.
 
-If you want traces and auto-instrumented metrics, it is easy to do [from code](examples/otel/instrument_aiohttpclient.py) or [using an agent](https://opentelemetry.io/docs/zero-code/python/).
+If you also want to generate traces, logs and other standard metrics, you can either use the `--instrument` command line option, do it [from code](examples/otel/instrument_aiohttpclient_span_manipulation.py) for increased flexibility, or use an agent for [zero-code instrumentation](https://opentelemetry.io/docs/zero-code/python/).
 
-Note: The "old" Locust supports exporting OTel traces/metrics as well, but this was "bolted on" and it used its own completely separate metrics tracking internally.
+aiolocust supports standard OTel env vars for exporter configuration, for example:
+
+```text
+OTEL_TRACES_EXPORTER=console aiolocust --instrument
+```
+
+Here's a more complete example, for Splunk:
+
+```text
+OTEL_METRIC_EXPORT_INTERVAL=1000 OTEL_EXPORTER_OTLP_TRACES_ENDPOINT="https://ingest.us1.signalfx.com/v2/trace/otlp" OTEL_EXPORTER_OTLP_METRICS_ENDPOINT="https://ingest.us1.signalfx.com/v2/datapoint/otlp" OTEL_EXPORTER_OTLP_HEADERS="X-SF-TOKEN=..." OTEL_EXPORTER_OTLP_METRICS_PROTOCOL="http" OTEL_METRIC_EXPORT_INTERVAL=500 aiolocust --instrument
+```
 
 ## High performance
 
