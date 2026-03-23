@@ -48,6 +48,8 @@ class MyUser(HttpUser):
         except TimeoutError:
             proc.terminate()
             stdout, stderr = await proc.communicate()
+            err = stdout.decode(errors="replace")
+            print(err)
             output = stdout.decode(errors="replace")
             print(output)
             pytest.fail("process never terminated")
