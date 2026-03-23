@@ -21,15 +21,26 @@ SPAN_NAME_KEY = context.create_key("name")
 
 
 class HttpUser(User):
-    def __init__(self, runner: Runner | None = None, base_url=None, **kwargs):
+    session_kwargs: dict[str, Any] = {}
+    """
+    Extra arguments to pass to aiohttp.ClientSession, e.g.
+
+    class TimeoutUser(HttpUser):
+        session_kwargs = {
+            "timeout": aiohttp.ClientTimeout(0.0001),
+            "skip_auto_headers": {"User-Agent"},
+        }
+        ...
+    """
+
+    def __init__(self, runner: Runner | None = None, base_url=None):
         super().__init__(runner)
         self.base_url = base_url
-        self.kwargs = kwargs
         self.client: LocustClientSession  # type: ignore[assignment] # always set in cm
 
     @asynccontextmanager
     async def cm(self):
-        async with LocustClientSession(self.runner, self.base_url, **self.kwargs) as self.client:
+        async with LocustClientSession(self.runner, self.base_url, **self.session_kwargs) as self.client:
             yield
 
 

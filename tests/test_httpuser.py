@@ -27,8 +27,7 @@ async def test_kwargs_forwarded_to_session(httpserver: HTTPServer):
     httpserver.expect_request("/").respond_with_data("")
 
     class TimeoutUser(HttpUser):
-        def __init__(self, *args):
-            super().__init__(*args, timeout=aiohttp.ClientTimeout(0.0001))
+        session_kwargs = {"timeout": aiohttp.ClientTimeout(0.0001)}
 
         async def run(self):
             async with self.client.get(httpserver.url_for("/")) as resp:
