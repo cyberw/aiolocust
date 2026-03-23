@@ -139,7 +139,7 @@ def test_manual_shutdown(http_server, capteesys):  # noqa: ARG001
         async def run(self):
             async with self.client.get("http://localhost:8081/") as resp:
                 pass
-            await self.runner.shutdown()  # manually trigger shutdown from user code
+            self.runner.shutdown()  # manually trigger shutdown from user code
 
     Runner([TestUser], duration=1).run_test()
     out, err = capteesys.readouterr()
