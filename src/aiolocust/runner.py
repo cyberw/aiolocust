@@ -144,6 +144,7 @@ class Runner:
             await asyncio.sleep(2)
 
     def shutdown(self):
+        logger.debug("Shutting down...")
         if not self.running:
             logger.debug("Already shutting down, ignoring shutdown() call")
             return
@@ -158,7 +159,11 @@ class Runner:
         async with user_instance.cm():
             while user_instance.running:
                 if self.iteration_counter.increment():
-                    self.shutdown()
+                    user_instance.running = False
+                    self.running_users.remove(user_instance)
+                    if not self.running_users:
+                        logger.debug(f"Reached iteration limit & all users finished ({self.iteration_counter.value})")
+                        self.shutdown()
                     break
                 try:
                     await user_instance.run()
