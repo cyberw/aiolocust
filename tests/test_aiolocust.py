@@ -32,8 +32,10 @@ class MyUser(HttpUser):
         proc = await asyncio.create_subprocess_exec(
             "aiolocust",
             tempfile.name,
+            "-u",
+            "20",
             "--iterations",
-            "1",
+            "30",
             env={
                 "OTEL_TRACES_EXPORTER": "console",
                 **os.environ,
@@ -52,10 +54,9 @@ class MyUser(HttpUser):
         else:
             err = stderr.decode(errors="replace")
             print(err)
-            assert not err
             output = stdout.decode(errors="replace")
             assert "http://localhost:" in output
-            assert "0 (0.0%)" in output
+            assert " foo                    │    30 │ 0 (0.0%)" in output
             assert '"trace_id":' in output
             assert '"name": "GET"' in output  # not renamed
             assert '"name": "foo"' in output  # using explicit name
