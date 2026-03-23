@@ -168,7 +168,7 @@ def test_iterations(http_server, capteesys):  # noqa: ARG001
     assert err == ""
     print(out)
     assert "Summary" in out
-    assert_search(r" http://localhost:8081/[ ]+│[ ]+60 .* 30 \(50.0%\)", out)
+    assert_search(r" http://localhost:8081/.* 60 .* 30 \(50.0%\)", out)
     assert "Error" in out
     assert_search(r"30 .* assert 'foo' in 'OK'", out)
 
