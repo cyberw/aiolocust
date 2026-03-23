@@ -47,11 +47,11 @@ def test_unhandled_exception(http_server, capteesys):  # noqa: ARG001
             await asyncio.sleep(1)
             raise Exception("an error")
 
-    Runner([TestUser], 1, 1).run_test()
+    Runner([TestUser], iterations=1).run_test()
     out, err = capteesys.readouterr()
     assert err == ""
     assert "Summary" in out
-    assert_search(r"[12] .* an error", out)
+    assert_search(r"1 .* an error", out)
 
 
 from contextlib import asynccontextmanager
@@ -121,16 +121,16 @@ def test_w_instrumentation(http_server, capfd):  # noqa: ARG001
             async with self.client.get("http://localhost:8081/404", name="foo") as resp:
                 pass
 
-    Runner([TestUser], 1, 2).run_test()
+    Runner([TestUser], iterations=2).run_test()
     out, err = capfd.readouterr()
     assert err == ""
     assert '"trace_id"' in out
     assert '"name": "foo"' in out
     assert '"name": "GET"' not in out
     assert "Summary" in out
-    assert_search(r" foo[ ]+│[ ]+[24] .* \(50.0%\)", out)
+    assert_search(r" foo[ ]+│[ ]+2 .* \(50.0%\)", out)
     assert "Error" in out
-    assert_search(r"[12] .* 404,", out)
+    assert_search(r"2 .* 404,", out)
     assert "bar" not in out
 
 
@@ -141,7 +141,7 @@ def test_manual_shutdown(http_server, capteesys):  # noqa: ARG001
                 pass
             self.runner.shutdown()  # manually trigger shutdown from user code
 
-    Runner([TestUser], duration=1).run_test()
+    Runner([TestUser]).run_test()
     out, err = capteesys.readouterr()
     assert err == ""
     print(out)

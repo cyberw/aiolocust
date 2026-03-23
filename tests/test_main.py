@@ -29,7 +29,7 @@ class MyUser(HttpUser):
         async with self.client.get("http://localhost:8081/") as resp:
             pass
 """)
-        result = runner.invoke(app, ["my_locustfile.py", "--duration", "3", "-u", "2"])
+        result = runner.invoke(app, ["my_locustfile.py", "--iterations", "3", "-u", "2"])
         assert "http://localhost:" in result.output
         assert "0 (0.0%)" in result.output
         assert result.exit_code == 0
@@ -51,7 +51,7 @@ async def run(user):
     async with user.client.get("http://localhost:8081/") as resp:
         pass
 """)
-        result = runner.invoke(app, ["my_locustfile.py", "--duration", "3", "-u", "2"])
+        result = runner.invoke(app, ["my_locustfile.py", "--iterations", "3", "-u", "2"])
         assert "http://localhost:" in result.output
         assert "0 (0.0%)" in result.output
         assert result.exit_code == 0

@@ -82,7 +82,7 @@ async def run(user):
         proc = await asyncio.create_subprocess_exec(
             "aiolocust",
             tempfile.name,
-            "--duration",
+            "--iterations",
             "1",
             "--log-level",
             "warning",
