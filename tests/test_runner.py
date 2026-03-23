@@ -152,12 +152,10 @@ def test_manual_shutdown(http_server, capteesys):  # noqa: ARG001
 def test_iterations(http_server, capteesys):  # noqa: ARG001
     class TestUser(HttpUser):
         async def run(self):
-            print("hi")
             async with self.client.get("http://localhost:8081/") as resp:
                 pass
             async with self.client.get("http://localhost:8081/") as resp:
                 assert "foo" in await resp.text()
-            print("bye")
 
     Runner(
         [TestUser],
@@ -170,9 +168,9 @@ def test_iterations(http_server, capteesys):  # noqa: ARG001
     assert err == ""
     print(out)
     assert "Summary" in out
-    assert " http://localhost:8081/ │    6 │ 3 (50.0%)" in out
+    assert " http://localhost:8081/ │    60 │ 30 (50.0%)" in out
     assert "Error" in out
-    assert_search(r"6 .* assert 'foo' in 'OK'", out)
+    assert_search(r"30 .* assert 'foo' in 'OK'", out)
 
 
 def test_desired_user_count():
