@@ -57,6 +57,7 @@ class MyUser(HttpUser):
             err = stderr.decode(errors="replace")
             print(err)
             output = stdout.decode(errors="replace")
+            print(output)
             assert "http://localhost:" in output
             assert " foo                    │    30 │ 0 (0.0%)" in output
             assert '"trace_id":' in output
