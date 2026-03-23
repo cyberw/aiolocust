@@ -26,6 +26,8 @@ class LogLevel(StrEnum):
 
 app = typer.Typer(add_completion=False)
 logger = logging.getLogger(__name__)
+# avoid annoying "Using selector: KqueueSelector" when running in debug:
+logging.getLogger("asyncio").setLevel(logging.INFO)
 
 
 def is_user_class(item) -> bool:
