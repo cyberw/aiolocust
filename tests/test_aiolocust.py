@@ -237,3 +237,31 @@ async def run(user):
             assert await proc.wait() == 0
             assert_search(r"0\.[0-9]*/s", output)  # first one
             assert_search(r"[2-9]\.[0-9]*/s", output)  # last one
+
+
+async def test_user_forwards_params_to_session_and_handles_timeouts(http_server):  # noqa: ARG001
+    proc = await asyncio.create_subprocess_exec(
+        "aiolocust",
+        "examples/advanced_user_class_settings.py",
+        "--iterations",
+        "3",
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE,
+    )
+    try:
+        stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=6)
+    except TimeoutError:
+        proc.kill()
+        stdout, stderr = await proc.communicate()
+        output = stdout.decode(errors="replace")
+        print(output)
+        pytest.fail("process never terminated")
+    else:
+        err = stderr.decode(errors="replace")
+        print(err)
+        assert not err
+        output = stdout.decode(errors="replace")
+        print(output)
+        assert "Summary" in output
+        assert await proc.wait() == 0
+        assert_search(r"3 .* TimeoutError", output)
