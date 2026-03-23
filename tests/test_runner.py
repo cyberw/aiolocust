@@ -162,7 +162,7 @@ def test_iterations(http_server, capteesys):  # noqa: ARG001
         user_count=2,
         iterations=30,
         event_loops=1,
-        duration=2,  # ensure we dont run forever, even if the iteration limit fails
+        duration=8,  # ensure we dont run forever, even if the iteration limit fails
     ).run_test()
     out, err = capteesys.readouterr()
     assert err == ""
