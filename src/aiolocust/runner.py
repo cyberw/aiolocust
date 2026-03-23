@@ -162,7 +162,7 @@ class Runner:
                     user_instance.running = False
                     self.running_users.remove(user_instance)
                     if not self.running_users:
-                        logger.debug(f"Reached iteration limit & all users finished ({self.iteration_counter.value})")
+                        logger.debug(f"Reached iteration limit ({self.iteration_counter.value}) & all users finished")
                         self.shutdown()
                     break
                 try:
