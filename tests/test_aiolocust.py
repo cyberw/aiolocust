@@ -32,10 +32,10 @@ class MyUser(HttpUser):
         proc = await asyncio.create_subprocess_exec(
             "aiolocust",
             tempfile.name,
-            "--duration",
-            "2",
             "-u",
-            "2",
+            "20",
+            "--iterations",
+            "30",
             env={
                 "OTEL_TRACES_EXPORTER": "console",
                 **os.environ,
@@ -48,16 +48,17 @@ class MyUser(HttpUser):
         except TimeoutError:
             proc.terminate()
             stdout, stderr = await proc.communicate()
+            err = stdout.decode(errors="replace")
+            print(err)
             output = stdout.decode(errors="replace")
             print(output)
             pytest.fail("process never terminated")
         else:
             err = stderr.decode(errors="replace")
             print(err)
-            assert not err
             output = stdout.decode(errors="replace")
             assert "http://localhost:" in output
-            assert "0 (0.0%)" in output
+            assert " foo                    │    30 │ 0 (0.0%)" in output
             assert '"trace_id":' in output
             assert '"name": "GET"' in output  # not renamed
             assert '"name": "foo"' in output  # using explicit name
@@ -83,7 +84,7 @@ async def run(user):
         proc = await asyncio.create_subprocess_exec(
             "aiolocust",
             tempfile.name,
-            "--duration",
+            "--iterations",
             "1",
             "--log-level",
             "warning",

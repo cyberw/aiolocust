@@ -13,7 +13,7 @@ from aiolocust.runner import Runner, Stage, desired_user_count
 WINDOWS_DELAY = 1 if os.name == "nt" else 0
 
 
-def test_runner(http_server, capteesys):  # noqa: ARG001
+def test_basic(http_server, capteesys):  # noqa: ARG001
     class TestUser(HttpUser):
         async def run(self):
             await asyncio.sleep(1)
@@ -41,17 +41,17 @@ def test_runner(http_server, capteesys):  # noqa: ARG001
     assert "bar" not in out
 
 
-def test_runner_unhandled_error(http_server, capteesys):  # noqa: ARG001
+def test_unhandled_exception(http_server, capteesys):  # noqa: ARG001
     class TestUser(HttpUser):
         async def run(self):
             await asyncio.sleep(1)
             raise Exception("an error")
 
-    Runner([TestUser], 1, 1).run_test()
+    Runner([TestUser], iterations=1).run_test()
     out, err = capteesys.readouterr()
     assert err == ""
     assert "Summary" in out
-    assert_search(r"[12] .* an error", out)
+    assert_search(r"1 .* an error", out)
 
 
 from contextlib import asynccontextmanager
@@ -81,7 +81,7 @@ def test_timeout_catching(http_server, capteesys):  # noqa: ARG001
     assert_search(r"\d .* TimeoutError", out)
 
 
-def test_runner_w_otel(http_server, capteesys):  # noqa: ARG001
+def test_w_otel(http_server, capteesys):  # noqa: ARG001
     class TestUser(HttpUser):
         async def run(self):
             await asyncio.sleep(1)
@@ -108,7 +108,7 @@ def test_runner_w_otel(http_server, capteesys):  # noqa: ARG001
 @pytest.mark.skipif(
     condition=not bool(os.environ.get("VSCODE_CLI")), reason="Only works when run individually, not sure why"
 )
-def test_runner_w_instrumentation(http_server, capfd):  # noqa: ARG001
+def test_w_instrumentation(http_server, capfd):  # noqa: ARG001
     AioHttpClientInstrumentor().instrument(request_hook=request_hook)
     os.environ["OTEL_TRACES_EXPORTER"] = "console"
     otel.setup_trace_exporters()
@@ -121,17 +121,56 @@ def test_runner_w_instrumentation(http_server, capfd):  # noqa: ARG001
             async with self.client.get("http://localhost:8081/404", name="foo") as resp:
                 pass
 
-    Runner([TestUser], 1, 2).run_test()
+    Runner([TestUser], iterations=2).run_test()
     out, err = capfd.readouterr()
     assert err == ""
     assert '"trace_id"' in out
     assert '"name": "foo"' in out
     assert '"name": "GET"' not in out
     assert "Summary" in out
-    assert_search(r" foo[ ]+│[ ]+[24] .* \(50.0%\)", out)
+    assert_search(r" foo[ ]+│[ ]+2 .* \(50.0%\)", out)
     assert "Error" in out
-    assert_search(r"[12] .* 404,", out)
+    assert_search(r"2 .* 404,", out)
     assert "bar" not in out
+
+
+def test_manual_shutdown(http_server, capteesys):  # noqa: ARG001
+    class TestUser(HttpUser):
+        async def run(self):
+            async with self.client.get("http://localhost:8081/") as resp:
+                pass
+            self.runner.shutdown()  # manually trigger shutdown from user code
+
+    Runner([TestUser]).run_test()
+    out, err = capteesys.readouterr()
+    assert err == ""
+    print(out)
+    assert "Summary" in out
+    assert " http://localhost:8081/ │     1 │ 0 (0.0%) " in out
+
+
+def test_iterations(http_server, capteesys):  # noqa: ARG001
+    class TestUser(HttpUser):
+        async def run(self):
+            async with self.client.get("http://localhost:8081/") as resp:
+                pass
+            async with self.client.get("http://localhost:8081/") as resp:
+                assert "foo" in await resp.text()
+
+    Runner(
+        [TestUser],
+        user_count=2,
+        iterations=30,
+        event_loops=1,
+        duration=8,  # ensure we dont run forever, even if the iteration limit fails
+    ).run_test()
+    out, err = capteesys.readouterr()
+    assert err == ""
+    print(out)
+    assert "Summary" in out
+    assert_search(r" http://localhost:8081/.* 60 .* 30 \(50.0%\)", out)
+    assert "Error" in out
+    assert_search(r"30 .* assert 'foo' in 'OK'", out)
 
 
 def test_desired_user_count():

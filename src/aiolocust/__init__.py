@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 
 class User(ABC):
     def __init__(self, runner: Runner | None = None, **kwargs):
-        self.runner = runner
+        self.runner: Runner = runner  # pyright: ignore[reportAttributeAccessIssue] # always set outside of unit testing
         self.running = True
 
     @abstractmethod

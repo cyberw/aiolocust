@@ -12,7 +12,7 @@ from aiohttp import ClientResponseError
 from rich.console import Console
 
 from aiolocust import User, otel, stats
-from aiolocust.datatypes import Stage
+from aiolocust.datatypes import SafeCounter, Stage
 
 # uvloop is faster than the default pure-python asyncio event loop
 # so if it is installed, we're going to be using that one
@@ -97,6 +97,7 @@ class Runner:
         user_count: int = 1,
         duration: int | None = None,
         rate: float | None = None,
+        iterations: int | None = None,
         config: dict | None = None,
         event_loops: int | None = None,
     ):
@@ -105,8 +106,11 @@ class Runner:
         self.start_time = 0
         self.sf = stats.StatsFormatter()
         self.console = Console()
+        self.users = users
+        self.iteration_counter = SafeCounter(iterations)
+        config = config or {}
 
-        if config and "stages" in config:
+        if "stages" in config:
             self.stages = [Stage(**item) for item in config["stages"]]
             if user_count > 1 or duration or rate:
                 logger.info("Both stages and user_count/duration/rate were specified, stages will take precedence")
@@ -116,9 +120,9 @@ class Runner:
                 Stage(ramp_up_time, user_count),
                 Stage(duration - ramp_up_time if duration else 99999999, user_count),
             ]
+
         logger.debug(f"Stages: {self.stages}")
 
-        self.users = users
         if event_loops is None:
             if cpu_count := os.cpu_count():
                 # for heavy calculations this may need to be increased,
@@ -140,8 +144,9 @@ class Runner:
             await asyncio.sleep(2)
 
     def shutdown(self):
+        logger.debug("Shutting down...")
         if not self.running:
-            logger.warning("Already shutting down, ignoring shutdown() call")
+            logger.debug("Already shutting down, ignoring shutdown() call")
             return
         self.running = False
         for user in self.running_users:
@@ -153,6 +158,13 @@ class Runner:
     async def user_loop(self, user_instance: User):
         async with user_instance.cm():
             while user_instance.running:
+                if self.iteration_counter.increment():
+                    user_instance.running = False
+                    self.running_users.remove(user_instance)
+                    if not self.running_users:
+                        logger.debug(f"Reached iteration limit ({self.iteration_counter.value}) & all users finished")
+                        self.shutdown()
+                    break
                 try:
                     await user_instance.run()
                 except EXPECTED_ERRORS:
