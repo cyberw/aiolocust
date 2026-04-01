@@ -16,6 +16,7 @@
 # Feel free to tweak this script but you don't really need to understand it to use it.
 
 import os.path
+from datetime import datetime
 
 from mitmproxy import http  # type: ignore
 
@@ -43,22 +44,22 @@ class LocustExporter:
     def new_file(self):
         with open(self.filename, "w") as f:
             f.write(
-                """from aiolocust import HttpUser
+                f"""# This file was generated using mitmproxy at {datetime.now().strftime("%Y-%m-%dT%H:%M:%S")}
+from aiolocust import HttpUser
 
 
 async def run(self: HttpUser):
 """
             )
 
-    def request(self, flow: http.HTTPFlow):
+    def response(self, flow: http.HTTPFlow):
         method: str = flow.request.method.lower()
         url: str = flow.request.url
         headers = dict(flow.request.headers)
 
-        for ignored_header in ignored_headers:
-            # TODO: implement case-insensitive matching
-            if ignored_header in headers:
-                del headers[ignored_header]
+        for header in headers.copy():
+            if header.lower() in ignored_headers:
+                del headers[header]
 
         for ignored_url in ignored_urls:
             if url.startswith(ignored_url):
