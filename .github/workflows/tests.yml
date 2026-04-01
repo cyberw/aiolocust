@@ -35,7 +35,7 @@ jobs:
 
             - name: generate locustfile using mitmproxy and execute recording
               run: |
-                  cd /tmp
+                  cd ${{ runner.temp }} # dont overwrite locustfile.py in the checkout
                   mitmdump -p 8080 -s examples/mitmproxy_addon.py > mitmproxy.log 2>&1 &
                   timeout 10s bash -c 'until lsof -i:8080; do sleep 1; done'
                   grep "This file was generated using mitmproxy" locust_output.txt
