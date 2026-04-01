@@ -36,8 +36,8 @@ jobs:
             - name: generate locustfile using mitmproxy and execute recording
               run: |
                   cd ${{ runner.temp }} # dont overwrite locustfile.py in the checkout
-                  mitmdump -s examples/mitmproxy_addon.py &
-                  sleep 5
+                  mitmdump -s "$GITHUB_WORKSPACE/examples/mitmproxy_addon.py" &
+                  sleep 5   
                   #   timeout 10s bash -c 'until lsof -i:8080; do sleep 1; done'
                   grep "This file was generated using mitmproxy" locustfile.py
                   curl -x http://localhost:8080 -k https://www.google.com
