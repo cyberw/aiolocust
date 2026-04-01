@@ -37,6 +37,8 @@ async def run(user: HttpUser):
 
 See [more examples](examples/).
 
+To record a locustfile from a browser session or other app, see [mitmproxy_addon.py](examples/mitmproxy_addon.py).
+
 ## Run a test
 
 ```text
