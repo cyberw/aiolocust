@@ -152,7 +152,8 @@ jobs:
 
     publish_pypi:
         name: Publish to PyPI
-        needs: [linux-and-lint, windows, macos]
+        needs:
+            [ruff-pyright-pytestlinux-and-mitmproxy-recording, windows, macos]
         if: github.repository_owner == 'cyberw' && startsWith(github.event.ref, 'refs/tags')
         runs-on: ubuntu-latest
 
