@@ -8,7 +8,7 @@
 # 3. Use the proxy from your browser or app. For example, using curl:
 #    curl -x http://localhost:8080 -k https://www.google.com
 # Or using Chrome:
-#    open -na "Google Chrome" --args --incognito --proxy-server="http://127.0.0.1:8080" --user-data-dir="/tmp/chrome-proxy-session" --no-first-run --no-default-browser-check --disable-component-update --disable-extensions --new-window http://www.google.com
+#    open -na "Google Chrome" --args --incognito --proxy-server="http://127.0.0.1:8080" --user-data-dir="/tmp/chrome-proxy-session" --no-first-run --no-default-browser-check --disable-component-update --disable-extensions --new-window --proxy-bypass-list="<-loopback>" http://localhost/some-url
 # 4. Look at the generated locustfile.py!
 
 from mitmproxy import http  # type: ignore
