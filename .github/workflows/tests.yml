@@ -30,7 +30,6 @@ jobs:
 
             - name: ruff lint and format
               run: |
-                  git checkout locustfile.py # the mitmproxy test would have overwritten this
                   uv run ruff check
                   uv run ruff format --check
 
