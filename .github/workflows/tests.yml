@@ -14,7 +14,7 @@ on:
             - "**.md"
 
 jobs:
-    linux-and-lint:
+    ruff-pyright-pytestlinux-and-mitmproxy-recording:
         runs-on: ubuntu-latest
 
         steps:
@@ -28,10 +28,32 @@ jobs:
             - name: setup uv
               uses: astral-sh/setup-uv@v7
 
-            - name: lint, format and typecheck
+            - name: install mitmproxy
               run: |
+                  sudo apt-get update
+                  sudo apt-get install -y mitmproxy
+
+            - name: generate locustfile using mitmproxy and execute recording
+              run: |
+                  mitmdump -s examples/mitmproxy_addon.py &
+                  timeout 10s bash -c 'until lsof -i:8080; do sleep 1; done'
+                  grep "This file was generated using mitmproxy" locustfile.py
+                  curl -x http://localhost:8080 -k https://www.google.com
+                  grep https://www.google.com locustfile.py
+                  uv run aiolocust -i 1 | tee locust_output.txt
+                  echo
+                  grep https://www.google.com locust_output.txt
+                  echo
+                  grep "0 (0.0%)" locust_output.txt
+
+            - name: ruff lint and format
+              run: |
+                  git checkout locustfile.py # the mitmproxy test would have overwritten this
                   uv run ruff check
                   uv run ruff format --check
+
+            - name: pyright type check
+              run: |
                   uv run pyright
 
             - name: pytest
@@ -93,7 +115,7 @@ jobs:
 
             - name: Run Tests
               run: |
-                  uv run aiolocust examples/advanced.py --users 100 --duration 30 --rate 10 --log-level debug | tee locust_output.txt
+                  uv run examples/advanced.py --users 100 --duration 30 --rate 10 --log-level debug | tee locust_output.txt
                   grep -E 'Total.*[0-9]{4}.[0-9]{2}/s' locust_output.txt # ensure >1000 RPS
                   bash -ec '! grep Traceback locust_output.txt' # ensure no callstacks
     windows:
@@ -132,7 +154,8 @@ jobs:
 
     publish_pypi:
         name: Publish to PyPI
-        needs: [linux-and-lint, windows, macos]
+        needs:
+            [ruff-pyright-pytestlinux-and-mitmproxy-recording, windows, macos]
         if: github.repository_owner == 'cyberw' && startsWith(github.event.ref, 'refs/tags')
         runs-on: ubuntu-latest
 
