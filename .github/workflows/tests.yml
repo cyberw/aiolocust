@@ -28,6 +28,19 @@ jobs:
             - name: setup uv
               uses: astral-sh/setup-uv@v7
 
+            - name: ruff lint and format
+              run: |
+                  git checkout locustfile.py # the mitmproxy test would have overwritten this
+                  uv run ruff check
+                  uv run ruff format --check
+
+            - name: pyright type check
+              run: |
+                  uv run pyright
+
+            - name: pytest
+              run: uv run pytest tests
+
             - name: install mitmproxy
               run: |
                   sudo apt-get update
@@ -45,19 +58,6 @@ jobs:
                   grep https://www.google.com locust_output.txt
                   echo
                   grep "0 (0.0%)" locust_output.txt
-
-            - name: ruff lint and format
-              run: |
-                  git checkout locustfile.py # the mitmproxy test would have overwritten this
-                  uv run ruff check
-                  uv run ruff format --check
-
-            - name: pyright type check
-              run: |
-                  uv run pyright
-
-            - name: pytest
-              run: uv run pytest tests
 
     examples:
         runs-on: ubuntu-latest
