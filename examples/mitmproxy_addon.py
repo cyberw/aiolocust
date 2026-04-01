@@ -36,8 +36,8 @@ IGNORED_URLS = [
     "https://clientservices.googleapis.com/",
 ]
 
-# These are created by aiohttp anyway.
-IGNORED_HEADERS = ["user-agent", "content-length", "cookie"]
+# These are created by aiohttp automatically so they don't need to be in the script
+IGNORED_HEADERS = ["user-agent", "content-length", "cookie", "host"]
 
 
 class LocustExporter:
