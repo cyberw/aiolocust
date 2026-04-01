@@ -41,11 +41,14 @@ jobs:
                   curl -x http://localhost:8080 -k https://www.google.com
                   grep https://www.google.com locustfile.py
                   uv run aiolocust -i 1 | tee locust_output.txt
+                  echo
                   grep https://www.google.com locust_output.txt
+                  echo
                   grep "0 (0.0%)" locust_output.txt
 
             - name: ruff lint and format
               run: |
+                  git checkout locustfile.py # the mitmproxy test would have overwritten this
                   uv run ruff check
                   uv run ruff format --check
 
