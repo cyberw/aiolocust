@@ -5,11 +5,17 @@
 #    sudo security add-trusted-cert -d -p ssl -p basic -k /Library/Keychains/System.keychain ~/.mitmproxy/mitmproxy-ca-cert.pem
 # 2. Start the proxy:
 #    mitmdump -s examples/mitmproxy_addon.py
-# 3. Use the proxy from your browser or app. For example, using curl:
+# 3. Use the proxy from your browser or app.
+# Using curl:
 #    curl -x http://localhost:8080 -k https://www.google.com
-# Or using Chrome:
+# Using Chrome:
 #    open -na "Google Chrome" --args --incognito --proxy-server="http://127.0.0.1:8080" --user-data-dir="/tmp/chrome-proxy-session" --no-first-run --no-default-browser-check --disable-component-update --disable-extensions --new-window --proxy-bypass-list="<-loopback>" http://localhost/some-url
-# 4. Look at the generated locustfile.py!
+#    ... and click around doing your stuff!
+# 4. Look at the generated locustfile.py (it is updated while recording)
+#
+# Feel free to tweak this script but you don't really need to understand it to use it.
+
+import os.path
 
 from mitmproxy import http  # type: ignore
 
@@ -25,13 +31,16 @@ ignored_urls = [
     "https://clientservices.googleapis.com/",
 ]
 
-# These are created by aiohttp anyway
+# These are created by aiohttp anyway.
 ignored_headers = ["user-agent", "content-length", "cookie"]
 
 
 class LocustExporter:
     def __init__(self):
         self.filename = "locustfile.py"
+        self.new_file()
+
+    def new_file(self):
         with open(self.filename, "w") as f:
             f.write(
                 """from aiolocust import HttpUser
@@ -47,6 +56,7 @@ async def run(self: HttpUser):
         headers = dict(flow.request.headers)
 
         for ignored_header in ignored_headers:
+            # TODO: implement case-insensitive matching
             if ignored_header in headers:
                 del headers[ignored_header]
 
@@ -54,6 +64,11 @@ async def run(self: HttpUser):
             if url.startswith(ignored_url):
                 print(f"Skipping {url} since it starts with {ignored_url}")
                 return
+
+        if not os.path.isfile(self.filename):
+            # in case someone deleted the file while mitmproxy was running
+            self.new_file()
+
         with open(self.filename, "a") as f:
             f.write(f"""    async with self.client.{method}("{url}", headers={headers}) as resp:
         pass\n""")
