@@ -29,7 +29,7 @@ ignored_urls = [
 ignored_headers = ["user-agent", "content-length", "cookie"]
 
 
-class AioExporter:
+class LocustExporter:
     def __init__(self):
         self.filename = "locustfile.py"
         with open(self.filename, "w") as f:
@@ -59,4 +59,4 @@ async def run(self: HttpUser):
         pass\n""")
 
 
-addons = [AioExporter()]
+addons = [LocustExporter()]
