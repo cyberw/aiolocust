@@ -20,7 +20,7 @@ from datetime import datetime
 
 from mitmproxy import http  # type: ignore
 
-ignored_urls = [
+IGNORED_URLS = [
     "https://www.google.com/async",
     "https://optimizationguide-pa.googleapis.com",
     "https://safebrowsing.googleapis.com/",
@@ -33,7 +33,7 @@ ignored_urls = [
 ]
 
 # These are created by aiohttp anyway.
-ignored_headers = ["user-agent", "content-length", "cookie"]
+IGNORED_HEADERS = ["user-agent", "content-length", "cookie"]
 
 
 class LocustExporter:
@@ -58,10 +58,10 @@ async def run(self: HttpUser):
         headers = dict(flow.request.headers)
 
         for header in headers.copy():
-            if header.lower() in ignored_headers:
+            if header.lower() in IGNORED_HEADERS:
                 del headers[header]
 
-        for ignored_url in ignored_urls:
+        for ignored_url in IGNORED_URLS:
             if url.startswith(ignored_url):
                 print(f"Skipping {url} since it starts with {ignored_url}")
                 return
