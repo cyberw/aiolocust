@@ -37,7 +37,44 @@ async def run(user: HttpUser):
 
 See [more examples](examples/).
 
-To record a locustfile from a browser session or other app, see [mitmproxy_addon.py](examples/mitmproxy_addon.py).
+## Record a locustfile from browser session or other app
+
+Using [mitmproxy](https://docs.mitmproxy.org/stable/api/events.html) and our [custom script](examples/mitmproxy_addon.py) you can easily generate locustfiles from live traffic.
+
+### Install mitmproxy & trust its certificate authority
+
+```text
+brew install --cask mitmproxy
+sudo security add-trusted-cert -d -p ssl -p basic -k /Library/Keychains/System.keychain ~/.mitmproxy/mitmproxy-ca-cert.pem
+```
+
+### Start the proxy
+
+```text
+mitmdump -s examples/mitmproxy_addon.py
+```
+
+### Use the proxy from your browser or app
+
+Using curl:
+
+```text
+curl -x http://localhost:8080 -k https://www.google.com
+```
+
+Using Chrome:
+
+```text
+open -na "Google Chrome" --args --proxy-server="http://127.0.0.1:8080" --incognito --user-data-dir="/tmp/chrome-proxy-session" --no-first-run --no-default-browser-check --disable-component-update --disable-extensions --new-window --proxy-bypass-list="<-loopback>" http://localhost/some-url
+```
+
+... and now click around doing your stuff!
+
+`--proxy-server` is of course the most key parameter for recording. You should be able to make this setting in other apps or even at OS level if necessary.
+
+### Look at the generated locustfile.py (it is updated while recording)
+
+For details and additional options, see [mitmproxy_addon.py](examples/mitmproxy_addon.py).
 
 ## Run a test
 

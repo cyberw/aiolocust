@@ -1,27 +1,12 @@
-# To generate a locustfile based on live traffic.
+# Used to generate a locustfile based on live traffic, using mitmproxy.
 #
-# 1. Install mitmproxy & trust its certificate authority:
-#    brew install --cask mitmproxy
-#    sudo security add-trusted-cert -d -p ssl -p basic -k /Library/Keychains/System.keychain ~/.mitmproxy/mitmproxy-ca-cert.pem
-#
-# 2. Start the proxy:
-#    mitmdump -s examples/mitmproxy_addon.py
-#
-# 3. Use the proxy from your browser or app.
-# Using curl:
-#    curl -x http://localhost:8080 -k https://www.google.com
-# Using Chrome:
-#    open -na "Google Chrome" --args --incognito --proxy-server="http://127.0.0.1:8080" --user-data-dir="/tmp/chrome-proxy-session" --no-first-run --no-default-browser-check --disable-component-update --disable-extensions --new-window --proxy-bypass-list="<-loopback>" http://localhost/some-url
-#    ... and click around doing your stuff!
-# You can of course use any app, and you can configure the proxy settings on OS level or within the app if it supports that.
-#
-# 4. Look at the generated locustfile.py (it is updated while recording)
-#
-# Feel free to tweak this script but you don't really need to understand it to use it.
+# It supports a couple different options, but the easiest use case is just:
+# mitmdump -s examples/mitmproxy_addon.py
 
 import os
 from datetime import datetime
 
+# this script is meant to be imported from mitmproxy, not run using aiolocust, so type checking wouldn't work
 from mitmproxy import http  # type: ignore
 
 IGNORED_URLS = os.getenv(
