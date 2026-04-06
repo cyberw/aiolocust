@@ -47,12 +47,15 @@ jobs:
 
             - name: generate locustfile using mitmproxy and execute recording
               run: |
-                  mitmdump -s examples/mitmproxy_addon.py &
+                  LOCUST_LOCUSTFILE=asdf.py LOCUST_EXTRA_IGNORED_HEADERS=Proxy-Connection LOCUST_IGNORED_URLS=https://www.google.com/?FOO mitmdump -s examples/mitmproxy_addon.py &
                   timeout 10s bash -c 'until lsof -i:8080; do sleep 1; done'
-                  grep "This file was generated using mitmproxy" locustfile.py
+                  grep "This file was generated using mitmproxy" asdf.py
                   curl -x http://localhost:8080 -k https://www.google.com
-                  grep https://www.google.com locustfile.py
-                  uv run aiolocust -i 1 | tee locust_output.txt
+                  curl -x http://localhost:8080 -k https://www.google.com/?FOO
+                  grep https://www.google.com asdf.py
+                  grep -v Proxy-Connection asdf.py
+                  grep -v FOO asdf.py
+                  uv run aiolocust -i 1 asdf.py | tee locust_output.txt
                   echo
                   grep https://www.google.com locust_output.txt
                   echo

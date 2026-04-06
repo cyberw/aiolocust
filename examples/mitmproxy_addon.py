@@ -19,30 +19,33 @@
 #
 # Feel free to tweak this script but you don't really need to understand it to use it.
 
-import os.path
+import os
 from datetime import datetime
 
 from mitmproxy import http  # type: ignore
 
-IGNORED_URLS = [
-    "https://www.google.com/async",
-    "https://optimizationguide-pa.googleapis.com",
-    "https://safebrowsing.googleapis.com/",
-    "https://android.clients.google.com",
-    "https://accounts.google.com/",
-    "http://clients2.google.com/",
-    "https://update.googleapis.com/",
-    "https://pagead2.googlesyndication.com/",
-    "https://clientservices.googleapis.com/",
-]
+IGNORED_URLS = os.getenv(
+    "LOCUST_IGNORED_URLS",
+    "https://www.google.com/async,https://optimizationguide-pa.googleapis.com,https://safebrowsing.googleapis.com/,https://android.clients.google.com,https://accounts.google.com/,http://clients2.google.com/,https://update.googleapis.com/,https://pagead2.googlesyndication.com/,https://clientservices.googleapis.com/",
+).split(",")
+if extra_urls := os.getenv("LOCUST_EXTRA_IGNORED_URLS"):
+    IGNORED_URLS.extend(extra_urls.split(","))
 
 # These are created by aiohttp automatically so they don't need to be in the script
-IGNORED_HEADERS = ["user-agent", "content-length", "cookie", "host"]
+IGNORED_HEADERS = os.getenv(
+    "LOCUST_IGNORED_HEADERS",
+    "user-agent,content-length,cookie,host",
+).split(",")
+if extra_headers := os.getenv("LOCUST_EXTRA_IGNORED_HEADERS"):
+    IGNORED_HEADERS.extend(extra_headers.lower().split(","))  # headers are case-insensitive
+print(IGNORED_HEADERS)
+
+IGNORED_METHODS = os.getenv("LOCUST_IGNORED_METHODS", "options").split(",")
 
 
 class LocustExporter:
     def __init__(self):
-        self.filename = "locustfile.py"
+        self.filename = os.getenv("LOCUST_LOCUSTFILE", "locustfile.py")
         self.new_file()
 
     def new_file(self):
@@ -69,6 +72,9 @@ async def run(self: HttpUser):
             if url.startswith(ignored_url):
                 print(f"Skipping {url} since it starts with {ignored_url}")
                 return
+
+        if method in IGNORED_METHODS:
+            return
 
         if not os.path.isfile(self.filename):
             # in case someone deleted the file while mitmproxy was running
