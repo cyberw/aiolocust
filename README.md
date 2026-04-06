@@ -39,7 +39,7 @@ See [more examples](examples/).
 
 ## Record a locustfile from browser session or other app
 
-Using [mitmproxy](https://docs.mitmproxy.org/stable/api/events.html) and our [custom script](examples/mitmproxy_addon.py) you can easily generate locustfiles from live traffic.
+If you don't want to code your locustfile from scratch, you can use [mitmproxy](https://docs.mitmproxy.org/stable/api/events.html) and our [custom script](examples/mitmproxy_addon.py) to easily generate locustfiles from live traffic:
 
 ### Install mitmproxy & trust its certificate authority
 
