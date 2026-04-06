@@ -50,6 +50,8 @@ sudo security add-trusted-cert -d -p ssl -p basic -k /Library/Keychains/System.k
 
 ### Start the proxy
 
+This (at the moment) requires a checked out copy of this repo or at least a copy of mitmproxy_addon.py:
+
 ```text
 mitmdump -s examples/mitmproxy_addon.py
 ```
