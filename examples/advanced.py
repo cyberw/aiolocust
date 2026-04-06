@@ -4,8 +4,7 @@
 # You can still pass regular parameters like --duration etc
 
 
-from aiolocust import Runner
-from aiolocust.http import HttpUser
+from aiolocust import HttpUser, Runner
 
 
 class MyUser(HttpUser):

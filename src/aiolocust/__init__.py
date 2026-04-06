@@ -16,5 +16,5 @@ class User(ABC):
         yield
 
 
-from aiolocust.http import HttpUser, LocustClientSession  # noqa: F401
 from aiolocust.runner import Runner  # noqa: F401
+from aiolocust.users.http import HttpUser, LocustClientSession  # noqa: F401

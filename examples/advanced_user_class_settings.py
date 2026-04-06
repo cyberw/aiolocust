@@ -1,6 +1,6 @@
 import aiohttp
 
-from aiolocust.http import HttpUser
+from aiolocust import HttpUser
 
 
 class TimeoutUser(HttpUser):

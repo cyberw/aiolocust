@@ -4,7 +4,7 @@ from utils import assert_search
 from aiolocust.runner import Runner
 
 try:
-    from aiolocust.pw import PlaywrightUser
+    from aiolocust.users.pw import PlaywrightUser
 except ImportError:
     PlaywrightUser = object
 
