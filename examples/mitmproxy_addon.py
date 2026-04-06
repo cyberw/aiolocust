@@ -11,14 +11,15 @@ from mitmproxy import http  # type: ignore
 
 IGNORED_URLS = os.getenv(
     "LOCUST_IGNORED_URLS",
+    # These are created by chrome at startup and are almost never relevant:
     "https://www.google.com/async,https://optimizationguide-pa.googleapis.com,https://safebrowsing.googleapis.com/,https://android.clients.google.com,https://accounts.google.com/,http://clients2.google.com/,https://update.googleapis.com/,https://pagead2.googlesyndication.com/,https://clientservices.googleapis.com/",
 ).split(",")
 if extra_urls := os.getenv("LOCUST_EXTRA_IGNORED_URLS"):
     IGNORED_URLS.extend(extra_urls.split(","))
 
-# These are created by aiohttp automatically so they don't need to be in the script
 IGNORED_HEADERS = os.getenv(
     "LOCUST_IGNORED_HEADERS",
+    # These are created by aiohttp automatically so they don't need to be in the script:
     "user-agent,content-length,cookie,host",
 ).split(",")
 if extra_headers := os.getenv("LOCUST_EXTRA_IGNORED_HEADERS"):
