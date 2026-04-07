@@ -6,12 +6,12 @@ import pytest
 import pytest_aiohttp
 from aiohttp import ClientConnectorError, WSMsgType, web
 from aiohttp.client_exceptions import ClientResponseError
-from aiolocust.http import LocustClientSession
 from pytest_httpserver import HTTPServer
 from pytest_mock.plugin import MockerFixture
 
 import aiolocust.stats
 from aiolocust.datatypes import Request
+from aiolocust.users.http import LocustClientSession
 
 
 async def test_basic(httpserver: HTTPServer):
