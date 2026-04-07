@@ -2,9 +2,8 @@ import asyncio
 
 import aiohttp
 import pytest
-from pytest_httpserver import HTTPServer
-
 from aiolocust.http import HttpUser
+from pytest_httpserver import HTTPServer
 
 
 async def user_loop(user_instance):  # this is basically copied from runner.user_loop()

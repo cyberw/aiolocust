@@ -3,11 +3,11 @@ import os
 
 import aiohttp
 import pytest
+from aiolocust.http import HttpUser, LocustClientSession, request_hook
 from opentelemetry.instrumentation.aiohttp_client import AioHttpClientInstrumentor
 from utils import assert_search
 
 from aiolocust import otel
-from aiolocust.http import HttpUser, LocustClientSession, request_hook
 from aiolocust.runner import Runner, Stage, desired_user_count
 
 WINDOWS_DELAY = 1 if os.name == "nt" else 0
