@@ -17,7 +17,7 @@ async def test_otel_autoinstrumentation(http_server):  # noqa: ARG001
         with open(script_path, "w") as tempfile:
             tempfile.write("""
 from opentelemetry.instrumentation.aiohttp_client import AioHttpClientInstrumentor
-from aiolocust.http import request_hook, HttpUser
+from aiolocust.users.http import request_hook, HttpUser
 
 AioHttpClientInstrumentor().instrument(request_hook=request_hook)
 

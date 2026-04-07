@@ -116,7 +116,7 @@ def request_hook(span: Span, params: aiohttp.TraceRequestStartParams):  # noqa: 
 
     Typical usage:
 
-    AioHttpClientInstrumentor().instrument(request_hook=aiolocust.http.request_hook)
+    AioHttpClientInstrumentor().instrument(request_hook=aiolocust.users.http.request_hook)
     """
     if custom_name := context.get_value(SPAN_NAME_KEY):
         span.update_name(str(custom_name))

@@ -28,7 +28,7 @@ class MyUser(HttpUser):
     async def run(self):
         async with self.client.get("http://localhost:8080/", name="some-name") as resp:
             # autoinstrumented span is already closed here, so we can't manipulate it directly,
-            # but aiolocust.http.request_hook renames the span based on the name parameter
+            # but aiolocust.users.http.request_hook renames the span based on the name parameter
             pass
 
         # we can create a parent span and do whatever we want with it
