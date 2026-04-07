@@ -12,9 +12,9 @@ import click
 import typer
 
 from aiolocust import User
-from aiolocust.http import HttpUser
 from aiolocust.otel import setup_logging
 from aiolocust.runner import Runner
+from aiolocust.users.http import HttpUser
 
 
 class LogLevel(StrEnum):
@@ -122,7 +122,7 @@ def main(
     if instrument:
         from opentelemetry.instrumentation.aiohttp_client import AioHttpClientInstrumentor
 
-        from aiolocust.http import request_hook
+        from aiolocust.users.http import request_hook
 
         AioHttpClientInstrumentor().instrument(request_hook=request_hook)
 
