@@ -9,9 +9,9 @@ from opentelemetry import context
 from opentelemetry.instrumentation.aiohttp_client import AioHttpClientInstrumentor
 from opentelemetry.trace import Span
 
-from aiolocust.http import HttpUser, request_hook
 from aiolocust.otel import tracer
 from aiolocust.runner import Runner
+from aiolocust.users.http import HttpUser, request_hook
 
 SOME_ATTRIBUTE_KEY = context.create_key("some-attribute")
 
