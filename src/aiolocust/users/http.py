@@ -24,13 +24,14 @@ class HttpUser(User):
     session_kwargs: dict[str, Any] = {}
     """
     Extra arguments to pass to aiohttp.ClientSession, e.g.
-
+    ```
     class TimeoutUser(HttpUser):
         session_kwargs = {
             "timeout": aiohttp.ClientTimeout(0.0001),
             "skip_auto_headers": {"User-Agent"},
         }
         ...
+    ```
     """
 
     def __init__(self, runner: Runner | None = None, base_url=None):
@@ -116,7 +117,9 @@ def request_hook(span: Span, params: aiohttp.TraceRequestStartParams):  # noqa: 
 
     Typical usage:
 
+    ```
     AioHttpClientInstrumentor().instrument(request_hook=aiolocust.users.http.request_hook)
+    ```
     """
     if custom_name := context.get_value(SPAN_NAME_KEY):
         span.update_name(str(custom_name))
