@@ -9,8 +9,8 @@
             "env": {
                 // "OTEL_TRACES_EXPORTER": "console"
             },
-            "args": ["${file}", "-d", "2"],
-            "justMyCode": false
+            "args": ["locustfile.py", "-d", "2"],
+            "justMyCode": true
         },
         {
             "name": "run current file",
