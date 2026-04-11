@@ -43,6 +43,9 @@ lint.dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?)|resp)$"
 
 [dependency-groups]
 dev = [
+    "mkdocs-click>=0.9.0",
+    "mkdocs-material>=9.7.6",
+    "mkdocstrings[python]>=1.0.3",
     "pyright>=1.1.408",
     "pytest>=9.0.2",
     "pytest-aiohttp>=1.1.0",

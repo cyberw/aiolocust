@@ -1,0 +1,13 @@
+site_name: aiolocust
+theme:
+  name: material
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [src]
+
+markdown_extensions:
+  - mkdocs-click

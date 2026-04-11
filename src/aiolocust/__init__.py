@@ -18,3 +18,5 @@ class User(ABC):
 
 from aiolocust.runner import Runner  # noqa: F401
 from aiolocust.users.http import HttpUser, LocustClientSession  # noqa: F401
+
+__all__ = ["User", "HttpUser", "LocustClientSession"]
