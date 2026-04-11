@@ -179,3 +179,7 @@ You can still use good ol' pip as well, just remember that you need a freethread
 pip install aiolocust
 aiolocust
 ```
+
+## API docs
+
+See [documentation](https://cyberw.github.io/aiolocust/).
