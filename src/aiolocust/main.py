@@ -150,3 +150,7 @@ def main(
         r.run_test()
     else:
         typer.echo(f"Error: No User classes or run function defined in {filename}")
+
+
+# Expose a Click command object for mkdocs-click documentation generation.
+cli = typer.main.get_command(app)
