@@ -62,7 +62,7 @@ See [more examples](examples/), or keep reading to learn how to create one based
 
 ## Record a locustfile from browser session or other app
 
-If you don't want to code your locustfile from scratch, you can use [mitmproxy](https://docs.mitmproxy.org/stable/api/events.html) and our [custom script](examples/mitmproxy_addon.py) to easily generate locustfiles from live traffic:
+If you don't want to code your locustfile from scratch, you can use [mitmproxy](https://docs.mitmproxy.org/stable/api/events.html) and our custom script to easily generate locustfiles from live traffic:
 
 ### Install mitmproxy & trust its certificate authority
 
@@ -73,7 +73,7 @@ sudo security add-trusted-cert -d -p ssl -p basic -k /Library/Keychains/System.k
 
 ### Start the proxy
 
-This (at the moment) requires a checked out copy of this repo or at least a copy of mitmproxy_addon.py:
+This (at the moment) requires a checked out copy of this repo or at least a copy of [mitmproxy_addon.py](examples/mitmproxy_addon.py):
 
 ```text
 mitmdump -s examples/mitmproxy_addon.py
