@@ -108,7 +108,7 @@ aiolocust --duration 30 --users 100
 
 Locust was created in 2011, and while it has gone through several major overhauls, it still has a lot of legacy-style code, and has accumulated a lot of non-core functionality that makes it very hard to maintain and improve. It has over 10,000 lines of code, with a mix of procedural, object oriented and functional programming, with several confusing abstractions.
 
-aiolocust is built to be smaller in scope, but capture the learnings from Locust. It is possible that this could be merged into Locust at some point, but for now it is a completely separate package.
+aiolocust is built to be smaller in scope, but still capture the learnings from Locust. It is possible that this could be merged into Locust at some point, but for now it is a completely separate package.
 
 ## Simple and consistent syntax
 
