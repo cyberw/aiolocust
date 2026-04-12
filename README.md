@@ -40,7 +40,7 @@ See [more examples](examples/), or keep reading to learn how to create one based
 ## Run a test
 
 ```text
-> aiolocust --duration 30 --users 100
+❯ aiolocust --duration 30 --users 100
  Name                   ┃  Count ┃ Failures ┃    Avg ┃    Max ┃       Rate
 ━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━╇━━━━━━━━━━╇━━━━━━━━╇━━━━━━━━╇━━━━━━━━━━━━
  http://example.com/    │ 120779 │ 0 (0.0%) │  1.6ms │ 22.6ms │ 60372.44/s
