@@ -110,6 +110,7 @@ async def run(user):
             output = stdout.decode(errors="replace")
             assert "warning level log message" in err
             assert "info level log message" not in err
+            assert "Exception" not in err
             assert await proc.wait() == 0
 
 
