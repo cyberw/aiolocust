@@ -75,6 +75,8 @@ class StatsFormatter:
         for resource_metric in metrics_data.resource_metrics if metrics_data else []:
             for scope_metric in resource_metric.scope_metrics:
                 for metric in scope_metric.metrics:
+                    if metric.name != "http.client.duration":
+                        continue
                     for point in metric.data.data_points:
                         if not point.attributes:
                             raise Exception(f"A data point had no attributes, that should never happen. Point: {point}")
