@@ -35,7 +35,33 @@ async def run(user: HttpUser):
     await asyncio.sleep(0.1)
 ```
 
-See [more examples](examples/).
+See [more examples](examples/), or keep reading to learn how to create one based on a recording.
+
+## Run a test
+
+```text
+aiolocust --duration 30 --users 100
+```
+
+```text
+ Name                   ┃  Count ┃ Failures ┃    Avg ┃    Max ┃       Rate
+━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━╇━━━━━━━━━━╇━━━━━━━━╇━━━━━━━━╇━━━━━━━━━━━━
+ http://example.com/    │ 120779 │ 0 (0.0%) │  1.6ms │ 22.6ms │ 60372.44/s
+────────────────────────┼────────┼──────────┼────────┼────────┼────────────
+ Total                  │ 120779 │ 0 (0.0%) │  1.6ms │ 22.6ms │ 60372.44/s
+
+ Name                   ┃  Count ┃ Failures ┃    Avg ┃    Max ┃       Rate
+━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━╇━━━━━━━━━━╇━━━━━━━━╇━━━━━━━━╇━━━━━━━━━━━━
+ http://example.com     │ 243411 │ 0 (0.0%) │  1.6ms │ 22.6ms │ 60800.63/s
+────────────────────────┼────────┼──────────┼────────┼────────┼────────────
+ Total                  │ 243411 │ 0 (0.0%) │  1.6ms │ 22.6ms │ 60800.63/s
+...
+ Name                   ┃   Count ┃ Failures ┃    Avg ┃    Max ┃       Rate
+━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━╇━━━━━━━━━━╇━━━━━━━━╇━━━━━━━━╇━━━━━━━━━━━━
+ http://example.com/    │ 1836384 │ 0 (0.0%) │  1.6ms │ 22.6ms │ 61154.84/s
+────────────────────────┼─────────┼──────────┼────────┼────────┼────────────
+ Total                  │ 1836385 │ 0 (0.0%) │  1.6ms │ 22.6ms │ 61154.87/s
+```
 
 ## Record a locustfile from browser session or other app
 
@@ -77,32 +103,6 @@ open -na "Google Chrome" --args --proxy-server="http://127.0.0.1:8080" --incogni
 ### Look at the generated locustfile.py (it is updated while recording)
 
 For details and additional options, see [mitmproxy_addon.py](examples/mitmproxy_addon.py).
-
-## Run a test
-
-```text
-aiolocust --duration 30 --users 100
-```
-
-```text
- Name                   ┃  Count ┃ Failures ┃    Avg ┃    Max ┃       Rate
-━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━╇━━━━━━━━━━╇━━━━━━━━╇━━━━━━━━╇━━━━━━━━━━━━
- http://example.com/    │ 120779 │ 0 (0.0%) │  1.6ms │ 22.6ms │ 60372.44/s
-────────────────────────┼────────┼──────────┼────────┼────────┼────────────
- Total                  │ 120779 │ 0 (0.0%) │  1.6ms │ 22.6ms │ 60372.44/s
-
- Name                   ┃  Count ┃ Failures ┃    Avg ┃    Max ┃       Rate
-━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━╇━━━━━━━━━━╇━━━━━━━━╇━━━━━━━━╇━━━━━━━━━━━━
- http://example.com     │ 243411 │ 0 (0.0%) │  1.6ms │ 22.6ms │ 60800.63/s
-────────────────────────┼────────┼──────────┼────────┼────────┼────────────
- Total                  │ 243411 │ 0 (0.0%) │  1.6ms │ 22.6ms │ 60800.63/s
-...
- Name                   ┃   Count ┃ Failures ┃    Avg ┃    Max ┃       Rate
-━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━╇━━━━━━━━━━╇━━━━━━━━╇━━━━━━━━╇━━━━━━━━━━━━
- http://example.com/    │ 1836384 │ 0 (0.0%) │  1.6ms │ 22.6ms │ 61154.84/s
-────────────────────────┼─────────┼──────────┼────────┼────────┼────────────
- Total                  │ 1836385 │ 0 (0.0%) │  1.6ms │ 22.6ms │ 61154.87/s
-```
 
 ## Why a rewrite instead of just expanding Locust?
 
