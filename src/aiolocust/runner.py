@@ -8,7 +8,7 @@ import threading
 import time
 import warnings
 
-from aiohttp import ClientResponseError
+from aiohttp import ClientOSError
 from rich.console import Console
 
 from aiolocust import User, otel, stats
@@ -30,9 +30,9 @@ logger = logging.getLogger(__name__)
 try:
     import playwright.async_api  # pyright: ignore[reportMissingImports]
 
-    EXPECTED_ERRORS = (ClientResponseError, AssertionError, TimeoutError, playwright.async_api.TimeoutError)
+    EXPECTED_ERRORS = (ClientOSError, AssertionError, TimeoutError, playwright.async_api.TimeoutError)
 except ImportError:
-    EXPECTED_ERRORS = (ClientResponseError, AssertionError, TimeoutError)
+    EXPECTED_ERRORS = (ClientOSError, AssertionError, TimeoutError)
 
 
 # We're going to inherit from ClientSession, even though it is considered internal,
