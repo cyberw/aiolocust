@@ -5,7 +5,6 @@ import signal
 import unittest
 from tempfile import TemporaryDirectory
 
-import pytest
 from utils import assert_search
 
 
@@ -44,7 +43,7 @@ class MyUser(HttpUser):
             stderr=asyncio.subprocess.PIPE,
         )
         try:
-            stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=6)
+            stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=0.1)
         except TimeoutError:
             proc.terminate()
             stdout, stderr = await proc.communicate()
@@ -52,7 +51,7 @@ class MyUser(HttpUser):
             print(err)
             output = stdout.decode(errors="replace")
             print(output)
-            pytest.fail("process never terminated")
+            raise AssertionError("process never terminated") from None
         else:
             err = stderr.decode(errors="replace")
             print(err)
@@ -103,7 +102,7 @@ async def run(user):
             stdout, stderr = await proc.communicate()
             output = stdout.decode(errors="replace")
             print(output)
-            pytest.fail("process never terminated")
+            raise AssertionError("process never terminated") from None
         else:
             err = stderr.decode(errors="replace")
             print(err)
@@ -141,7 +140,7 @@ async def run(user):
             stdout, stderr = await proc.communicate()
             output = stdout.decode(errors="replace")
             print(output)
-            pytest.fail("process never terminated")
+            raise AssertionError("process never terminated") from None
         else:
             err = stderr.decode(errors="replace")
             output = stdout.decode(errors="replace")
@@ -183,7 +182,7 @@ async def run(user):
             stdout, stderr = await proc.communicate()
             output = stdout.decode(errors="replace")
             print(output)
-            pytest.fail("process never terminated")
+            raise AssertionError("process never terminated") from None
         else:
             output = stdout.decode(errors="replace")
             assert "Summary" in output
@@ -217,7 +216,7 @@ async def run(user):
             stdout, stderr = await proc.communicate()
             output = stdout.decode(errors="replace")
             print(output)
-            pytest.fail("process never terminated")
+            raise AssertionError("process never terminated") from None
         else:
             err = stderr.decode(errors="replace")
             print(err)
@@ -266,7 +265,7 @@ async def run(user):
             stdout, stderr = await proc.communicate()
             output = stdout.decode(errors="replace")
             print(output)
-            pytest.fail("process never terminated")
+            raise AssertionError("process never terminated") from None
         else:
             err = stderr.decode(errors="replace")
             print(err)
@@ -294,7 +293,7 @@ async def test_user_forwards_params_to_session_and_handles_timeouts(http_server)
         stdout, stderr = await proc.communicate()
         output = stdout.decode(errors="replace")
         print(output)
-        pytest.fail("process never terminated")
+        raise AssertionError("process never terminated") from None
     else:
         err = stderr.decode(errors="replace")
         print(err)
