@@ -114,6 +114,44 @@ async def run(user):
             assert await proc.wait() == 0
 
 
+async def test_host_param(http_server):  # noqa: ARG001
+    with TemporaryDirectory() as tmp_dir:
+        script_path = os.path.join(tmp_dir, "my_script.py")
+
+        with open(script_path, "w") as tempfile:
+            tempfile.write("""
+async def run(user):
+    async with user.client.get("/?foo") as resp:
+        pass
+""")
+        proc = await asyncio.create_subprocess_exec(
+            "aiolocust",
+            tempfile.name,
+            "--iterations",
+            "1",
+            "--host",
+            "http://localhost:8081",
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+        )
+        try:
+            stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=4)
+        except TimeoutError:
+            proc.terminate()
+            stdout, stderr = await proc.communicate()
+            output = stdout.decode(errors="replace")
+            print(output)
+            pytest.fail("process never terminated")
+        else:
+            err = stderr.decode(errors="replace")
+            output = stdout.decode(errors="replace")
+            print(output)
+            print(err)
+            assert "http://localhost:8081/?foo" in output
+            assert "Error" not in output
+            assert await proc.wait() == 0
+
+
 @unittest.skipIf(os.name == "nt", reason="Signal handling on windows is hard")
 async def test_sigint(http_server):  # noqa: ARG001
     with TemporaryDirectory() as tmp_dir:
