@@ -217,7 +217,8 @@ jobs:
 
         - name: Build package
           run: |
-              uv version ${{ github.ref_name }} # ensure version is set inside the package too
+              uv version 0.5.1 
+              # ${{ github.ref_name }} # ensure version is set inside the package too
 
         - name: Set up QEMU
           uses: docker/setup-qemu-action@v3
