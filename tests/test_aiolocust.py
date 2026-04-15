@@ -43,7 +43,7 @@ class MyUser(HttpUser):
             stderr=asyncio.subprocess.PIPE,
         )
         try:
-            stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=0.1)
+            stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=6)
         except TimeoutError:
             proc.terminate()
             stdout, stderr = await proc.communicate()
