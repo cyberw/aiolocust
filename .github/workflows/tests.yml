@@ -184,8 +184,7 @@ jobs:
     docker_image:
       needs:
           [ruff-pyright-pytestlinux-and-mitmproxy-recording, windows, macos]
-      if: github.repository_owner == 'cyberw' 
-      # && startsWith(github.event.ref, 'refs/tags')
+      if: github.repository_owner == 'cyberw' && startsWith(github.event.ref, 'refs/tags')
       runs-on: ubuntu-latest
       permissions:
         contents: read
@@ -217,8 +216,7 @@ jobs:
 
         - name: Build package
           run: |
-              uv version 0.5.1 
-              # ${{ github.ref_name }} # ensure version is set inside the package too
+              uv version ${{ github.ref_name }} # ensure version is set inside the package too
 
         - name: Set up QEMU
           uses: docker/setup-qemu-action@v3
