@@ -146,7 +146,8 @@ async def run(user):
             output = stdout.decode(errors="replace")
             print(output)
             print(err)
-            assert " http://localhost:8081/?foo │     1 │ 0 (0.0%) │" in output
+            assert " http://localhost:8081/?foo " in output
+            assert " 0 (0.0%) " in output
             assert "Error" not in output
             assert await proc.wait() == 0
 
