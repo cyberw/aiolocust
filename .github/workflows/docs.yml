@@ -2,7 +2,7 @@ name: docs
 on:
     push:
         branches:
-            - master
+            - notgonnahappen # master
 permissions:
     contents: write
 jobs:
