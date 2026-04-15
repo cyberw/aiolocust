@@ -98,6 +98,7 @@ class Runner:
         duration: int | None = None,
         rate: float | None = None,
         iterations: int | None = None,
+        host: str | None = None,
         config: dict | None = None,
         event_loops: int | None = None,
     ):
@@ -107,6 +108,7 @@ class Runner:
         self.sf = stats.StatsFormatter()
         self.console = Console()
         self.users = users
+        self.host = host
         self.iteration_counter = SafeCounter(iterations)
         config = config or {}
 
