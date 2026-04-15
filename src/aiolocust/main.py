@@ -5,6 +5,7 @@ import logging
 import os
 import sys
 from enum import StrEnum
+from importlib.metadata import version
 from pathlib import Path
 from typing import Annotated
 
@@ -55,6 +56,12 @@ def load_config(input_string):
         raise
 
 
+def version_callback(value: bool):
+    if value:
+        print(f"aiolocust {version('aiolocust')}")
+        raise typer.Exit()
+
+
 @app.command()
 def main(
     filename: Annotated[str, typer.Argument(help="The test to run")] = "locustfile.py",
@@ -87,6 +94,9 @@ def main(
             "--event-loops", help="Set the number of aio event loops", rich_help_panel="Advanced Configuration"
         ),
     ] = None,
+    _version: bool = typer.Option(
+        None, "--version", callback=version_callback, is_eager=True, help="Show the version and exit."
+    ),
 ):
     log_level_id = getattr(logging, log_level.value.upper())
     setup_logging(log_level_id)
