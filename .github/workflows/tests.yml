@@ -197,12 +197,11 @@ jobs:
         - id: set_is_tag_build
           run: echo "is_tag_build=${{ startsWith(github.event.ref, 'refs/tags') }}" | tee -a "$GITHUB_OUTPUT"
 
-        # # Log in to the Container registry
-        # - name: Log in to the Container registry
-        #   uses: docker/login-action@v3
-        #   with:
-        #     username: cyberw
-        #     password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+        - name: Log in to Docker Hub
+          uses: docker/login-action@v3
+          with:
+            username: cyberw
+            password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
 
         - name: Docker meta
           id: docker_meta
@@ -210,8 +209,8 @@ jobs:
           with:
             images: locustio/aiolocust
             tags: |
-              type=raw,value=latest,enable=${{ needs.build_package.outputs.is_tag_build }}
-              type=raw,value=${{ github.ref_name }},enable=${{ needs.build_package.outputs.is_tag_build }}
+              type=raw,value=latest,enable=${{ steps.set_is_tag_build.outputs.is_tag_build }}
+              type=raw,value=${{ github.ref_name }},enable=${{ steps.set_is_tag_build.outputs.is_tag_build }}
 
         - name: Install uv
           uses: astral-sh/setup-uv@v7
