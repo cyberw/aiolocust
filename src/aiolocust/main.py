@@ -71,6 +71,7 @@ def main(
     iterations: Annotated[
         int | None, typer.Option("-i", "--iterations", help="Max total number of iterations to run")
     ] = None,
+    host: Annotated[str | None, typer.Option("-H", "--host", help="Base URL to target")] = None,
     instrument: Annotated[
         bool,
         typer.Option(
@@ -154,6 +155,7 @@ def main(
             duration=duration,
             rate=rate,
             iterations=iterations,
+            host=host,
             config=config,
             event_loops=event_loops,
         )

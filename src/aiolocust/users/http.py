@@ -36,7 +36,7 @@ class HttpUser(User):
 
     def __init__(self, runner: Runner | None = None, base_url=None):
         super().__init__(runner)
-        self.base_url = base_url
+        self.base_url = base_url or runner.host if runner else None
         self.client: LocustClientSession  # type: ignore[assignment] # always set in cm
 
     @asynccontextmanager
