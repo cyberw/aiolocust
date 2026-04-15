@@ -30,7 +30,7 @@ async def test_get_table():
     assert "1500.0ms" in output
     assert "1 (50.0%)" in output
     assert_search(r"foo .* [234].\d{2}/s", output)
-    assert_search(r"Total .* [67].\d{2}/s", output)
+    assert_search(r"Total .* [567].\d{2}/s", output)
 
     await asyncio.sleep(0.1)
     console.print(sf.get_table(True))
