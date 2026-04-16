@@ -79,7 +79,14 @@ def main(
         ),
     ] = False,
     log_level: Annotated[
-        LogLevel, typer.Option("--log-level", help="Set the logging level", case_sensitive=False)
+        LogLevel,
+        typer.Option(
+            "--log-level",
+            help="Set the logging level (debug, info, warning, error)",
+            case_sensitive=False,
+            metavar="TEXT",
+            show_default=False,
+        ),
     ] = LogLevel.info,
     config: Annotated[
         dict | None,
