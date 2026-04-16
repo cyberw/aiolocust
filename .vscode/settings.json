@@ -15,7 +15,7 @@
     ".chalice": true,
     "**/.eggs": true,
     "**_cache": true
-},
+  },
   "[python]": {
     "editor.formatOnSave": true,
     "editor.codeActionsOnSave": {
@@ -23,13 +23,12 @@
       "source.organizeImports": "explicit"
     },
     "editor.defaultFormatter": "charliermarsh.ruff"
-},
-"python.testing.pytestArgs": [
+  },
+  "python.testing.pytestArgs": [
     "tests"
-],
-"python.testing.unittestEnabled": false,
-"python.terminal.activateEnvironment": true,
-"python.testing.pytestEnabled": true,
-"testing.defaultGutterClickAction": "debug"
+  ],
+  "python.testing.unittestEnabled": false,
+  "python.terminal.activateEnvironment": true,
+  "python.testing.pytestEnabled": true,
+  "testing.defaultGutterClickAction": "debug"
 }
-
