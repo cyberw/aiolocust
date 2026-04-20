@@ -35,7 +35,7 @@ jobs:
 
             - name: pyright type check
               run: |
-                  uv sync --group pymongo
+                  uv sync --all-extras
                   uv run pyright
 
             - name: pytest

@@ -54,15 +54,17 @@ dev = [
     "pytest-mock>=3.15.1",
     "ruff>=0.15.5",
 ]
-playwright = [
-    "playwright>=1.58.0",
-]
-pymongo = [
-    "pymongo>=4.16.0",
-]
 
 [project.scripts]
 aiolocust = "aiolocust.main:app"
+
+[project.optional-dependencies]
+pymongo = [
+    "pymongo>=4.16.0",
+]
+playwright = [
+    "playwright>=1.58.0",
+]
 
 [tool.pytest]
 filterwarnings = ["ignore:Inheritance class LocustClientSession from ClientSession is discouraged:DeprecationWarning"]
