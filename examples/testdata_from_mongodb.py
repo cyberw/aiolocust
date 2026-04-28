@@ -18,40 +18,41 @@ logger = logging.getLogger(__name__)
 dblock = Lock()
 
 
-class MongoLRUReader(AsyncIterator[dict]):
-    def __init__(self, coll: AsyncCollection, filter: dict | None = None, timestamp_field: str = "last_used"):
-        self.timestamp_field = timestamp_field
-        self.coll = coll
-        self.filter = filter or {}
-        self.cursor: AsyncCursor = self.coll.find(filter).sort(self.timestamp_field, pymongo.ASCENDING)
-
-    async def __anext__(self) -> dict:
+async def iter_docs(
+    coll: AsyncCollection,
+    filter: dict | None = None,
+    timestamp_field: str = "last_used",
+) -> AsyncIterator[dict]:
+    """Thread safe and looping wrapper for coll.filter() / AsyncCursor suitable for test data like customers."""
+    filter = filter or {}
+    cursor: AsyncCursor = coll.find(filter).sort(timestamp_field, pymongo.ASCENDING)
+    while True:
         with dblock:
             doc: dict
             try:
-                doc = await self.cursor.next()
+                doc = await cursor.next()
             except StopAsyncIteration:
-                await self.cursor.rewind()
+                await cursor.rewind()
                 try:
-                    doc = await self.cursor.next()
+                    doc = await cursor.next()
                 except StopAsyncIteration:
-                    raise Exception(f"cursor had no docs, maybe your filter ({self.filter}) is bad?")
-            await self.coll.update_one(
+                    raise Exception(f"cursor had no docs, maybe your filter ({filter}) is bad?")
+            await coll.update_one(
                 {"_id": doc["_id"]},
-                {"$currentDate": {self.timestamp_field: True}},
+                {"$currentDate": {timestamp_field: True}},
             )
-            return doc
+            yield doc
 
 
 client = AsyncMongoClient(os.environ["MONGO_URI"])
 coll = client[os.environ["MONGO_DB"]][os.environ["MONGO_COLLECTION"]]
 filter = json.loads(os.getenv("MONGO_FILTER", "{}"))
-mlr = MongoLRUReader(coll, filter)
+customers = iter_docs(coll, filter)
 
 
 class MyUser(HttpUser):
     async def run(self: HttpUser):
-        ssn = (await anext(mlr))["ssn"]
+        ssn = (await anext(customers))["ssn"]
         async with self.client.get(f"http://localhost:8080/{ssn}") as resp:
             pass
 
