@@ -40,7 +40,7 @@ jobs:
           uv run pyright
 
       - name: pytest
-        run: uv run pytest tests
+        run: uv run pytest -v tests
 
       - name: install mitmproxy
         run: |
