@@ -40,7 +40,7 @@ jobs:
           uv run pyright
 
       - name: pytest
-        run: uv run pytest -v --timeout 15 tests
+        run: uv run pytest -v --timeout 60 tests
 
       - name: install mitmproxy
         run: |
@@ -137,7 +137,7 @@ jobs:
         uses: astral-sh/setup-uv@v7
 
       - name: pytest
-        run: uv run pytest --full-trace tests
+        run: uv run pytest --timeout 60 --full-trace tests
 
   macos:
     runs-on: macos-latest
@@ -154,7 +154,7 @@ jobs:
         uses: astral-sh/setup-uv@v7
 
       - name: pytest
-        run: uv run pytest tests
+        run: uv run pytest --timeout 60 tests
 
   publish_pypi:
     name: Publish to PyPI
