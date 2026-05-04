@@ -113,6 +113,44 @@ async def run(user):
             assert await proc.wait() == 0
 
 
+async def test_loglevel_debug(http_server):  # noqa: ARG001
+    with TemporaryDirectory() as tmp_dir:
+        script_path = os.path.join(tmp_dir, "my_script.py")
+
+        with open(script_path, "w") as tempfile:
+            tempfile.write("""
+async def run(user):
+    async with user.client.get("http://localhost:8081/") as resp:
+        pass
+""")
+        proc = await asyncio.create_subprocess_exec(
+            "aiolocust",
+            tempfile.name,
+            "--iterations",
+            "1",
+            "--log-level",
+            "debug",
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+        )
+        try:
+            stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=4)
+        except TimeoutError:
+            proc.terminate()
+            stdout, stderr = await proc.communicate()
+            output = stdout.decode(errors="replace")
+            print(output)
+            raise AssertionError("process never terminated") from None
+        else:
+            err = stderr.decode(errors="replace")
+            print(err)
+            output = stdout.decode(errors="replace")
+            assert "Exception" not in err
+            assert await proc.wait() == 0
+            # this also tests that otel initialization didn't happen before log level setup
+            assert "No metrics exporter configured" in err
+
+
 async def test_host_param(http_server):  # noqa: ARG001
     with TemporaryDirectory() as tmp_dir:
         script_path = os.path.join(tmp_dir, "my_script.py")

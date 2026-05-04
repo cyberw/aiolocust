@@ -12,11 +12,6 @@ from typing import Annotated
 import click
 import typer
 
-from aiolocust import User
-from aiolocust.otel import setup_logging
-from aiolocust.runner import Runner
-from aiolocust.users.http import HttpUser
-
 
 class LogLevel(StrEnum):
     debug = "debug"
@@ -29,13 +24,6 @@ app = typer.Typer(add_completion=False)
 logger = logging.getLogger(__name__)
 # avoid annoying "Using selector: KqueueSelector" when running in debug:
 logging.getLogger("asyncio").setLevel(logging.INFO)
-
-
-def is_user_class(item) -> bool:
-    """
-    Check if a variable is a runnable (non-abstract) User class
-    """
-    return bool(inspect.isclass(item)) and issubclass(item, User) and not inspect.isabstract(item)
 
 
 def load_config(input_string):
@@ -106,8 +94,14 @@ def main(
         None, "--version", callback=version_callback, is_eager=True, help="Show the version and exit."
     ),
 ):
+    from aiolocust.otel import setup_logging
+
     log_level_id = getattr(logging, log_level.value.upper())
     setup_logging(log_level_id)
+
+    # delayed imports so that logging is configured first
+    from aiolocust import HttpUser, User
+    from aiolocust.runner import Runner
 
     file_path = Path(filename).resolve()
     if not file_path.exists():
@@ -145,6 +139,12 @@ def main(
         AioHttpClientInstrumentor().instrument(request_hook=request_hook)
 
     # Return our two-tuple
+    def is_user_class(item) -> bool:
+        """
+        Check if a variable is a runnable (non-abstract) User class
+        """
+        return bool(inspect.isclass(item)) and issubclass(item, User) and not inspect.isabstract(item)
+
     user_classes = {name: value for name, value in vars(module).items() if is_user_class(value)}
     if not user_classes and hasattr(module, "run"):
 
