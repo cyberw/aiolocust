@@ -63,9 +63,6 @@ aiolocust = "aiolocust.main:app"
 pymongo = [
     "pymongo>=4.16.0",
 ]
-playwright = [
-    "playwright>=1.58.0",
-]
 
 [tool.pytest]
 filterwarnings = ["ignore:Inheritance class LocustClientSession from ClientSession is discouraged:DeprecationWarning"]
