@@ -21,7 +21,7 @@ SPAN_NAME_KEY = context.create_key("name")
 
 
 class HttpUser(User):
-    session_kwargs: dict[str, Any] = {}
+    session_kwargs: dict[str, Any] = {"timeout": aiohttp.ClientTimeout(60.0)}
     """
     Extra arguments to pass to aiohttp.ClientSession, e.g.
     ```
