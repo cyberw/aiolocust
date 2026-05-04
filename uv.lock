@@ -115,7 +115,7 @@ requires-dist = [
     { name = "uvloop", marker = "sys_platform == 'darwin'", specifier = ">=0.22.1" },
     { name = "uvloop", marker = "sys_platform == 'linux'", specifier = ">=0.22.1" },
 ]
-provides-extras = ["pymongo", "playwright"]
+provides-extras = ["pymongo"]
 
 [package.metadata.requires-dev]
 dev = [
