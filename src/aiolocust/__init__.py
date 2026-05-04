@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from contextlib import asynccontextmanager
+from typing import TYPE_CHECKING
 
 
 class User(ABC):
@@ -16,7 +17,23 @@ class User(ABC):
         yield
 
 
-from aiolocust.runner import Runner  # noqa: F401
-from aiolocust.users.http import HttpUser, LocustClientSession  # noqa: F401
+if TYPE_CHECKING:
+    from aiolocust.runner import Runner
+    from aiolocust.users.http import HttpUser, LocustClientSession
+
+
+def __getattr__(name):
+    # prevent early load of these classes, because they in turn might trigger otel setup
+    if name == "HttpUser":
+        from aiolocust.users.http import HttpUser
+
+        return HttpUser
+    elif name == "LocustClientSession":
+        from aiolocust.users.http import LocustClientSession
+
+        return LocustClientSession
+
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
 
 __all__ = ["User", "HttpUser", "LocustClientSession"]

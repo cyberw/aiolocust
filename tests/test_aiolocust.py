@@ -147,6 +147,7 @@ async def run(user):
             output = stdout.decode(errors="replace")
             assert "Exception" not in err
             assert await proc.wait() == 0
+            # this also tests that otel initialization didn't happen before log level setup
             assert "No metrics exporter configured" in output
 
 
