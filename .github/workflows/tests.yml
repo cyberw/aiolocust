@@ -40,7 +40,7 @@ jobs:
           uv run pyright
 
       - name: pytest
-        run: uv run pytest -v tests
+        run: uv run pytest -v --timeout 15 tests
 
       - name: install mitmproxy
         run: |
