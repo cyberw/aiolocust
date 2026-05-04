@@ -80,6 +80,7 @@ async def run(user):
                 "--config",
                 '{ "stages": [{ "duration": 2, "target": 2 }] }',
             ],
+            catch_exceptions=False,
         )
         assert "http://localhost:" in result.output
         assert "0 (0.0%)" in result.output
