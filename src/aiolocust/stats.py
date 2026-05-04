@@ -49,17 +49,6 @@ def request(req: Request):
     ttlb_histogram.record(req.ttlb, attributes=attributes)
 
 
-def make_row(name: str, re: RequestEntry, start, end) -> list[str]:
-    return [
-        name,
-        str(re.count),
-        f"{re.errorcount} ({re.error_percentage:2.1f}%)",
-        f"{re.avg_ttlb_ms:4.1f}ms",
-        f"{re.max_ttlb_ms:4.1f}ms",
-        f"{re.rate(start, end):.2f}/s",
-    ]
-
-
 class StatsFormatter:
     def __init__(self):
         self.start_time = time.time()
@@ -105,8 +94,8 @@ class StatsFormatter:
         for url, re in entries.items():
             self.aggregate[url] += re
             total += re
-            table.append(make_row(url, re, self.last_time, now))
-        table.append(make_row("Total", total, self.last_time, now))
+            table.append(self.make_row(url, re, self.last_time, now))
+        table.append(self.make_row("Total", total, self.last_time, now))
 
         self.last_time = now
 
@@ -117,8 +106,8 @@ class StatsFormatter:
 
         for url, re in self.aggregate.items():
             summary_total += re
-            summary_table.append(make_row(url, re, self.start_time, now))
-        summary_table.append(make_row("Total", summary_total, self.start_time, now))
+            summary_table.append(self.make_row(url, re, self.start_time, now))
+        summary_table.append(self.make_row("Total", summary_total, self.start_time, now))
 
         return summary_table
 
@@ -148,3 +137,14 @@ class StatsFormatter:
             error_table.add_row(str(count), key)
 
         return error_table
+
+    @staticmethod
+    def make_row(name: str, re: RequestEntry, start, end) -> list[str]:
+        return [
+            name,
+            str(re.count),
+            f"{re.errorcount} ({re.error_percentage:2.1f}%)",
+            f"{re.avg_ttlb_ms:4.1f}ms",
+            f"{re.max_ttlb_ms:4.1f}ms",
+            f"{re.rate(start, end):.2f}/s",
+        ]
