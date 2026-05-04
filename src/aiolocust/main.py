@@ -12,8 +12,7 @@ from typing import Annotated
 import click
 import typer
 
-from aiolocust import User
-from aiolocust.otel import setup_logging
+from aiolocust import User, stats
 from aiolocust.runner import Runner
 from aiolocust.users.http import HttpUser
 
@@ -107,7 +106,10 @@ def main(
     ),
 ):
     log_level_id = getattr(logging, log_level.value.upper())
+    from aiolocust.otel import setup_logging
+
     setup_logging(log_level_id)
+    stats.init_stats()
 
     file_path = Path(filename).resolve()
     if not file_path.exists():

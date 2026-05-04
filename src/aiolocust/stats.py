@@ -12,18 +12,25 @@ from aiolocust.datatypes import Request, RequestEntry
 
 MAX_ERROR_KEYS = 200
 
-reader = InMemoryMetricReader(
-    preferred_temporality={
-        Histogram: AggregationTemporality.DELTA,
-    }
-)
-
-otel.setup_trace_exporters()
-otel.setup_meter_provider([reader])
-meter = metrics.get_meter("locust")
-ttlb_histogram = meter.create_histogram("http.client.duration")
+reader: InMemoryMetricReader = None  # type: ignore
+meter: metrics.Meter = None  # type: ignore
+ttlb_histogram: metrics.Histogram = None  # type: ignore
 error_counter = defaultdict(int)
 error_counter_lock = Lock()
+
+
+def init_stats():
+    global reader, meter, ttlb_histogram, error_counter
+    if meter:
+        from logging import getLogger
+
+        getLogger(__name__).info("init_stats was called twice?")
+        return
+    reader = InMemoryMetricReader(preferred_temporality={Histogram: AggregationTemporality.DELTA})
+    otel.setup_trace_exporters()
+    otel.setup_meter_provider([reader])
+    meter = metrics.get_meter("locust")
+    ttlb_histogram = meter.create_histogram("http.client.duration")
 
 
 def record_error(message: str):

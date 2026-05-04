@@ -5,6 +5,9 @@ import pytest
 from pytest_httpserver import HTTPServer
 
 from aiolocust import HttpUser
+from aiolocust.stats import init_stats
+
+init_stats()
 
 
 async def user_loop(user_instance):  # this is basically copied from runner.user_loop()
