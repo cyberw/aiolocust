@@ -32,8 +32,12 @@ def __getattr__(name):
         from aiolocust.users.http import LocustClientSession
 
         return LocustClientSession
+    elif name == "Runner":
+        from aiolocust.runner import Runner
+
+        return Runner
 
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 
-__all__ = ["User", "HttpUser", "LocustClientSession"]
+__all__ = ["User", "HttpUser", "LocustClientSession", "Runner"]
