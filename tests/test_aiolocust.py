@@ -148,7 +148,7 @@ async def run(user):
             assert "Exception" not in err
             assert await proc.wait() == 0
             # this also tests that otel initialization didn't happen before log level setup
-            assert "No metrics exporter configured" in output
+            assert "No metrics exporter configured" in err
 
 
 async def test_host_param(http_server):  # noqa: ARG001
