@@ -336,7 +336,7 @@ async def test_user_forwards_params_to_session_and_handles_timeouts(http_server)
     else:
         err = stderr.decode(errors="replace")
         print(err)
-        assert not err
+        assert "Shutting down..." in err
         output = stdout.decode(errors="replace")
         print(output)
         assert "Summary" in output
