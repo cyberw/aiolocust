@@ -1,5 +1,6 @@
 import logging
 import os
+import socket
 import sys
 
 from opentelemetry import metrics, trace
@@ -19,6 +20,7 @@ resource = Resource.create(
     {
         "service.name": "locust",
         "service.version": "0.0.0",  # __version__
+        "host.name": socket.gethostname(),
     }
 )
 logger = logging.getLogger(__name__)
@@ -178,11 +180,12 @@ def setup_meter_provider(metric_readers: list[MetricReader]):
             metric_readers.append(metric_reader)
 
         elif exporter == "none":
-            logger.debug("No metric reader configured, metrics will not be exported")
+            logger.debug("Metric exporter explicitly set to 'none', metrics will not be exported")
 
         else:
             logger.warning(f"Unknown metrics exporter '{exporter}'. Ignored")
-    else:
+
+    if not metrics_exporters:
         logger.debug("No metrics exporter configured,")
 
     metrics.set_meter_provider(MeterProvider(resource=resource, metric_readers=metric_readers))
