@@ -2,6 +2,7 @@ import logging
 import os
 import socket
 import sys
+from importlib.metadata import version
 
 from opentelemetry import metrics, trace
 from opentelemetry._logs import set_logger_provider
@@ -19,7 +20,7 @@ from rich.logging import RichHandler
 resource = Resource.create(
     {
         "service.name": "locust",
-        "service.version": "0.0.0",  # __version__
+        "service.version": version("aiolocust"),
         "host.name": socket.gethostname(),
     }
 )
