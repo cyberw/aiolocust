@@ -146,7 +146,7 @@ class Runner:
             await asyncio.sleep(2)
 
     def shutdown(self):
-        logger.debug("Shutting down...")
+        logger.info("Shutting down...")
         if not self.running:
             logger.debug("Already shutting down, ignoring shutdown() call")
             return
@@ -156,6 +156,7 @@ class Runner:
         for fut in self.futures:
             _ = fut.result()
         otel.logger_provider.shutdown()
+        logger.debug("Shutdown complete. Total iteration count: %d", self.iteration_counter.value)
 
     async def user_loop(self, user_instance: User):
         async with user_instance.cm():
@@ -177,7 +178,7 @@ class Runner:
 
     def signal_handler(self, _sig, _frame):
         signal.signal(signal.SIGINT, original_sigint_handler)  # stop immediately on second Ctrl-C
-        logger.info("\nStopping...")
+        logger.debug("\nGot SIGINT, shutting down...")
         self.shutdown()
 
     def run_test(self):
