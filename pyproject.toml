@@ -1,6 +1,6 @@
 [project]
 name = "aiolocust"
-version = "0.1.0" # updated from github action on tags
+version = "0.0.0" # updated from github action on tags
 description = "High performance Python-based load testing tool"
 requires-python = ">=3.14"
 dependencies = [
