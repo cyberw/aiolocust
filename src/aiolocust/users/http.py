@@ -1,3 +1,4 @@
+import ssl
 import time
 from asyncio import Future
 from collections.abc import Coroutine
@@ -34,6 +35,19 @@ class HttpUser(User):
     ```
     """
 
+    ssl_context: None | ssl.SSLContext = None
+    """
+    Used to create a custom TCPConnector for LocustClientSession.
+    To use system ssl you could do something like this:
+
+    import truststore
+    from aiolocust import HttpUser
+
+    class MyUser(HttpUser):
+        ssl_context = truststore.SSLContext(protocol=ssl.PROTOCOL_TLS_CLIENT)
+        ...
+    """
+
     def __init__(self, runner: Runner | None = None, base_url=None):
         super().__init__(runner)
         self.base_url = base_url or runner.host if runner else None
@@ -41,7 +55,11 @@ class HttpUser(User):
 
     @asynccontextmanager
     async def cm(self):
-        async with LocustClientSession(self.runner, self.base_url, **self.session_kwargs) as self.client:
+        async with LocustClientSession(
+            self.runner,
+            self.base_url,
+            connector=aiohttp.TCPConnector(ssl=self.ssl_context) if self.ssl_context else None,
+        ) as self.client:
             yield
 
 
