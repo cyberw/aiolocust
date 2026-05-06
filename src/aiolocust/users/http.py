@@ -37,8 +37,10 @@ class HttpUser(User):
 
     ssl_context: None | ssl.SSLContext = None
     """
-    Used to create a custom TCPConnector for LocustClientSession.
-    To use system ssl you could do something like this:
+    Used to create a custom TCPConnector for LocustClientSession,
+    instead of having to pass ssl=ssl_context on each request.
+
+    For example, to use OS-managed trust you could do something like this:
 
     import truststore
     from aiolocust import HttpUser
