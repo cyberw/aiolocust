@@ -61,6 +61,7 @@ class HttpUser(User):
             self.runner,
             self.base_url,
             connector=aiohttp.TCPConnector(ssl=self.ssl_context) if self.ssl_context else None,
+            **self.session_kwargs,
         ) as self.client:
             yield
 
