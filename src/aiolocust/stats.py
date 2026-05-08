@@ -50,7 +50,9 @@ def request(req: Request):
         attributes["error.type"] = req.error.__class__.__name__
         if isinstance(req.error, AssertionError):
             tb: TracebackType = req.error.exc_tb  # type: ignore
-            record_error(f"{req.error} ({os.path.basename(tb.tb_frame.f_code.co_filename)}:{tb.tb_lineno})")
+            record_error(
+                f"{str(req.error) or req.error.__class__.__name__} ({os.path.basename(tb.tb_frame.f_code.co_filename)}:{tb.tb_lineno})"
+            )
         else:
             record_error(str(req.error) or req.error.__class__.__name__)
     ttlb_histogram.record(req.ttlb, attributes=attributes)

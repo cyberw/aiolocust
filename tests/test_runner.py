@@ -35,7 +35,7 @@ def test_basic(http_server, capteesys):  # noqa: ARG001
     assert_search(r" http://localhost:8081/[ ]+│[ ]+[46] .* \(50.0%\)", out)
     assert_search(r" renamed[ ]+│[ ]+[23] .* \(100.0%\)", out)
     assert "Error" in out
-    assert_search(r"[23] .* assert 'foo' in 'OK'", out)
+    assert_search(r"[23] .* assert 'foo' in 'OK' \(test_runner.py:\d", out)
     assert_search(r"[23] .* 404,", out)
     assert_search(r"[23] .* Oh no", out)
     assert "bar" not in out
