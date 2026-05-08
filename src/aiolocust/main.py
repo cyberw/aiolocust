@@ -4,6 +4,7 @@ import json
 import logging
 import os
 import sys
+import traceback
 from enum import StrEnum
 from importlib.metadata import version
 from pathlib import Path
@@ -126,8 +127,6 @@ def main(
 
     # Add the module to sys.modules so it behaves like a normal import
     sys.modules[module_name] = module
-
-    import traceback
 
     SDK_ROOT = Path(__file__).resolve().parent
 
