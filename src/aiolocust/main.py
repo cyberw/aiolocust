@@ -127,8 +127,39 @@ def main(
     # Add the module to sys.modules so it behaves like a normal import
     sys.modules[module_name] = module
 
+    import traceback
+
+    SDK_ROOT = Path(__file__).resolve().parent
+
+    def is_ignored_frame(tb):
+        filename = tb.tb_frame.f_code.co_filename
+
+        # 1. Skip frozen / synthetic frames
+        if filename.startswith("<") and filename.endswith(">"):
+            return True
+
+        # 2. Skip your SDK frames
+        try:
+            path = Path(filename).resolve()
+            if path.is_relative_to(SDK_ROOT):
+                return True
+        except Exception:
+            pass
+
+        return False
+
     # Run any top-level code
-    spec.loader.exec_module(module)
+    try:
+        spec.loader.exec_module(module)
+    except BaseException as exc:
+        # if there's an error during import, print the traceback for the user code, but leave out aiolocust and importlib
+        tb = exc.__traceback__
+
+        while tb and is_ignored_frame(tb):
+            tb = tb.tb_next
+
+        traceback.print_exception(type(exc), exc, tb)
+        raise SystemExit(1)
 
     # apply --instrument option after loading script, so that any code based instrumentation takes precedence
     if instrument:
