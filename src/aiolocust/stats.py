@@ -1,6 +1,8 @@
+import os
 import time
 from collections import defaultdict
 from threading import Lock
+from types import TracebackType
 
 from opentelemetry import metrics
 from opentelemetry.sdk.metrics import Histogram
@@ -44,8 +46,13 @@ def request(req: Request):
         # http.status_code=200}
     }
     if req.error:
+        # error.type is propagated to otel, but it also picked up when calculating command line stats table
         attributes["error.type"] = req.error.__class__.__name__
-        record_error(str(req.error) or req.error.__class__.__name__)
+        if isinstance(req.error, AssertionError):
+            tb: TracebackType = req.error.exc_tb  # type: ignore
+            record_error(f"{req.error} ({os.path.basename(tb.tb_frame.f_code.co_filename)}:{tb.tb_lineno})")
+        else:
+            record_error(str(req.error) or req.error.__class__.__name__)
     ttlb_histogram.record(req.ttlb, attributes=attributes)
 
 

@@ -121,6 +121,7 @@ class LocustRequestContextManager(_RequestContextManager):
             except (ClientResponseError, ClientConnectorError) as e:
                 self._resp.error = e
             if exc_val:  # overwrite if there was an explicit exception (e.g. an assert or crash)
+                exc_val.exc_tb = exc_tb  # add traceback so we can add line number info to error summary
                 self._resp.error = exc_val
         stats.request(
             Request(

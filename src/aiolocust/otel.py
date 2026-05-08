@@ -97,7 +97,6 @@ def setup_logging(level: int = logging.INFO):
 
 
 def setup_trace_exporters():
-
     traces_exporters = {e.strip().lower() for e in os.getenv("OTEL_TRACES_EXPORTER", "otlp").split(",") if e.strip()}
     for exporter in traces_exporters:
         if exporter == "otlp":
