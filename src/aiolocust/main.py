@@ -91,6 +91,10 @@ def main(
             "--event-loops", help="Set the number of aio event loops", rich_help_panel="Advanced Configuration"
         ),
     ] = None,
+    html_report: Annotated[
+        Path | None,
+        typer.Option("--html-report", help="Write the final summary as a static HTML report"),
+    ] = None,
     _version: bool = typer.Option(
         None, "--version", callback=version_callback, is_eager=True, help="Show the version and exit."
     ),
@@ -195,6 +199,7 @@ def main(
             host=host,
             config=config,
             event_loops=event_loops,
+            html_report=html_report,
         )
         r.run_test()
     else:
