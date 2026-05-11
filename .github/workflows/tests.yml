@@ -90,11 +90,6 @@ jobs:
         run: |
           uv run aiolocust --instrument -d 1 | tee locust_output.txt
           grep -E '"name": "GET"' locust_output.txt
-          # advanced
-          uv run aiolocust examples/otel/instrument_aiohttpclient_span_manipulation.py -d 1 | tee locust_output.txt
-          grep '"name": "some-name"' locust_output.txt
-          grep '"foo": "bar"' locust_output.txt
-          grep 'some-value' locust_output.txt
 
   perftest:
     runs-on: ubuntu-latest

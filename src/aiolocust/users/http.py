@@ -126,7 +126,11 @@ class LocustRequestContextManager(_RequestContextManager):
         if self._resp.error:
             self.span.set_status(StatusCode.ERROR)
             self.span.set_attribute("exception.type", type(self._resp.error).__name__)
-            self.span.record_exception(self._resp.error)  # type: ignore
+            if isinstance(self._resp.error, Exception):
+                self.span.record_exception(self._resp.error)
+            else:
+                # wrap plain strings in Exceptions. Callstack may be confusing, but it is better than nothing
+                self.span.record_exception(Exception(self._resp.error))
         self.span.end()
         stats.request(
             Request(
