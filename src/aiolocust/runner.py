@@ -7,6 +7,7 @@ import sys
 import threading
 import time
 import warnings
+from pathlib import Path
 
 from aiohttp import ClientOSError
 from rich.console import Console
@@ -101,6 +102,7 @@ class Runner:
         host: str | None = None,
         config: dict | None = None,
         event_loops: int | None = None,
+        html_report: Path | None = None,
     ):
         signal.signal(signal.SIGINT, self.signal_handler)
         self.running = False
@@ -134,6 +136,7 @@ class Runner:
                 self.event_loops = 1
         else:
             self.event_loops = event_loops
+        self.html_report = html_report
         self.running_users: set[User] = set()
         self.futures: list[asyncio.Future] = []
 
@@ -230,9 +233,18 @@ class Runner:
 
         stats_printer_task.cancel()
 
-        self.console.print(self.sf.get_table(True))
+        summary_table = self.sf.get_table(True)
+        self.console.print(summary_table)
+        error_table = self.sf.get_error_table() if stats.error_counter else None
         if stats.error_counter:
-            self.console.print(self.sf.get_error_table())
+            self.console.print(error_table)
+        if self.html_report:
+            report_console = Console(record=True)
+            report_console.print(summary_table)
+            if error_table:
+                report_console.print(error_table)
+            self.html_report.parent.mkdir(parents=True, exist_ok=True)
+            report_console.save_html(str(self.html_report), inline_styles=True)
 
         for w in workers:
             w.stop()

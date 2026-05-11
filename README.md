@@ -60,6 +60,12 @@ See [more examples](examples/), or keep reading to learn how to create one based
  Total                  │ 1836385 │ 0 (0.0%) │  1.6ms │ 22.6ms │ 61154.87/s
 ```
 
+To save the final Rich summary as a static HTML report:
+
+```text
+aiolocust --duration 30 --users 100 --html-report report.html
+```
+
 ## Record a locustfile from browser session or other app
 
 If you don't want to code your locustfile from scratch, you can use [mitmproxy](https://docs.mitmproxy.org/stable/api/events.html) and our custom script to easily generate locustfiles from live traffic:

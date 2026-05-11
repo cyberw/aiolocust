@@ -45,6 +45,29 @@ async def run(user):
         assert result.exit_code == 0
 
 
+def test_html_report(http_server):  # noqa: ARG001
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        with open("my_locustfile.py", "w") as f:
+            f.write("""
+async def run(user):
+    async with user.client.get("http://localhost:8081/") as resp:
+        pass
+""")
+        result = runner.invoke(
+            app,
+            ["my_locustfile.py", "--iterations", "3", "-u", "2", "--html-report", "reports/report.html"],
+        )
+        assert "http://localhost:" in result.output
+        assert "0 (0.0%)" in result.output
+        assert result.exit_code == 0
+        with open("reports/report.html") as report:
+            html = report.read()
+        assert "<!DOCTYPE html>" in html
+        assert "http://localhost:" in html
+        assert "Total" in html
+
+
 def test_config(http_server):  # noqa: ARG001
     runner = CliRunner()
     with runner.isolated_filesystem():
