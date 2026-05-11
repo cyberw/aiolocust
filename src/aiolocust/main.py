@@ -70,6 +70,7 @@ def main(
     log_level: Annotated[
         LogLevel,
         typer.Option(
+            "-l",
             "--log-level",
             help="Set the logging level (debug, info, warning, error)",
             case_sensitive=False,
