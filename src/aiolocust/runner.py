@@ -123,7 +123,7 @@ class Runner:
                 Stage(duration - ramp_up_time if duration else 99999999, user_count),
             ]
 
-        logger.debug(f"Stages: {self.stages}")
+        logger.info("Starting test")
 
         if event_loops is None:
             if cpu_count := os.cpu_count():

@@ -15,18 +15,11 @@ async def test_otel_autoinstrumentation(http_server):  # noqa: ARG001
 
         with open(script_path, "w") as tempfile:
             tempfile.write("""
-from opentelemetry.instrumentation.aiohttp_client import AioHttpClientInstrumentor
-from aiolocust.users.http import request_hook, HttpUser
-
-AioHttpClientInstrumentor().instrument(request_hook=request_hook)
-
-class MyUser(HttpUser):
-    async def run(self):
-        async with self.client.get("http://localhost:8081/") as resp:
-            pass
-        async with self.client.get("http://localhost:8081/", name="foo") as resp:
-            pass
-        print("done!")
+async def run(self):
+    async with self.client.get("http://localhost:8081/") as resp:
+        pass
+    async with self.client.get("http://localhost:8081/", name="foo") as resp:
+        assert await resp.text() == "no way"
 """)
         proc = await asyncio.create_subprocess_exec(
             "aiolocust",
@@ -35,8 +28,11 @@ class MyUser(HttpUser):
             "20",
             "--iterations",
             "30",
+            "--instrument",
             env={
                 "OTEL_TRACES_EXPORTER": "console",
+                "OTEL_METRICS_EXPORTER": "none",
+                "OTEL_LOGS_EXPORTER": "none",
                 **os.environ,
             },
             stdout=asyncio.subprocess.PIPE,
@@ -57,12 +53,14 @@ class MyUser(HttpUser):
             print(err)
             output = stdout.decode(errors="replace")
             print(output)
-            assert "http://localhost:" in output
-            assert " foo                    │    30 │ 0 (0.0%)" in output
+            assert " http://localhost:8081/ │    30 │    0 (0.0%) " in output
+            assert " foo                    │    30 │ 30 (100.0%)" in output
+            assert '"status_code": "UNSET"' in output
+            assert '"status_code": "ERROR"' in output
+            assert '"exception.type": "AssertionError"' in output
             assert '"trace_id":' in output
             assert '"name": "GET"' in output  # not renamed
-            assert '"name": "foo"' in output  # using explicit name
-            assert "done!" in output
+            assert '"name": "GET foo"' in output  # using explicit name
             assert await proc.wait() == 0
 
 

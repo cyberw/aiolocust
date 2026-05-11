@@ -9,10 +9,11 @@ import aiohttp
 from aiohttp import ClientConnectorError, ClientResponse, ClientResponseError, ClientSession
 from aiohttp.client import _RequestContextManager
 from opentelemetry import context
-from opentelemetry.trace import Span
+from opentelemetry.trace import Span, StatusCode
 
 from aiolocust import User, stats
 from aiolocust.datatypes import Request
+from aiolocust.otel import tracer
 
 if TYPE_CHECKING:  # avoid circular import
     from aiolocust.runner import Runner
@@ -78,12 +79,13 @@ class LocustRequestContextManager(_RequestContextManager):
         # slightly hacky way to get the URL, but passing it explicitly would be a mess
         # and it is only used for connection errors where the exception doesn't contain URL
         self.str_or_url = coro._coro.cr_frame.f_locals["str_or_url"]  # type: ignore
+        self.method = coro._coro.cr_frame.f_locals["method"]  # type: ignore
         self._resp: LocustResponse  # type: ignore
+        self.span: Span
         self.name = name
 
     async def __aenter__(self) -> LocustResponse:
-        ctx = context.set_value(SPAN_NAME_KEY, self.name)
-        token = context.attach(ctx)
+        self.span = tracer.start_span(f"{self.method} {self.name}" if self.name else self.method)
         self.start_time = time.perf_counter()
         try:
             await super().__aenter__()
@@ -108,8 +110,6 @@ class LocustRequestContextManager(_RequestContextManager):
             self.ttfb = time.perf_counter() - self.start_time
             await self._resp.read()
             self.ttlb = time.perf_counter() - self.start_time
-        finally:
-            context.detach(token)
 
         return self._resp
 
@@ -123,6 +123,11 @@ class LocustRequestContextManager(_RequestContextManager):
             if exc_val:  # overwrite if there was an explicit exception (e.g. an assert or crash)
                 exc_val.exc_tb = exc_tb  # add traceback so we can add line number info to error summary
                 self._resp.error = exc_val
+        if self._resp.error:
+            self.span.set_status(StatusCode.ERROR)
+            self.span.set_attribute("exception.type", type(self._resp.error).__name__)
+            self.span.record_exception(self._resp.error)  # type: ignore
+        self.span.end()
         stats.request(
             Request(
                 str(self.name or self.url),
@@ -131,20 +136,6 @@ class LocustRequestContextManager(_RequestContextManager):
                 self._resp.error,
             )
         )
-
-
-def request_hook(span: Span, params: aiohttp.TraceRequestStartParams):  # noqa: ARG001
-    """
-    Request hook for renaming spans based on name parameter (passed via context vars)
-
-    Typical usage:
-
-    ```
-    AioHttpClientInstrumentor().instrument(request_hook=aiolocust.users.http.request_hook)
-    ```
-    """
-    if custom_name := context.get_value(SPAN_NAME_KEY):
-        span.update_name(str(custom_name))
 
 
 class LocustClientSession(ClientSession):
