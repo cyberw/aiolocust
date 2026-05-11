@@ -8,7 +8,7 @@ from utils import assert_search
 
 from aiolocust import otel
 from aiolocust.runner import Runner, Stage, desired_user_count
-from aiolocust.users.http import HttpUser, LocustClientSession, request_hook
+from aiolocust.users.http import HttpUser, LocustClientSession
 
 WINDOWS_DELAY = 1 if os.name == "nt" else 0
 
@@ -109,7 +109,7 @@ def test_w_otel(http_server, capteesys):  # noqa: ARG001
     condition=not bool(os.environ.get("VSCODE_CLI")), reason="Only works when run individually, not sure why"
 )
 def test_w_instrumentation(http_server, capfd):  # noqa: ARG001
-    AioHttpClientInstrumentor().instrument(request_hook=request_hook)
+    AioHttpClientInstrumentor().instrument()
     os.environ["OTEL_TRACES_EXPORTER"] = "console"
     otel.setup_trace_exporters()
 

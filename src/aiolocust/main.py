@@ -169,9 +169,7 @@ def main(
     if instrument:
         from opentelemetry.instrumentation.aiohttp_client import AioHttpClientInstrumentor
 
-        from aiolocust.users.http import request_hook
-
-        AioHttpClientInstrumentor().instrument(request_hook=request_hook)
+        AioHttpClientInstrumentor().instrument()
 
     # Return our two-tuple
     def is_user_class(item) -> bool:
