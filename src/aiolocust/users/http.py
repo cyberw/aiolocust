@@ -8,7 +8,8 @@ from typing import TYPE_CHECKING, Any
 import aiohttp
 from aiohttp import ClientConnectorError, ClientResponse, ClientResponseError, ClientSession
 from aiohttp.client import _RequestContextManager
-from opentelemetry import context
+from opentelemetry import context, trace
+from opentelemetry.context import Context, Token  # type: ignore # Token exists, I promise
 from opentelemetry.trace import Span, StatusCode
 
 from aiolocust import User, stats
@@ -81,12 +82,16 @@ class LocustRequestContextManager(_RequestContextManager):
         self.str_or_url = coro._coro.cr_frame.f_locals["str_or_url"]  # type: ignore
         self.method = coro._coro.cr_frame.f_locals["method"]  # type: ignore
         self._resp: LocustResponse  # type: ignore
+        self._token: Token[Context]
         self.span: Span
+        self.start_time: float
         self.name = name
 
     async def __aenter__(self) -> LocustResponse:
         self.span = tracer.start_span(f"{self.method} {self.name}" if self.name else self.method)
         self.start_time = time.perf_counter()
+        ctx = trace.set_span_in_context(self.span)
+        self._token = context.attach(ctx)
         try:
             await super().__aenter__()
         except ClientConnectorError as e:
@@ -131,6 +136,7 @@ class LocustRequestContextManager(_RequestContextManager):
             else:
                 # wrap plain strings in Exceptions. Callstack may be confusing, but it is better than nothing
                 self.span.record_exception(Exception(self._resp.error))
+        context.detach(self._token)
         self.span.end()
         stats.request(
             Request(
