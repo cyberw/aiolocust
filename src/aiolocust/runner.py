@@ -150,8 +150,8 @@ class Runner:
             first = False
             await asyncio.sleep(2)
 
-    def shutdown(self):
-        logger.info("Shutting down")
+    def shutdown(self, reason=None):
+        logger.info(f"Shutting down test ({reason})" if reason else "Shutting down test")
         if not self.running:
             logger.debug("Already shutting down, ignoring shutdown() call")
             return
