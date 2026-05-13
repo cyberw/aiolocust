@@ -10,10 +10,10 @@ import warnings
 from pathlib import Path
 
 from aiohttp import ClientOSError
-from opentelemetry import metrics
+from opentelemetry import _logs, metrics
 from rich.console import Console
 
-from aiolocust import User, otel, stats
+from aiolocust import User, stats
 from aiolocust.datatypes import SafeCounter, Stage
 
 # uvloop is faster than the default pure-python asyncio event loop
@@ -160,10 +160,10 @@ class Runner:
             user.running = False
         for fut in self.futures:
             _ = fut.result()
-        meter_provider = metrics.get_meter_provider()
-        meter_provider.shutdown()  # pyright: ignore[reportAttributeAccessIssue]
         logger.debug("Shutdown complete. Total iteration count: %d", self.iteration_counter.value)
-        otel.logger_provider.shutdown()
+        # flush otel
+        metrics.get_meter_provider().shutdown()  # pyright: ignore[reportAttributeAccessIssue]
+        _logs.get_logger_provider().shutdown()  # pyright: ignore[reportAttributeAccessIssue]
 
     async def user_loop(self, user_instance: User):
         async with user_instance.cm():
