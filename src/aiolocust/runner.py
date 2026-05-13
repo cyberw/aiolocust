@@ -10,6 +10,7 @@ import warnings
 from pathlib import Path
 
 from aiohttp import ClientOSError
+from opentelemetry import metrics
 from rich.console import Console
 
 from aiolocust import User, otel, stats
@@ -118,6 +119,7 @@ class Runner:
             self.stages = [Stage(**item) for item in config["stages"]]
             if user_count > 1 or duration or rate:
                 logger.info("Both stages and user_count/duration/rate were specified, stages will take precedence")
+            logger.debug(f"Stages: {self.stages}")
         else:
             ramp_up_time = user_count / rate if rate else 0
             self.stages = [
@@ -149,7 +151,7 @@ class Runner:
             await asyncio.sleep(2)
 
     def shutdown(self):
-        logger.info("Shutting down...")
+        logger.info("Shutting down")
         if not self.running:
             logger.debug("Already shutting down, ignoring shutdown() call")
             return
@@ -158,8 +160,10 @@ class Runner:
             user.running = False
         for fut in self.futures:
             _ = fut.result()
-        otel.logger_provider.shutdown()
+        meter_provider = metrics.get_meter_provider()
+        meter_provider.shutdown()  # pyright: ignore[reportAttributeAccessIssue]
         logger.debug("Shutdown complete. Total iteration count: %d", self.iteration_counter.value)
+        otel.logger_provider.shutdown()
 
     async def user_loop(self, user_instance: User):
         async with user_instance.cm():
