@@ -54,7 +54,7 @@ def version_callback(value: bool):
 
 @dataclass
 class Config:
-    # used for passing around command line arguments
+    # used for giving all modules access to command line arguments. Remember to keep this in sync with main() arguments.
     filename: str = "locustfile.py"
     users: int = 1
     duration: int | None = None
