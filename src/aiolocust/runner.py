@@ -1,4 +1,5 @@
 import asyncio
+import io
 import logging
 import math
 import os
@@ -7,6 +8,7 @@ import sys
 import threading
 import time
 import warnings
+from datetime import datetime
 from pathlib import Path
 
 from aiohttp import ClientOSError
@@ -243,7 +245,13 @@ class Runner:
         if stats.error_counter:
             self.console.print(error_table)
         if self.html_report:
-            report_console = Console(record=True)
+            report_console = Console(record=True, file=io.StringIO())
+
+            def format_time(time: float) -> str:
+                return datetime.fromtimestamp(time).strftime("%H:%M:%S.%f")[:-5]
+
+            end_time = time.time()
+            summary_table.title = f"{datetime.fromtimestamp(self.start_time).strftime('%Y-%m-%d %H:%M:%S.%f')[:-4]} - {datetime.fromtimestamp(end_time).strftime('%H:%M:%S.%f')[:-4]} ({end_time - self.start_time:.2f}s)"
             report_console.print(summary_table)
             if error_table:
                 report_console.print(error_table)

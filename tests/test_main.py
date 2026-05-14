@@ -58,9 +58,11 @@ async def run(user):
             app,
             ["my_locustfile.py", "--iterations", "3", "-u", "2", "--html-report", "reports/report.html"],
         )
+        print(result.output)
         assert "http://localhost:" in result.output
         assert "0 (0.0%)" in result.output
         assert result.exit_code == 0
+        assert result.output.count("http://localhost:") == 1  # no accidental duplicate print
         with open("reports/report.html") as report:
             html = report.read()
         assert "<!DOCTYPE html>" in html
