@@ -17,11 +17,14 @@ from opentelemetry.sdk.trace.export import BatchSpanProcessor, ConsoleSpanExport
 from rich.console import Console
 from rich.logging import RichHandler
 
+from aiolocust.main import CONFIG
+
 resource = Resource.create(
     {
         "service.name": "locust",
         "service.version": version("aiolocust"),
         "host.name": socket.gethostname(),
+        "filename": CONFIG.filename,
     }
 )
 logger = logging.getLogger(__name__)
