@@ -121,8 +121,10 @@ def main(
         None, "--version", callback=version_callback, is_eager=True, help="Show the version and exit."
     ),
 ):
+    # propagate command line args to other modules via CONFIG object
     for key, value in locals().items():
         setattr(CONFIG, key, value)
+
     from aiolocust.otel import setup_logging
 
     log_level_id = getattr(logging, log_level.value.upper())
