@@ -5,7 +5,7 @@ from dataclasses import dataclass
 
 @dataclass(slots=True)
 class Request:
-    url: str
+    name: str
     ttfb: float
     ttlb: float
     error: Exception | bool | str | None

@@ -36,12 +36,12 @@ async def test_name(httpserver: HTTPServer, mocker: MockerFixture):
         async with client.get(httpserver.url_for("/"), name="foo") as resp:
             pass
         r = aiolocust.stats.request.call_args.args[0]
-        assert r.url == "foo"
+        assert r.name == "foo"
 
         async with client.get(httpserver.url_for("/doesnt_exist"), name="foo") as resp:
             pass
         r = aiolocust.stats.request.call_args.args[0]
-        assert r.url == "foo"
+        assert r.name == "foo"
         assert isinstance(r.error, ClientResponseError)
 
     async with LocustClientSession() as client:
@@ -78,7 +78,7 @@ async def test_timeout(httpserver: HTTPServer, mocker: MockerFixture):
             await _(client)
 
     r = aiolocust.stats.request.call_args.args[0]
-    assert r.url == "foo"
+    assert r.name == "foo"
 
 
 async def test_404(httpserver: HTTPServer, mocker: MockerFixture):
@@ -90,7 +90,7 @@ async def test_404(httpserver: HTTPServer, mocker: MockerFixture):
             pass
         assert isinstance(aiolocust.stats.request, MagicMock)  # for type hinting
         r = aiolocust.stats.request.call_args.args[0]
-        assert r.url.endswith("/")
+        assert r.name.endswith("/")
         assert isinstance(r.error, ClientResponseError)
         assert "404," in str(r.error)
 
@@ -113,7 +113,7 @@ async def test_raise_for_status(httpserver: HTTPServer, mocker: MockerFixture):
 
     assert isinstance(aiolocust.stats.request, MagicMock)  # for type hinting
     r = aiolocust.stats.request.call_args.args[0]
-    assert r.url.endswith("/doesnt_exist")
+    assert r.name.endswith("/doesnt_exist")
     assert isinstance(r.error, ClientResponseError)
 
 

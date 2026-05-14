@@ -123,7 +123,7 @@ We also plan to further emphasize the "It's just Python"-approach. For example, 
 
 ## OTEL Native
 
-aiolocust uses OTel for metrics internally and exporting them into your own monitoring solution is easy. By default, it creates a `http.client.duration` histogram, as well as basic trace spans for every request and logs.
+aiolocust uses OTel for metrics internally and exporting them into your own monitoring solution is easy. By default, it creates a `locust.client.duration` histogram, as well as basic trace spans for every request and logs.
 
 If you also want to propagate spans, and standard metrics, you can either use the `--instrument` command line option or use an agent for [zero-code instrumentation](https://opentelemetry.io/docs/zero-code/python/). You can also do it [from code](https://opentelemetry-python-contrib.readthedocs.io/en/latest/instrumentation/aiohttp_client/aiohttp_client.html#usage) for increased flexibility.
 

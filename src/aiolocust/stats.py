@@ -23,7 +23,7 @@ reader = InMemoryMetricReader(
 otel.setup_trace_exporters()
 otel.setup_meter_provider([reader])
 meter = metrics.get_meter("locust")
-ttlb_histogram = meter.create_histogram("http.client.duration")
+ttlb_histogram = meter.create_histogram("locust.client.duration")
 error_counter = defaultdict(int)
 error_counter_lock = Lock()
 
@@ -37,7 +37,7 @@ def record_error(message: str):
 
 def request(req: Request):
     attributes = {
-        "http.url": req.url,
+        "name": req.name,
         # the rest of these remain to be implemented
         # http.method=GET,
         # http.host=localhost,
@@ -73,22 +73,19 @@ class StatsFormatter:
         for resource_metric in metrics_data.resource_metrics if metrics_data else []:
             for scope_metric in resource_metric.scope_metrics:
                 for metric in scope_metric.metrics:
-                    if metric.name != "http.client.duration":
+                    if metric.name != "locust.client.duration":
                         continue
                     for point in metric.data.data_points:
                         if not point.attributes:
                             raise Exception(f"A data point had no attributes, that should never happen. Point: {point}")
                         if not isinstance(point, HistogramDataPoint):
-                            continue  # maybe we should log this, but we don't want to kill performance either
-                        if name := point.attributes.get("http.url"):
-                            entries[str(name)] += RequestEntry(
-                                point.count,
-                                point.count if point.attributes.get("error.type") else 0,
-                                point.sum,
-                                point.max,
-                            )
-                        else:
-                            pass  # print(f"Unknown point {point}")
+                            raise Exception(f"Unexpected Strange datapoint type: {point}")
+                        entries[str(point.attributes["name"])] += RequestEntry(
+                            point.count,
+                            point.count if point.attributes.get("error.type") else 0,
+                            point.sum,
+                            point.max,
+                        )
 
         return entries
 
