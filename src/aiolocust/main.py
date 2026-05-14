@@ -5,6 +5,7 @@ import logging
 import os
 import sys
 import traceback
+from dataclasses import dataclass
 from enum import StrEnum
 from importlib.metadata import version
 from pathlib import Path
@@ -49,6 +50,26 @@ def version_callback(value: bool):
     if value:
         print(f"aiolocust {version('aiolocust')}")
         raise typer.Exit()
+
+
+@dataclass
+class Config:
+    # used for giving all modules access to command line arguments. Remember to keep this in sync with main() arguments.
+    filename: str = "locustfile.py"
+    users: int = 1
+    duration: int | None = None
+    rate: float | None = None
+    iterations: int | None = None
+    host: str | None = None
+    instrument: bool = False
+    log_level: LogLevel = LogLevel.info
+    config: dict | None = None
+    event_loops: int | None = None
+    html_report: Path | None = None
+    _version: bool = False
+
+
+CONFIG = Config()
 
 
 @app.command()
@@ -100,6 +121,8 @@ def main(
         None, "--version", callback=version_callback, is_eager=True, help="Show the version and exit."
     ),
 ):
+    for key, value in locals().items():
+        setattr(CONFIG, key, value)
     from aiolocust.otel import setup_logging
 
     log_level_id = getattr(logging, log_level.value.upper())

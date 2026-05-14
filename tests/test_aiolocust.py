@@ -59,6 +59,7 @@ async def run(self):
             assert '"status_code": "ERROR"' in output
             assert '"exception.type": "AssertionError"' in output
             assert '"trace_id":' in output
+            assert f'"filename": "{tempfile.name}"' in output  # ensure filename is included in resource attributes
             assert '"name": "GET"' in output  # not renamed
             assert '"name": "GET foo"' in output  # using explicit name
             assert await proc.wait() == 0
