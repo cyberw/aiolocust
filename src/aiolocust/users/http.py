@@ -20,9 +20,6 @@ if TYPE_CHECKING:  # avoid circular import
     from aiolocust.runner import Runner
 
 
-SPAN_NAME_KEY = context.create_key("name")
-
-
 class HttpUser(User):
     session_kwargs: dict[str, Any] = {"timeout": aiohttp.ClientTimeout(60.0)}
     """
