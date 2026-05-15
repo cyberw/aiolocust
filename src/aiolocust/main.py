@@ -26,6 +26,10 @@ app = typer.Typer(add_completion=False)
 logger = logging.getLogger(__name__)
 # avoid annoying "Using selector: KqueueSelector" when running in debug:
 logging.getLogger("asyncio").setLevel(logging.INFO)
+# dont debug log urllib3, because it is very verbose,
+# and would send logs to OTEL about having written to the collector,
+# which is extra weird
+logging.getLogger("urllib3").setLevel(logging.INFO)
 
 
 def load_config(input_string):
