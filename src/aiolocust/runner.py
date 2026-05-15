@@ -236,21 +236,19 @@ class Runner:
 
         if self.running:  # if we exited the loop without a signal, we should still do a proper shutdown
             self.shutdown()
-
+        end_time = time.time()
         stats_printer_task.cancel()
 
         summary_table = self.sf.get_table(True)
         self.console.print(summary_table)
         error_table = self.sf.get_error_table() if stats.error_counter else None
+
         if stats.error_counter:
             self.console.print(error_table)
+
         if self.html_report:
+            logger.debug(f"Saving HTML report to {self.html_report}")
             report_console = Console(record=True, file=io.StringIO())
-
-            def format_time(time: float) -> str:
-                return datetime.fromtimestamp(time).strftime("%H:%M:%S.%f")[:-5]
-
-            end_time = time.time()
             summary_table.title = f"{datetime.fromtimestamp(self.start_time).strftime('%Y-%m-%d %H:%M:%S.%f')[:-4]} - {datetime.fromtimestamp(end_time).strftime('%H:%M:%S.%f')[:-4]} ({end_time - self.start_time:.2f}s)"
             report_console.print(summary_table)
             if error_table:
