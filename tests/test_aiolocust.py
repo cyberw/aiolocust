@@ -108,7 +108,7 @@ async def run(user):
             output = stdout.decode(errors="replace")
             assert "warning level log message" in err
             assert "info level log message" not in err
-            assert "Exception" not in err
+            assert "exception" not in err.lower()
             assert await proc.wait() == 0
 
 
@@ -144,7 +144,7 @@ async def run(user):
             err = stderr.decode(errors="replace")
             print(err)
             output = stdout.decode(errors="replace")
-            assert "Exception" not in err
+            assert "exception" not in err.lower()
             assert await proc.wait() == 0
             # this also tests that otel initialization didn't happen before log level setup
             assert "setup_meter_provider: OpenTelemetry otlp exporter" in err
@@ -311,6 +311,7 @@ async def run(user):
         else:
             err = stderr.decode(errors="replace")
             print(err)
+            assert "duration" in err
             output = stdout.decode(errors="replace")
             print(output)
             assert "Summary" in output
