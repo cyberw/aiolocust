@@ -32,21 +32,21 @@ logging.getLogger("asyncio").setLevel(logging.INFO)
 logging.getLogger("urllib3").setLevel(logging.INFO)
 
 
-def load_config(input_string):
+def load_config(input_string: str) -> dict:
     if os.path.isfile(input_string):
         try:
             with open(input_string) as f:
                 return json.load(f)
         except json.JSONDecodeError as e:
-            print(f"Config file is not valid JSON: {e}")
+            print(f"--config file is not valid JSON: {e}")
             raise
         except Exception as e:
-            print(f"Could not load file: {e}")
+            print(f"--config file could not be opened: {e}")
             raise
     try:
         return json.loads(input_string)
     except json.JSONDecodeError as e:
-        print(f"Config is not valid JSON: {e}")
+        print(f"--config string is not valid JSON: {e}")
         raise
 
 
@@ -114,7 +114,7 @@ def main(
         typer.Option(
             metavar="JSON",
             parser=load_config,
-            help='JSON string or path to JSON file, e.g. \n\n{"stages": [{"duration": 10, "target": 10}, {"duration": 5, "target": 0}]}',
+            help='JSON string or path to JSON file, e.g. \n\n{"stages":[{"duration":10,"target":10},{"duration":5,"target":0}]}',
         ),
     ] = None,
     event_loops: Annotated[
