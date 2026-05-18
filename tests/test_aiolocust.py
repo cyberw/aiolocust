@@ -223,8 +223,12 @@ async def run(user):
             raise AssertionError("process never terminated") from None
         else:
             output = stdout.decode(errors="replace")
+            err = stderr.decode(errors="replace")
+            print(output)
             assert "Summary" in output
             assert await proc.wait() == 0
+            print(err)
+            assert "Shutting down (got SIGINT/CTRL-C)" in err
 
 
 async def test_unhandled_error_logging(http_server):  # noqa: ARG001

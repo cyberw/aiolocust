@@ -153,7 +153,7 @@ class Runner:
             await asyncio.sleep(2)
 
     def shutdown(self, reason=None):
-        logger.info(f"Shutting down ({reason})" if reason else "Shutting down")
+        logger.info(f"Shutting down ({reason or 'no reason given'})")
         if not self.running:
             logger.debug("Already shutting down, ignoring shutdown() call")
             return
@@ -174,8 +174,7 @@ class Runner:
                     user_instance.running = False
                     self.running_users.remove(user_instance)
                     if not self.running_users:
-                        logger.debug(f"Reached iteration limit ({self.iteration_counter.value}) & all users finished")
-                        self.shutdown()
+                        self.shutdown(f"reached iteration limit ({self.iteration_counter.value})")
                     break
                 try:
                     await user_instance.run()
@@ -187,8 +186,7 @@ class Runner:
 
     def signal_handler(self, _sig, _frame):
         signal.signal(signal.SIGINT, original_sigint_handler)  # stop immediately on second Ctrl-C
-        logger.debug("\nGot SIGINT, shutting down...")
-        self.shutdown()
+        self.shutdown("got SIGINT/CTRL-C")
 
     def run_test(self):
         asyncio.run(self.run_test_async())
@@ -235,7 +233,7 @@ class Runner:
             self.previous_user_count = new_user_count
 
         if self.running:  # if we exited the loop without a signal, we should still do a proper shutdown
-            self.shutdown()
+            self.shutdown("run_test loop exited - possibly due to an exception?")
         end_time = time.time()
         stats_printer_task.cancel()
 

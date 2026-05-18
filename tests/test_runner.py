@@ -139,7 +139,7 @@ def test_manual_shutdown(http_server, capteesys):  # noqa: ARG001
         async def run(self):
             async with self.client.get("http://localhost:8081/") as resp:
                 pass
-            self.runner.shutdown()  # manually trigger shutdown from user code
+            self.runner.shutdown("foo")  # manually trigger shutdown from user code
 
     Runner([TestUser]).run_test()
     out, err = capteesys.readouterr()
@@ -147,6 +147,10 @@ def test_manual_shutdown(http_server, capteesys):  # noqa: ARG001
     print(out)
     assert "Summary" in out
     assert " http://localhost:8081/ │     1 │ 0 (0.0%) " in out
+
+    # I wish we could test this, but it isnt actually printed by the runner,
+    # and it isn't worth testing at test_aiolocust-level
+    # assert "foo" in out
 
 
 def test_iterations(http_server, capteesys):  # noqa: ARG001
