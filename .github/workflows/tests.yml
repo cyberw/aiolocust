@@ -153,7 +153,7 @@ jobs:
 
   publish_pypi:
     name: Publish to PyPI
-    needs: [ruff-pyright-pytestlinux-and-mitmproxy-recording, windows, macos]
+    needs: [ruff-pyright-pytestlinux-and-mitmproxy-recording, macos]
     if: github.repository_owner == 'cyberw' && startsWith(github.event.ref,
       'refs/tags')
     runs-on: ubuntu-latest
@@ -178,7 +178,7 @@ jobs:
         run: uv publish
 
   docker_image:
-    needs: [ruff-pyright-pytestlinux-and-mitmproxy-recording, windows, macos]
+    needs: [ruff-pyright-pytestlinux-and-mitmproxy-recording, macos]
     if: github.repository_owner == 'cyberw' && startsWith(github.event.ref,
       'refs/tags')
     runs-on: ubuntu-latest
