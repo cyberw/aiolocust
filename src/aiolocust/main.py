@@ -76,9 +76,15 @@ class Config:
 CONFIG = Config()
 
 
-@app.command()
+@app.command(context_settings={"auto_envvar_prefix": "LOCUST"})
 def main(
-    filename: Annotated[str, typer.Argument(help="The test to run")] = "locustfile.py",
+    filename: Annotated[
+        str,
+        typer.Argument(
+            help="The test to run",
+            envvar="LOCUST_FILENAME",  # auto_envvar_prefix doesn't work with arguments for some reason
+        ),
+    ] = "locustfile.py",
     users: Annotated[int, typer.Option("-u", "--users", help="Number of concurrent VUs (peak)")] = 1,
     duration: Annotated[int | None, typer.Option("-d", "--duration", help="Time to run the test (seconds)")] = None,
     rate: Annotated[float | None, typer.Option("-r", "--rate", help="Number of users to spawn (per second)")] = None,
