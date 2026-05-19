@@ -70,6 +70,7 @@ class Config:
     config: dict | None = None
     event_loops: int | None = None
     html_report: Path | None = None
+    profile: str | None = None
     _version: bool = False
 
 
