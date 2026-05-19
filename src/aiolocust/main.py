@@ -127,8 +127,20 @@ def main(
         Path | None,
         typer.Option("--html-report", help="Write the final summary as a static HTML report"),
     ] = None,
+    profile: Annotated[
+        str | None,
+        typer.Option(
+            "--profile",
+            help="A description of the test run to include in otel resource attributes,\n\nto differentiate between runs with the same file name",
+        ),
+    ] = None,
     _version: bool = typer.Option(
-        None, "--version", callback=version_callback, is_eager=True, help="Show the version and exit."
+        None,
+        "--version",
+        callback=version_callback,
+        is_eager=True,
+        help="Show the version and exit.",
+        show_envvar=False,
     ),
 ):
     # propagate command line args to other modules via CONFIG object

@@ -25,6 +25,7 @@ resource = Resource.create(
         "service.version": version("aiolocust"),
         "host.name": socket.gethostname(),
         "filename": CONFIG.filename,
+        "profile": CONFIG.profile,
     }
 )
 logger = logging.getLogger(__name__)
