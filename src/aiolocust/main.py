@@ -171,7 +171,11 @@ def main(
 
     module_name = file_path.stem
 
-    spec = importlib.util.spec_from_file_location(module_name, file_path)
+    spec = importlib.util.spec_from_file_location(
+        module_name,
+        file_path,
+        submodule_search_locations=[str(file_path.parent)],
+    )
     if spec is None or spec.loader is None:
         typer.echo(f"Error: Could not load the file at {file_path}")
         raise typer.Exit(code=1)
@@ -206,7 +210,7 @@ def main(
     except BaseException as exc:
         # if there's an error during import, print the traceback for the user code, but leave out aiolocust and importlib
         tb = exc.__traceback__
-
+        logger.debug(f"Error during import of {filename}: {exc}")
         while tb and is_ignored_frame(tb):
             tb = tb.tb_next
 
