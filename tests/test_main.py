@@ -70,6 +70,30 @@ async def run(user):
         assert "Total" in html
 
 
+def test_relative_import_in_module():
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        os.makedirs("mytests")
+        with open("mytests/__init__.py", "w") as f:
+            f.write("")
+        with open("mytests/helper.py", "w") as f:
+            f.write(
+                """
+async def run(user):
+    pass
+"""
+            )
+        with open("mytests/my_locustfile.py", "w") as f:
+            f.write(
+                """
+from .helper import run
+"""
+            )
+
+        result = runner.invoke(app, ["mytests/my_locustfile.py", "--iterations", "1"])
+        assert result.exit_code == 0
+
+
 def test_config(http_server):  # noqa: ARG001
     runner = CliRunner()
     with runner.isolated_filesystem():
