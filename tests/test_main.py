@@ -45,6 +45,27 @@ async def run(user):
         assert result.exit_code == 0
 
 
+def test_on_start():  # noqa: ARG001
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        with open("my_locustfile.py", "w") as f:
+            f.write("""
+from aiolocust import HttpUser
+foo = None
+
+async def on_start():
+    global foo
+    foo = "bar"
+
+class MyUser(HttpUser):
+    async def run(self):
+        print(foo)
+""")
+        result = runner.invoke(app, ["my_locustfile.py", "--iterations", "1"])
+        assert "bar" in result.output
+        assert result.exit_code == 0
+
+
 def test_html_report(http_server):  # noqa: ARG001
     runner = CliRunner()
     with runner.isolated_filesystem():
