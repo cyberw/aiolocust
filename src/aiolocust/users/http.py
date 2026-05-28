@@ -69,6 +69,7 @@ class LocustResponse(ClientResponse):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.error: Exception | bool | str | None = None
+        self._bytes: bytes | None = None
 
 
 class LocustRequestContextManager(_RequestContextManager):
@@ -86,6 +87,7 @@ class LocustRequestContextManager(_RequestContextManager):
 
     async def __aenter__(self) -> LocustResponse:
         self.span = tracer.start_span(f"{self.method} {self.name}" if self.name else self.method)
+        self.span.set_attribute("http.method", self.method)
         self.start_time = time.perf_counter()
         ctx = trace.set_span_in_context(self.span)
         self._token = context.attach(ctx)
