@@ -8,6 +8,7 @@ import sys
 import threading
 import time
 import warnings
+from collections.abc import Awaitable, Callable
 from datetime import datetime
 from pathlib import Path
 
@@ -106,6 +107,7 @@ class Runner:
         config: dict | None = None,
         event_loops: int | None = None,
         html_report: Path | None = None,
+        on_start: Callable[[], Awaitable[None]] | None = None,
     ):
         signal.signal(signal.SIGINT, self.signal_handler)
         self.running = False
@@ -116,6 +118,7 @@ class Runner:
         self.host = host
         self.iteration_counter = SafeCounter(iterations)
         config = config or {}
+        self.on_start = on_start
 
         if "stages" in config:
             self.stages = [Stage(**item) for item in config["stages"]]
@@ -203,7 +206,8 @@ class Runner:
 
     async def run_test_async(self):
         self.running = True
-
+        if self.on_start:
+            await self.on_start()
         workers = [LoopWorker() for _ in range(self.event_loops)]
         for w in workers:
             w.start()

@@ -251,6 +251,7 @@ def main(
             config=config,
             event_loops=event_loops,
             html_report=html_report,
+            on_start=getattr(module, "on_start", None),
         )
         r.run_test()
     else:
