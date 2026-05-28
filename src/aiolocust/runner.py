@@ -131,8 +131,8 @@ class Runner:
                 Stage(ramp_up_time, user_count),
                 Stage(duration - ramp_up_time if duration else 99999999, user_count),
             ]
-
-        logger.info("Starting test")
+        self.target_user_count = max((stage.target for stage in self.stages), default=0)
+        logger.info(f"Starting test (target user count: {self.target_user_count})")
 
         if event_loops is None:
             if cpu_count := os.cpu_count():
@@ -252,8 +252,8 @@ class Runner:
         if self.html_report:
             logger.debug(f"Saving HTML report to {self.html_report}")
             report_console = Console(record=True, file=io.StringIO())
-            max_user_count = max((stage.target for stage in self.stages), default=0)
-            summary_table.title = f"{datetime.fromtimestamp(self.start_time).strftime('%Y-%m-%d %H:%M:%S.%f')[:-4]} - {datetime.fromtimestamp(end_time).strftime('%H:%M:%S.%f')[:-4]} ({end_time - self.start_time:.2f}s, target user count: {max_user_count})"
+
+            summary_table.title = f"{datetime.fromtimestamp(self.start_time).strftime('%Y-%m-%d %H:%M:%S.%f')[:-4]} - {datetime.fromtimestamp(end_time).strftime('%H:%M:%S.%f')[:-4]} ({end_time - self.start_time:.2f}s, target user count: {self.target_user_count})"
             report_console.print(summary_table)
             if error_table:
                 report_console.print(error_table)
