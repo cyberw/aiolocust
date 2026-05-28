@@ -67,6 +67,7 @@ async def run(user):
             html = report.read()
         assert "<!DOCTYPE html>" in html
         assert "http://localhost:" in html
+        assert "target user count: 2" in html
         assert "Total" in html
 
 
