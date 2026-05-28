@@ -110,7 +110,7 @@ class LocustRequestContextManager(_RequestContextManager):
         else:
             self.url = super()._resp.url
             self.ttfb = time.perf_counter() - self.start_time
-            await self._resp.read()
+            self._resp._bytes = await self._resp.read()
             self.ttlb = time.perf_counter() - self.start_time
 
         return self._resp
