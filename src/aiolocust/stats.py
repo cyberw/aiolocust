@@ -23,7 +23,9 @@ reader = InMemoryMetricReader(
 otel.setup_trace_exporters()
 otel.setup_meter_provider([reader])
 meter = metrics.get_meter("locust")
-ttlb_histogram = meter.create_histogram("locust.client.duration")
+ttlb_histogram = meter.create_histogram(
+    "locust.client.duration", unit="s", description="Time to last byte for requests"
+)
 error_counter = defaultdict(int)
 error_counter_lock = Lock()
 
