@@ -211,7 +211,7 @@ def test_current_user_count_gauge(http_server, monkeypatch):  # noqa: ARG001
     def _record_gauge(value, attributes=None, context=None):  # noqa: ARG001
         gauge_values.append(value)
 
-    monkeypatch.setattr("aiolocust.runner.user_count_gauge.set", _record_gauge)
+    monkeypatch.setattr("aiolocust.runner.current_users_gauge.set", _record_gauge)
     Runner([TestUser], user_count=2, duration=1).run_test()
 
     assert gauge_values[0] == 0

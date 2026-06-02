@@ -30,9 +30,9 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 meter = metrics.get_meter("locust")
-user_count_gauge = meter.create_gauge(
+current_users_gauge = meter.create_gauge(
     # note: While shutting down a user, it will not be counted, so during its final iteration it may still produce requests even though it is not counted here.
-    "locust.runner.user_count",
+    "locust.current_users",
     unit="{user}",
     description="Currently active Locust Users",
 )
@@ -226,7 +226,7 @@ class Runner:
 
         self.start_time = time.time()
         self.current_user_count = 0
-        user_count_gauge.set(self.current_user_count)
+        current_users_gauge.set(self.current_user_count)
 
         while self.running:
             await asyncio.sleep(0.01)
@@ -244,7 +244,7 @@ class Runner:
                 for i in range(-change):
                     self.stop_user()
             self.current_user_count = new_user_count
-            user_count_gauge.set(self.current_user_count)
+            current_users_gauge.set(self.current_user_count)
 
         if self.running:  # if we exited the loop without a signal, we should still do a proper shutdown
             self.shutdown("run_test loop exited - possibly due to an exception?")
