@@ -199,3 +199,20 @@ def test_desired_user_count():
     assert desired_user_count(stages, 10) == 10
     assert desired_user_count(stages, 999) is None
     assert desired_user_count([Stage(0, 100), Stage(1, 100)], 0.001) == 100  # correctly handles instant ramp up
+
+
+def test_current_user_count_gauge(http_server, monkeypatch):  # noqa: ARG001
+    class TestUser(HttpUser):
+        async def run(self):
+            await asyncio.sleep(0.01)
+
+    gauge_values = []
+
+    def _record_gauge(value, attributes=None, context=None):  # noqa: ARG001
+        gauge_values.append(value)
+
+    monkeypatch.setattr("aiolocust.runner.user_count_gauge.set", _record_gauge)
+    Runner([TestUser], user_count=2, duration=1).run_test()
+
+    assert gauge_values[0] == 0
+    assert max(gauge_values) == 2
