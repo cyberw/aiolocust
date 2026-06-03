@@ -156,7 +156,7 @@ Users/threads can also communicate easily with each other, as they are in the sa
 ## Things this doesn't have compared do Locust (at least not yet)
 
 * A WebUI
-* Support for distributed tests
+* Support for distributed tests (although with OTEL you can aggregate independent concurrent test runs in a single dashboard)
 
 ## Alternative ways to install
 
