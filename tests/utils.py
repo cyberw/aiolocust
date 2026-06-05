@@ -1,6 +1,9 @@
+import os
 import re
 
 import pytest
+
+WINDOWS_DELAY = 1 if os.name == "nt" else 0
 
 
 def assert_search(pattern, string):

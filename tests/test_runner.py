@@ -4,13 +4,11 @@ import os
 import aiohttp
 import pytest
 from opentelemetry.instrumentation.aiohttp_client import AioHttpClientInstrumentor
-from utils import assert_search
+from utils import WINDOWS_DELAY, assert_search
 
 from aiolocust import otel
 from aiolocust.runner import Runner, Stage, desired_user_count
 from aiolocust.users.http import HttpUser, LocustClientSession
-
-WINDOWS_DELAY = 1 if os.name == "nt" else 0
 
 
 def test_basic(http_server, capteesys):  # noqa: ARG001

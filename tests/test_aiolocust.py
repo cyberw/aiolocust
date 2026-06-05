@@ -5,7 +5,7 @@ import signal
 import unittest
 from tempfile import TemporaryDirectory
 
-from utils import assert_search
+from utils import WINDOWS_DELAY, assert_search
 
 
 @unittest.skipIf(os.name == "nt", reason="otel instrumentation seems to have some issues with freethreading on Windows")
@@ -301,7 +301,7 @@ async def run(user):
             stderr=asyncio.subprocess.PIPE,
         )
         try:
-            stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=6)
+            stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=6 + WINDOWS_DELAY * 2)
         except TimeoutError:
             proc.kill()
             stdout, stderr = await proc.communicate()
