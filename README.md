@@ -7,7 +7,7 @@
 
 This is a 2026 reimagining of the load testing tool [Locust](https://github.com/locustio/locust/).
 
-It has a ton of [advantages over its predecessor](#simple-and-consistent-syntax), but is still in beta and missing some of Locust's more advanced features. Do let us know if you find any issues or want to contribute!
+It has a ton of [advantages over its predecessor](#simple-and-consistent-syntax) and is more narrow in scope. Do let us know if you find any issues or want to contribute!
 
 ## Installation
 
