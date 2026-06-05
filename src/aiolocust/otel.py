@@ -41,6 +41,8 @@ tracer = tracer_provider.get_tracer("aiolocust")
 
 def setup_logging(level: int = logging.INFO):
     otel_handler = LoggingHandler(level=level, logger_provider=logger_provider)
+    # avoid double-handling logs emitted by the OTEL handler itself
+    # otel_handler.addFilter(lambda record: record.name != "opentelemetry.sdk._logs.export.LoggingHandler")
 
     logs_exporters = {e.strip().lower() for e in os.getenv("OTEL_LOGS_EXPORTER", "otlp").split(",") if e.strip()}
     for exporter in logs_exporters:
