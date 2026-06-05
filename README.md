@@ -7,7 +7,7 @@
 
 This is a 2026 reimagining of the load testing tool [Locust](https://github.com/locustio/locust/).
 
-It has a ton of [advantages over its predecessor](#simple-and-consistent-syntax) and is more narrow in scope. Do let us know if you find any issues or want to contribute!
+It has a ton of [advantages over its predecessor](#simple-and-consistent-syntax) and is more narrow in scope.
 
 ## Installation
 
@@ -186,3 +186,9 @@ aiolocust
 ## API docs
 
 See [documentation](https://cyberw.github.io/aiolocust/).
+
+## Contributions
+
+This project is still in an early phase. Do let us know if you want to contribute or have feedback on any design choices!
+
+You can reach us on the same [Discord](https://discord.gg/faeXQY82Zs) as the main Locust project.
