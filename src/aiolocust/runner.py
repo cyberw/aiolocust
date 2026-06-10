@@ -63,6 +63,7 @@ if sys._is_gil_enabled():
 
 
 original_sigint_handler = signal.getsignal(signal.SIGINT)
+original_sigterm_handler = signal.getsignal(signal.SIGTERM)
 
 
 def distribute_evenly(total, num_buckets) -> list[int]:
@@ -117,6 +118,7 @@ class Runner:
         on_start: Callable[[], Awaitable[None]] | None = None,
     ):
         signal.signal(signal.SIGINT, self.signal_handler)
+        signal.signal(signal.SIGTERM, self.signal_handler)
         self.running = False
         self.start_time = 0
         self.sf = stats.StatsFormatter()
@@ -195,7 +197,9 @@ class Runner:
                     logger.exception(e)
 
     def signal_handler(self, _sig, _frame):
-        signal.signal(signal.SIGINT, original_sigint_handler)  # stop immediately on second Ctrl-C
+        # stop immediately on repeat signal
+        signal.signal(signal.SIGINT, original_sigint_handler)
+        signal.signal(signal.SIGTERM, original_sigterm_handler)
         self.shutdown("got SIGINT/CTRL-C")
 
     def run_test(self):
