@@ -193,6 +193,10 @@ class Runner:
                 except EXPECTED_ERRORS:
                     pass  # these errors should already have been recorded by the User
                 except Exception as e:
+                    if isinstance(e, RuntimeError) and "cannot schedule new futures after interpreter shutdown" in str(
+                        e
+                    ):
+                        return
                     stats.record_error(str(e))
                     logger.exception(e)
 
