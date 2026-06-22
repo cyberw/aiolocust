@@ -17,7 +17,7 @@ async def test_otel_autoinstrumentation(http_server):  # noqa: ARG001
             tempfile.write("""
 async def run(self):
     async with self.client.get("http://localhost:8081/") as resp:
-        pass
+        resp.span.set_attribute("custom.attribute", "example")
     async with self.client.get("http://localhost:8081/", name="foo") as resp:
         assert await resp.text() == "no way"
 """)
@@ -59,6 +59,7 @@ async def run(self):
             assert '"status_code": "ERROR"' in output
             assert '"exception.type": "AssertionError"' in output
             assert '"trace_id":' in output
+            assert '"custom.attribute": "example"' in output
             assert f'"filename": "{tempfile.name}"' in output  # ensure filename is included in resource attributes
             assert '"name": "GET"' in output  # not renamed
             assert '"name": "GET foo"' in output  # using explicit name

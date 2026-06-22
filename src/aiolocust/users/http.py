@@ -70,6 +70,7 @@ class LocustResponse(ClientResponse):
         super().__init__(*args, **kwargs)
         self.error: Exception | bool | str | None = None
         self._bytes: bytes | None = None
+        self.span: Span  # type: ignore
 
 
 class LocustRequestContextManager(_RequestContextManager):
@@ -114,7 +115,7 @@ class LocustRequestContextManager(_RequestContextManager):
             self.ttfb = time.perf_counter() - self.start_time
             self._resp._bytes = await self._resp.read()
             self.ttlb = time.perf_counter() - self.start_time
-
+        self._resp.span = self.span
         return self._resp
 
     async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
