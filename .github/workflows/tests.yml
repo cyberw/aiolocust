@@ -90,6 +90,10 @@ jobs:
         run: |
           uv run aiolocust --instrument -d 1 | tee locust_output.txt
           grep -E '"name": "GET"' locust_output.txt
+          uv run aiolocust examples/events_ex.py --iterations 1 | tee locust_output.txt
+          grep -E 'Request: http://localhost:8080/, TTLB:' locust_output.txt
+          grep -E 'http://localhost:8080/,' requests.csv
+          
 
   perftest:
     runs-on: ubuntu-latest

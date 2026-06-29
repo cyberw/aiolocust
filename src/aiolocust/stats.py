@@ -5,8 +5,7 @@ from threading import Lock
 from types import TracebackType
 
 from opentelemetry import metrics
-from opentelemetry.sdk.metrics import Histogram
-from opentelemetry.sdk.metrics.export import AggregationTemporality, HistogramDataPoint, InMemoryMetricReader
+from opentelemetry.sdk.metrics.export import HistogramDataPoint
 from rich.table import Table
 
 from aiolocust import otel
@@ -14,14 +13,7 @@ from aiolocust.datatypes import Request, RequestEntry
 
 MAX_ERROR_KEYS = 200
 
-reader = InMemoryMetricReader(
-    preferred_temporality={
-        Histogram: AggregationTemporality.DELTA,
-    }
-)
 
-otel.setup_trace_exporters()
-otel.setup_meter_provider([reader])
 meter = metrics.get_meter("locust")
 ttlb_histogram = meter.create_histogram(
     "locust.client.duration", unit="s", description="Time to last byte for requests"
@@ -30,14 +22,14 @@ error_counter = defaultdict(int)
 error_counter_lock = Lock()
 
 
-def record_error(message: str):
+def record_error(message: str) -> None:
     with error_counter_lock:
         if message not in error_counter and len(error_counter) >= MAX_ERROR_KEYS:
             message = "OTHER"
         error_counter[message] += 1
 
 
-def request(req: Request):
+def record_request(req: Request) -> None:
     attributes = {
         "name": req.name,
         # the rest of these remain to be implemented
@@ -66,11 +58,11 @@ class StatsFormatter:
         self.last_time = self.start_time
         self.aggregate: dict[str, RequestEntry] = defaultdict(RequestEntry)
         # clear reader, in case this is not the first Stats object
-        _ = reader.get_metrics_data()
+        _ = otel.reader.get_metrics_data()
         error_counter.clear()
 
     def _get_entries(self) -> dict[str, RequestEntry]:
-        metrics_data = reader.get_metrics_data()
+        metrics_data = otel.reader.get_metrics_data()
         entries: dict[str, RequestEntry] = defaultdict(RequestEntry)
         for resource_metric in metrics_data.resource_metrics if metrics_data else []:
             for scope_metric in resource_metric.scope_metrics:

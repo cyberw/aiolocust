@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 from opentelemetry import trace
 from playwright.async_api import Page, async_playwright  # pyright: ignore[reportMissingImports]
 
-from aiolocust import User, stats
+from aiolocust import User, events
 from aiolocust.datatypes import Request
 from aiolocust.runner import Runner
 
@@ -17,7 +17,8 @@ browser_instance = None
 class LocustPage:
     """A wrapper for the Playwright Page object to automatically generate OTel spans."""
 
-    def __init__(self, page: Page):
+    def __init__(self, events: events.Events, page: Page):
+        self.events = events
         self._page = page
 
     async def goto(self, url: str, **kwargs):
@@ -25,10 +26,10 @@ class LocustPage:
             span.set_attribute("browser.url", url)
             try:
                 result = await self._page.goto(url, **kwargs)
-                stats.request(Request(url, 1, 1, None))
+                self.events.request.fire(Request(url, 1, 1, None))
             except Exception as e:
                 span.record_exception(e)
-                stats.request(Request(url, 1, 1, e))
+                self.events.request.fire(Request(url, 1, 1, e))
                 raise
             return result
 
@@ -37,17 +38,18 @@ class LocustPage:
             span.set_attribute("browser.selector", selector)
             try:
                 result = await self._page.click(selector, **kwargs)
-                stats.request(Request(selector, 1, 1, None))
+                self.events.request.fire(Request(selector, 1, 1, None))
             except Exception as e:
                 span.record_exception(e)
-                stats.request(Request(selector, 1, 1, e))
+                self.events.request.fire(Request(selector, 1, 1, e))
                 raise
             return result
 
 
 class PlaywrightUser(User):
-    def __init__(self, runner: Runner | None = None, **kwargs):
+    def __init__(self, events: events.Events, runner: Runner | None = None, **kwargs):
         super().__init__(runner)
+        self.events = events
         self.kwargs = kwargs
         self.page: LocustPage  # type: ignore[assignment] # always set in cm
 
@@ -77,7 +79,7 @@ class PlaywrightUser(User):
         assert browser_instance
         context = await browser_instance.new_context()
         raw_page = await context.new_page()
-        self.page = LocustPage(raw_page)
+        self.page = LocustPage(self.events, raw_page)
 
         yield
 

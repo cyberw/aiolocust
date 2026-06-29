@@ -1,3 +1,4 @@
+# the filename of these tests is because pytest runs in alphabetical order and we want lower level tests to run first
 import asyncio
 import json
 import os
@@ -216,6 +217,53 @@ async def run(user):
             else:
                 proc.send_signal(signal.SIGINT)
             stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=3)
+        except TimeoutError:
+            proc.kill()
+            stdout, stderr = await proc.communicate()
+            output = stdout.decode(errors="replace")
+            print(output)
+            raise AssertionError("process never terminated") from None
+        else:
+            output = stdout.decode(errors="replace")
+            err = stderr.decode(errors="replace")
+            print(output)
+            assert "Summary" in output
+            assert await proc.wait() == 0
+            print(err)
+            assert "Shutting down (got SIGINT/CTRL-C)" in err
+
+
+async def test_sigint_doesnt_wait_for_otel_to_connect(http_server):  # noqa: ARG001
+    with TemporaryDirectory() as tmp_dir:
+        script_path = os.path.join(tmp_dir, "my_script.py")
+
+        with open(script_path, "w") as tempfile:
+            tempfile.write("""
+async def run(user):
+    async with user.client.get("http://localhost:8081/") as resp:
+        pass
+""")
+        proc = await asyncio.create_subprocess_exec(
+            "aiolocust",
+            tempfile.name,
+            "--duration",
+            "10",
+            "--instrument",
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+            env={
+                "OTEL_METRICS_EXPORTER": "otlp",
+                "OTEL_EXPORTER_OTLP_ENDPOINT": "https://collector.observability.test.svenskaspel.se",
+                **os.environ,
+            },
+        )
+        try:
+            await asyncio.sleep(1)
+            if os.name == "nt":
+                proc.send_signal(signal.CTRL_C_EVENT)
+            else:
+                proc.send_signal(signal.SIGINT)
+            stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=5)
         except TimeoutError:
             proc.kill()
             stdout, stderr = await proc.communicate()

@@ -40,6 +40,7 @@ async def run(user):
         pass
 """)
         result = runner.invoke(app, ["my_locustfile.py", "--iterations", "3", "-u", "2"])
+        print(result.output)
         assert "http://localhost:" in result.output
         assert "0 (0.0%)" in result.output
         assert result.exit_code == 0
@@ -133,6 +134,7 @@ async def run(user):
                 '{ "stages": [{ "duration": 2, "target": 2 }] }',
             ],
         )
+        print(result.output)
         assert "http://localhost:" in result.output
         assert "0 (0.0%)" in result.output
         assert result.exit_code == 0

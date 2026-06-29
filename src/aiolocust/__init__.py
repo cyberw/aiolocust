@@ -2,6 +2,9 @@ from abc import ABC, abstractmethod
 from contextlib import asynccontextmanager
 from typing import TYPE_CHECKING
 
+from aiolocust.datatypes import Config
+from aiolocust.events import Events
+
 
 class User(ABC):
     def __init__(self, runner: Runner | None = None, **kwargs):
@@ -38,6 +41,33 @@ def __getattr__(name):
         return Runner
 
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
+
+_config: Config | None = None
+_events: Events | None = None
+
+
+def get_config() -> Config:
+    global _config
+    if _config is None:
+        _config = Config()
+    return _config
+
+
+def get_events() -> Events:
+    global _events
+    if _events is None:
+        _events = Events()
+    return _events
+
+
+def _reset_events() -> Events:
+    """
+    Only used by Runner and in unit tests
+    """
+    global _events
+    _events = Events()
+    return _events
 
 
 __all__ = ["User", "HttpUser", "LocustClientSession", "Runner"]

@@ -10,7 +10,13 @@ from opentelemetry.instrumentation.logging.handler import LoggingHandler
 from opentelemetry.sdk._logs import LoggerProvider
 from opentelemetry.sdk._logs.export import BatchLogRecordProcessor, ConsoleLogRecordExporter
 from opentelemetry.sdk.metrics import Histogram, MeterProvider
-from opentelemetry.sdk.metrics.export import ConsoleMetricExporter, MetricReader, PeriodicExportingMetricReader
+from opentelemetry.sdk.metrics.export import (
+    AggregationTemporality,
+    ConsoleMetricExporter,
+    InMemoryMetricReader,
+    MetricReader,
+    PeriodicExportingMetricReader,
+)
 from opentelemetry.sdk.metrics.view import ExplicitBucketHistogramAggregation, View
 from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import TracerProvider
@@ -18,28 +24,41 @@ from opentelemetry.sdk.trace.export import BatchSpanProcessor, ConsoleSpanExport
 from rich.console import Console
 from rich.logging import RichHandler
 
-from aiolocust.main import CONFIG
+from aiolocust.datatypes import Config
 
 HISTOGRAM_BOUNDARIES = [0.001, 0.002, 0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1.0, 2.0, 5.0, 10.0, 20.0, 50.0]
 
-resource = Resource.create(
-    {
-        "service.name": "locust",
-        "service.version": version("aiolocust"),
-        "host.name": socket.gethostname(),
-        "filename": CONFIG.filename,
-        "profile": CONFIG.profile or "",
-    }
-)
-logger = logging.getLogger(__name__)
-logger_provider = LoggerProvider(resource=resource)
-set_logger_provider(logger_provider)
-tracer_provider = TracerProvider(resource=resource)
-trace.set_tracer_provider(tracer_provider)
-tracer = tracer_provider.get_tracer("aiolocust")
+reader: InMemoryMetricReader = None  # type: ignore
 
 
-def setup_logging(level: int = logging.INFO):
+def configure_telemetry(config: Config):
+    global reader
+    if reader:
+        return
+    resource = Resource.create(
+        {
+            "service.name": "locust",
+            "service.version": version("aiolocust"),
+            "host.name": socket.gethostname(),
+            "filename": config.filename,
+            "profile": config.profile or "",
+        }
+    )
+    logger_provider = LoggerProvider(resource=resource)
+    set_logger_provider(logger_provider)
+    setup_logging(getattr(logging, config.log_level.value.upper()), logger_provider)
+    tracer_provider = TracerProvider(resource=resource)
+    trace.set_tracer_provider(tracer_provider)
+    reader = InMemoryMetricReader(
+        preferred_temporality={
+            Histogram: AggregationTemporality.DELTA,
+        }
+    )
+    setup_trace_exporters(tracer_provider)
+    setup_meter_provider([reader], resource)
+
+
+def setup_logging(level: int, logger_provider: LoggerProvider):
     otel_handler = LoggingHandler(level=level, logger_provider=logger_provider)
     # avoid double-handling logs emitted by the OTEL handler itself
     # otel_handler.addFilter(lambda record: record.name != "opentelemetry.sdk._logs.export.LoggingHandler")
@@ -105,7 +124,8 @@ def setup_logging(level: int = logging.INFO):
         )
 
 
-def setup_trace_exporters():
+def setup_trace_exporters(tracer_provider: TracerProvider):
+    logger = logging.getLogger(__name__)
     traces_exporters = {e.strip().lower() for e in os.getenv("OTEL_TRACES_EXPORTER", "otlp").split(",") if e.strip()}
     for exporter in traces_exporters:
         if exporter == "otlp":
@@ -146,7 +166,7 @@ def setup_trace_exporters():
             print(f"Unknown traces exporter '{exporter}'. Ignored")
 
 
-def setup_meter_provider(metric_readers: list[MetricReader]):
+def setup_meter_provider(metric_readers: list[MetricReader], resource):
     readers_from_env = get_metric_exporters()
     metrics.set_meter_provider(
         MeterProvider(
@@ -165,6 +185,7 @@ def setup_meter_provider(metric_readers: list[MetricReader]):
 def get_metric_exporters() -> list[MetricReader]:
     metric_readers: list[MetricReader] = []
     metrics_exporters = {e.strip().lower() for e in os.getenv("OTEL_METRICS_EXPORTER", "otlp").split(",") if e.strip()}
+    logger = logging.getLogger(__name__)
     for exporter in metrics_exporters:
         if exporter == "otlp":
             protocol = (
