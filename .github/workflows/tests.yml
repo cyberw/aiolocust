@@ -84,12 +84,17 @@ jobs:
         with:
           enable-cache: true
 
-      - name: Run Tests
+      - name: --instrument
         env:
           OTEL_TRACES_EXPORTER: console
         run: |
           uv run aiolocust --instrument -d 1 | tee locust_output.txt
           grep -E '"name": "GET"' locust_output.txt
+
+      - name: events_ex.py
+        env:
+          OTEL_TRACES_EXPORTER: console
+        run: |
           uv run aiolocust examples/events_ex.py --iterations 1 | tee locust_output.txt
           grep -E 'Request: http://localhost:8080/, TTLB:' locust_output.txt
           grep -E 'http://localhost:8080/,' requests.csv
