@@ -95,6 +95,7 @@ jobs:
         env:
           OTEL_TRACES_EXPORTER: console
         run: |
+          set -x
           uv run aiolocust examples/events_ex.py --iterations 1 | tee locust_output.txt
           grep -E 'Request: http://localhost:8080/, TTLB:' locust_output.txt
           grep -E 'http://localhost:8080/,' requests.csv
