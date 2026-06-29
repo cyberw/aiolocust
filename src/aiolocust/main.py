@@ -13,7 +13,7 @@ import click
 import typer
 
 import aiolocust
-from aiolocust.datatypes import LogLevel
+from aiolocust.config import LogLevel
 from aiolocust.otel import configure_telemetry
 
 app = typer.Typer(add_completion=False)

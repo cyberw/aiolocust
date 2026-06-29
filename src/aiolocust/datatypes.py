@@ -1,8 +1,6 @@
 import sys
 import threading
 from dataclasses import dataclass
-from enum import StrEnum
-from pathlib import Path
 
 
 @dataclass(slots=True)
@@ -52,31 +50,6 @@ class RequestEntry:
 class Stage:
     duration: float
     target: int
-
-
-class LogLevel(StrEnum):
-    debug = "debug"
-    info = "info"
-    warning = "warning"
-    error = "error"
-
-
-@dataclass
-class Config:
-    # used for giving all modules access to command line arguments. Remember to keep this in sync with main() arguments.
-    filename: str = "locustfile.py"
-    users: int = 1
-    duration: int | None = None
-    rate: float | None = None
-    iterations: int | None = None
-    host: str | None = None
-    instrument: bool = False
-    log_level: LogLevel = LogLevel.info
-    config: dict | None = None
-    event_loops: int | None = None
-    html_report: Path | None = None
-    profile: str | None = None
-    _version: bool = False
 
 
 class SafeCounter:

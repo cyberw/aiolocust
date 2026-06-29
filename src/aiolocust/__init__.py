@@ -2,8 +2,6 @@ from abc import ABC, abstractmethod
 from contextlib import asynccontextmanager
 from typing import TYPE_CHECKING
 
-from aiolocust.datatypes import Config
-
 
 class User(ABC):
     def __init__(self, runner: Runner | None = None, **kwargs):
