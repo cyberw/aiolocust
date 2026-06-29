@@ -11,7 +11,10 @@ class EventHook[**P]:
         self._handlers: list[Callable[P, None]] = []
 
     def add_listener(self, func: Callable[P, None]) -> Callable[P, None]:
-        self._handlers.append(func)
+        if func not in self._handlers:
+            self._handlers.append(func)
+        else:
+            pass  # ignore duplicate listener registration
         return func
 
     def fire(self, *args: P.args, **kwargs: P.kwargs) -> None:
