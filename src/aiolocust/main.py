@@ -117,11 +117,9 @@ def main(
         show_envvar=False,
     ),
 ):
-    _config = aiolocust.get_config()
-
     # propagate command line args to other modules via config object
     for key, value in locals().items():
-        setattr(_config, key, value)
+        setattr(aiolocust.config, key, value)
 
     log_level_id = getattr(logging, log_level.value.upper())
 

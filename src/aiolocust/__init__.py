@@ -42,14 +42,4 @@ def __getattr__(name):
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 
-_config: Config | None = None
-
-
-def get_config() -> Config:
-    global _config
-    if _config is None:
-        _config = Config()
-    return _config
-
-
 __all__ = ["User", "HttpUser", "LocustClientSession", "Runner"]
