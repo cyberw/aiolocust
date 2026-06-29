@@ -22,10 +22,11 @@ class EventHook[**P]:
             handler(*args, **kwargs)
 
 
-class Events:
-    def __init__(self):
-        self._clear_handlers()
+startup = EventHook[[]]()
+request = EventHook[[Request]]()
 
-    def _clear_handlers(self):
-        self.startup = EventHook[[]]()
-        self.request = EventHook[[Request]]()
+
+def _clear_handlers():
+    global startup, request
+    startup = EventHook[[]]()
+    request = EventHook[[Request]]()

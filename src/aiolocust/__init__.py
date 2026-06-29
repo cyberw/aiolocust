@@ -3,7 +3,6 @@ from contextlib import asynccontextmanager
 from typing import TYPE_CHECKING
 
 from aiolocust.datatypes import Config
-from aiolocust.events import Events
 
 
 class User(ABC):
@@ -44,7 +43,6 @@ def __getattr__(name):
 
 
 _config: Config | None = None
-events = Events()
 
 
 def get_config() -> Config:
