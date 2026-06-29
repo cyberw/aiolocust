@@ -162,8 +162,6 @@ class Runner:
             logger.debug("Already shutting down, ignoring shutdown() call")
             return
         self.running = False
-        for user in self.running_users:
-            user.running = False
         # # wake up event loops
         # for w in self.workers:
         #     w.loop.call_soon_threadsafe(lambda: None)
@@ -183,7 +181,7 @@ class Runner:
 
     async def user_loop(self, user_instance: User):
         async with user_instance.cm():
-            while user_instance.running:
+            while user_instance.running and self.running:
                 if self.iteration_counter.increment():
                     user_instance.running = False
                     self.running_users.remove(user_instance)
