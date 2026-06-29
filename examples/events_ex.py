@@ -1,6 +1,6 @@
 import threading
 
-from aiolocust import HttpUser, get_events
+from aiolocust import HttpUser, events
 from aiolocust.datatypes import Request
 
 
@@ -23,5 +23,5 @@ def to_csv(request: Request) -> None:
         f.write(f"{request.name},{request.ttlb:.3f},{request.error}\n")
 
 
-get_events().request.add_listener(to_stdout)
-get_events().request.add_listener(to_csv)
+events.request.add_listener(to_stdout)
+events.request.add_listener(to_csv)

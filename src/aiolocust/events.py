@@ -24,5 +24,8 @@ class EventHook[**P]:
 
 class Events:
     def __init__(self):
+        self._clear_handlers()
+
+    def _clear_handlers(self):
         self.startup = EventHook[[]]()
         self.request = EventHook[[Request]]()

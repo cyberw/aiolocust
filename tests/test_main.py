@@ -51,21 +51,19 @@ def test_on_start():  # noqa: ARG001
     with runner.isolated_filesystem():
         with open("my_locustfile.py", "w") as f:
             f.write("""
-from aiolocust import HttpUser, get_events
-foo = None
+from aiolocust import HttpUser, events
 
 def on_start():
-    global foo
-    foo = "bar"
+    print("foo")
 
-get_events().startup.add_listener(on_start)
+events.startup.add_listener(on_start)
 
 class MyUser(HttpUser):
     async def run(self):
-        print(foo)
+        pass
 """)
         result = runner.invoke(app, ["my_locustfile.py", "--iterations", "1"])
-        assert "bar" in result.output
+        assert "foo" in result.output
         assert result.exit_code == 0
 
 

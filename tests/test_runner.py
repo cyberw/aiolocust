@@ -3,7 +3,6 @@ import asyncio
 import aiohttp
 from utils import WINDOWS_DELAY, assert_search
 
-from aiolocust import get_events
 from aiolocust.runner import Runner, Stage, desired_user_count
 from aiolocust.users.http import HttpUser, LocustClientSession
 
@@ -57,7 +56,7 @@ def test_timeout_catching(http_server, capteesys):  # noqa: ARG001
         @asynccontextmanager
         async def cm(self):
             async with LocustClientSession(
-                get_events(), self.runner, self.base_url, timeout=aiohttp.ClientTimeout(0.0001)
+                self.runner, self.base_url, timeout=aiohttp.ClientTimeout(0.0001)
             ) as self.client:
                 yield
 

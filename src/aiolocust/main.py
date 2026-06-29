@@ -12,7 +12,7 @@ from typing import Annotated
 import click
 import typer
 
-from aiolocust import get_config, get_events
+import aiolocust
 from aiolocust.datatypes import LogLevel
 from aiolocust.otel import configure_telemetry
 
@@ -117,8 +117,8 @@ def main(
         show_envvar=False,
     ),
 ):
-    _config = get_config()
-    events = get_events()
+    _config = aiolocust.get_config()
+
     # propagate command line args to other modules via config object
     for key, value in locals().items():
         setattr(_config, key, value)
@@ -224,7 +224,6 @@ def main(
             config=config,
             event_loops=event_loops,
             html_report=html_report,
-            events=events,
         )
         r.run_test()
     else:

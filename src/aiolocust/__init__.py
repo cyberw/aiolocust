@@ -44,7 +44,7 @@ def __getattr__(name):
 
 
 _config: Config | None = None
-_events: Events | None = None
+events = Events()
 
 
 def get_config() -> Config:
@@ -52,22 +52,6 @@ def get_config() -> Config:
     if _config is None:
         _config = Config()
     return _config
-
-
-def get_events() -> Events:
-    global _events
-    if _events is None:
-        _events = Events()
-    return _events
-
-
-def _reset_events() -> Events:
-    """
-    Only used by Runner and in unit tests
-    """
-    global _events
-    _events = Events()
-    return _events
 
 
 __all__ = ["User", "HttpUser", "LocustClientSession", "Runner"]

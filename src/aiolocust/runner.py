@@ -15,9 +15,8 @@ from aiohttp import ClientOSError
 from opentelemetry import _logs, metrics, trace
 from rich.console import Console
 
-from aiolocust import User, get_events, stats
+from aiolocust import User, events, stats
 from aiolocust.datatypes import SafeCounter, Stage
-from aiolocust.events import Events
 from aiolocust.otel import configure_telemetry
 
 # uvloop is faster than the default pure-python asyncio event loop
@@ -116,14 +115,12 @@ class Runner:
         config: dict | None = None,
         event_loops: int | None = None,
         html_report: Path | None = None,
-        events: Events | None = None,
     ):
         signal.signal(signal.SIGINT, self.signal_handler)
         signal.signal(signal.SIGTERM, self.signal_handler)
         self.running = False
         self.start_time = 0
-        self.events = events or get_events()
-        self.events.request.add_listener(stats.record_request)
+        events.request.add_listener(stats.record_request)
         configure_telemetry()
         self.sf = stats.StatsFormatter()
         self.console = Console()
@@ -235,7 +232,7 @@ class Runner:
 
     async def run_test_async(self):
         self.running = True
-        self.events.startup.fire()
+        events.startup.fire()
         self.workers = [LoopWorker() for _ in range(self.event_loops)]
         for w in self.workers:
             w.start()

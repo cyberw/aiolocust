@@ -12,7 +12,7 @@ from opentelemetry import context, trace
 from opentelemetry.context import Context, Token  # type: ignore # Token exists, I promise
 from opentelemetry.trace import Span, StatusCode
 
-from aiolocust import User, get_events
+from aiolocust import User, events
 from aiolocust.datatypes import Request
 
 if TYPE_CHECKING:  # avoid circular import
@@ -51,13 +51,11 @@ class HttpUser(User):
     def __init__(self, runner: Runner | None = None, base_url=None):
         super().__init__(runner)
         self.base_url = base_url or runner.host if runner else None
-        self.events = get_events()
         self.client: LocustClientSession  # type: ignore[assignment] # always set in cm
 
     @asynccontextmanager
     async def cm(self):
         async with LocustClientSession(
-            self.events,
             self.runner,
             self.base_url,
             connector=aiohttp.TCPConnector(ssl=self.ssl_context) if self.ssl_context else None,
@@ -75,9 +73,8 @@ class LocustResponse(ClientResponse):
 
 
 class LocustRequestContextManager(_RequestContextManager):
-    def __init__(self, name, events, coro: Coroutine[Future[Any], None, ClientResponse]):
+    def __init__(self, name, coro: Coroutine[Future[Any], None, ClientResponse]):
         super().__init__(coro)
-        self.events = events
         # slightly hacky way to get the URL, but passing it explicitly would be a mess
         # and it is only used for connection errors where the exception doesn't contain URL
         self.str_or_url = coro._coro.cr_frame.f_locals["str_or_url"]  # type: ignore
@@ -102,15 +99,15 @@ class LocustRequestContextManager(_RequestContextManager):
                 url = request_info.url
             else:
                 url = self.str_or_url
-            self.events.request.fire(Request(str(self.name or url), elapsed, elapsed, e))
+            events.request.fire(Request(str(self.name or url), elapsed, elapsed, e))
             raise
         except ClientResponseError as e:
             elapsed = self.ttlb = time.perf_counter() - self.start_time
-            self.events.request.fire(Request(str(self.name or self.str_or_url), elapsed, elapsed, e))
+            events.request.fire(Request(str(self.name or self.str_or_url), elapsed, elapsed, e))
             raise
         except TimeoutError as e:
             elapsed = self.ttlb = time.perf_counter() - self.start_time
-            self.events.request.fire(Request(str(self.name or self.str_or_url), elapsed, elapsed, e))
+            events.request.fire(Request(str(self.name or self.str_or_url), elapsed, elapsed, e))
             raise
         else:
             self.url = super()._resp.url
@@ -140,7 +137,7 @@ class LocustRequestContextManager(_RequestContextManager):
                 self.span.record_exception(Exception(self._resp.error))
         context.detach(self._token)
         self.span.end()
-        self.events.request.fire(
+        events.request.fire(
             Request(
                 str(self.name or self.url),
                 self.ttfb,
@@ -151,8 +148,7 @@ class LocustRequestContextManager(_RequestContextManager):
 
 
 class LocustClientSession(ClientSession):
-    def __init__(self, events, runner: Runner | None = None, base_url=None, **kwargs):
-        self.events = events
+    def __init__(self, runner: Runner | None = None, base_url=None, **kwargs):
         self.runner: Runner = runner  # pyright: ignore[reportAttributeAccessIssue] # always set outside of unit testing
         super().__init__(base_url=base_url, response_class=LocustResponse, **kwargs)
 
@@ -161,22 +157,22 @@ class LocustClientSession(ClientSession):
         return self
 
     def get(self, url, *, name=None, **kwargs) -> LocustRequestContextManager:
-        return LocustRequestContextManager(name, self.events, super().get(url, **kwargs))
+        return LocustRequestContextManager(name, super().get(url, **kwargs))
 
     def post(self, url, *, name=None, **kwargs) -> LocustRequestContextManager:
-        return LocustRequestContextManager(name, self.events, super().post(url, **kwargs))
+        return LocustRequestContextManager(name, super().post(url, **kwargs))
 
     def options(self, url, *, name=None, **kwargs) -> LocustRequestContextManager:
-        return LocustRequestContextManager(name, self.events, super().options(url, **kwargs))
+        return LocustRequestContextManager(name, super().options(url, **kwargs))
 
     def head(self, url, *, name=None, **kwargs) -> LocustRequestContextManager:
-        return LocustRequestContextManager(name, self.events, super().head(url, **kwargs))
+        return LocustRequestContextManager(name, super().head(url, **kwargs))
 
     def put(self, url, *, name=None, **kwargs) -> LocustRequestContextManager:
-        return LocustRequestContextManager(name, self.events, super().put(url, **kwargs))
+        return LocustRequestContextManager(name, super().put(url, **kwargs))
 
     def patch(self, url, *, name=None, **kwargs) -> LocustRequestContextManager:
-        return LocustRequestContextManager(name, self.events, super().patch(url, **kwargs))
+        return LocustRequestContextManager(name, super().patch(url, **kwargs))
 
     def delete(self, url, *, name=None, **kwargs) -> LocustRequestContextManager:
-        return LocustRequestContextManager(name, self.events, super().delete(url, **kwargs))
+        return LocustRequestContextManager(name, super().delete(url, **kwargs))
