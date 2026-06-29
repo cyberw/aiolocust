@@ -66,15 +66,6 @@ original_sigint_handler = signal.getsignal(signal.SIGINT)
 original_sigterm_handler = signal.getsignal(signal.SIGTERM)
 
 
-def distribute_evenly(total, num_buckets) -> list[int]:
-    # Calculate the base amount for every bucket
-    base = total // num_buckets
-    # Calculate how many buckets need an extra +1
-    remainder = total % num_buckets
-    # Create the list: add 1 to the first 'remainder' buckets
-    return [base + 1 if i < remainder else base for i in range(num_buckets)]
-
-
 def desired_user_count(stages: list[Stage], elapsed: float) -> int | None:
     total_time = 0.0
     previous_user_count = 0
