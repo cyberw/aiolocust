@@ -12,7 +12,8 @@ from typing import Annotated
 import click
 import typer
 
-from aiolocust.datatypes import Config, LogLevel
+from aiolocust import get_config
+from aiolocust.datatypes import LogLevel
 from aiolocust.otel import configure_telemetry
 
 app = typer.Typer(add_completion=False)
@@ -116,7 +117,7 @@ def main(
         show_envvar=False,
     ),
 ):
-    _config = Config()
+    _config = get_config()
     # propagate command line args to other modules via config object
     for key, value in locals().items():
         setattr(_config, key, value)
