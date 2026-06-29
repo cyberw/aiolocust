@@ -5,7 +5,7 @@ from rich.console import Console
 from utils import assert_search
 
 from aiolocust.datatypes import Request
-from aiolocust.stats import StatsFormatter, request
+from aiolocust.stats import StatsFormatter, record_request
 
 
 async def test_get_table():
@@ -17,10 +17,10 @@ async def test_get_table():
     f.seek(0)
     assert "Total" in output
 
-    request(Request("foo", 1, 1, None))
-    request(Request("foo", 1, 2, True))
-    request(Request("bar", 1, 1, None))
-    request(Request("bar", 1, 2, True))
+    record_request(Request("foo", 1, 1, None))
+    record_request(Request("foo", 1, 2, True))
+    record_request(Request("bar", 1, 1, None))
+    record_request(Request("bar", 1, 2, True))
     await asyncio.sleep(0.5)
     console.print(sf.get_table())
     output = f.getvalue()
@@ -45,11 +45,11 @@ async def test_error_pct_summary():
     f = io.StringIO()
     console = Console(file=f)
     sf = StatsFormatter()
-    request(Request("foo", 1, 1, None))
-    request(Request("foo", 2, 2, None))
-    request(Request("bar", 3, 3, None))
-    request(Request("bar", 4, 4, Exception("an exception")))
-    request(Request("baz", 5, 5, True))
+    record_request(Request("foo", 1, 1, None))
+    record_request(Request("foo", 2, 2, None))
+    record_request(Request("bar", 3, 3, None))
+    record_request(Request("bar", 4, 4, Exception("an exception")))
+    record_request(Request("baz", 5, 5, True))
     await asyncio.sleep(0.5)
     console.print(sf.get_table(True))
     console.print(sf.get_error_table())
@@ -73,7 +73,7 @@ async def test_error_cardinality():
     console = Console(file=f)
     sf = StatsFormatter()
     for i in range(300):
-        request(Request("foo", 1, 1, Exception(f"error with unique id {i}")))
+        record_request(Request("foo", 1, 1, Exception(f"error with unique id {i}")))
     console.print(sf.get_error_table())
     output = f.getvalue()
     assert "Error" in output

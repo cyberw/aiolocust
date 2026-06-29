@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 from opentelemetry import trace
 from playwright.async_api import Page, async_playwright  # pyright: ignore[reportMissingImports]
 
-from aiolocust import User, stats
+from aiolocust import User, events
 from aiolocust.datatypes import Request
 from aiolocust.runner import Runner
 
@@ -25,10 +25,10 @@ class LocustPage:
             span.set_attribute("browser.url", url)
             try:
                 result = await self._page.goto(url, **kwargs)
-                stats.request(Request(url, 1, 1, None))
+                events.request.fire(Request(url, 1, 1, None))
             except Exception as e:
                 span.record_exception(e)
-                stats.request(Request(url, 1, 1, e))
+                events.request.fire(Request(url, 1, 1, e))
                 raise
             return result
 
@@ -37,10 +37,10 @@ class LocustPage:
             span.set_attribute("browser.selector", selector)
             try:
                 result = await self._page.click(selector, **kwargs)
-                stats.request(Request(selector, 1, 1, None))
+                events.request.fire(Request(selector, 1, 1, None))
             except Exception as e:
                 span.record_exception(e)
-                stats.request(Request(selector, 1, 1, e))
+                events.request.fire(Request(selector, 1, 1, e))
                 raise
             return result
 

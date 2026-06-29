@@ -1,5 +1,4 @@
 import asyncio
-from unittest.mock import MagicMock
 
 import aiohttp
 import pytest
@@ -7,11 +6,24 @@ import pytest_aiohttp
 from aiohttp import ClientConnectorError, WSMsgType, web
 from aiohttp.client_exceptions import ClientResponseError
 from pytest_httpserver import HTTPServer
-from pytest_mock.plugin import MockerFixture
 
-import aiolocust.stats
+from aiolocust import events
 from aiolocust.datatypes import Request
 from aiolocust.users.http import LocustClientSession
+
+requests: list[Request] = []
+
+
+@pytest.fixture(autouse=True)
+def reset():
+    events._clear_handlers()
+    requests.clear()
+
+    @events.request.add_listener
+    def save_request(request: Request):
+        requests.append(request)
+
+    yield
 
 
 async def test_basic(httpserver: HTTPServer):
@@ -27,20 +39,19 @@ async def test_basic(httpserver: HTTPServer):
         await _(client)
 
 
-async def test_name(httpserver: HTTPServer, mocker: MockerFixture):
+async def test_name(httpserver: HTTPServer):
     httpserver.expect_request("/").respond_with_data("")
-    mocker.patch("aiolocust.stats.request")
 
     async def _(client: LocustClientSession):
-        assert isinstance(aiolocust.stats.request, MagicMock)  # for type hinting
         async with client.get(httpserver.url_for("/"), name="foo") as resp:
             pass
-        r = aiolocust.stats.request.call_args.args[0]
+        assert len(requests) == 1
+        r = requests[0]
         assert r.name == "foo"
 
         async with client.get(httpserver.url_for("/doesnt_exist"), name="foo") as resp:
             pass
-        r = aiolocust.stats.request.call_args.args[0]
+        r = requests[1]
         assert r.name == "foo"
         assert isinstance(r.error, ClientResponseError)
 
@@ -48,9 +59,7 @@ async def test_name(httpserver: HTTPServer, mocker: MockerFixture):
         await _(client)
 
 
-async def test_hard_fails_raise_and_log(mocker: MockerFixture):
-    mocker.patch("aiolocust.stats.request")
-
+async def test_hard_fails_raise_and_log():
     async def _(client: LocustClientSession):
         with pytest.raises(ClientConnectorError):
             async with client.get("http://localhost:6666") as resp:
@@ -59,15 +68,12 @@ async def test_hard_fails_raise_and_log(mocker: MockerFixture):
     async with LocustClientSession() as client:
         await _(client)
 
-    assert isinstance(aiolocust.stats.request, MagicMock)  # for type hinting
-    r = aiolocust.stats.request.call_args.args[0]
+    r = requests[0]
     assert isinstance(r.error, ClientConnectorError)
 
 
-async def test_timeout(httpserver: HTTPServer, mocker: MockerFixture):
+async def test_timeout(httpserver: HTTPServer):
     httpserver.expect_request("/").respond_with_data("")
-    mocker.patch("aiolocust.stats.request")
-    assert isinstance(aiolocust.stats.request, MagicMock)  # for type hinting
 
     async def _(client: LocustClientSession):
         async with client.get(httpserver.url_for("/"), name="foo") as resp:
@@ -77,19 +83,18 @@ async def test_timeout(httpserver: HTTPServer, mocker: MockerFixture):
         async with LocustClientSession(timeout=aiohttp.ClientTimeout(0.0001)) as client:
             await _(client)
 
-    r = aiolocust.stats.request.call_args.args[0]
-    assert r.name == "foo"
+    assert len(requests) == 1
+    assert requests[0].name == "foo"
 
 
-async def test_404(httpserver: HTTPServer, mocker: MockerFixture):
+async def test_404(httpserver: HTTPServer):
     httpserver.expect_request("/").respond_with_data("", 404)
-    mocker.patch("aiolocust.stats.request")
 
     async def _(client: LocustClientSession):
         async with client.get(httpserver.url_for("/")) as resp:
             pass
-        assert isinstance(aiolocust.stats.request, MagicMock)  # for type hinting
-        r = aiolocust.stats.request.call_args.args[0]
+        assert len(requests) == 1
+        r = requests[0]
         assert r.name.endswith("/")
         assert isinstance(r.error, ClientResponseError)
         assert "404," in str(r.error)
@@ -98,9 +103,7 @@ async def test_404(httpserver: HTTPServer, mocker: MockerFixture):
         await _(client)
 
 
-async def test_raise_for_status(httpserver: HTTPServer, mocker: MockerFixture):
-    mocker.patch("aiolocust.stats.request")
-
+async def test_raise_for_status(httpserver: HTTPServer):
     async def _(client: LocustClientSession):
         async with client.get(httpserver.url_for("/doesnt_exist"), raise_for_status=True) as resp:
             pass
@@ -111,15 +114,12 @@ async def test_raise_for_status(httpserver: HTTPServer, mocker: MockerFixture):
         with pytest.raises(ClientResponseError):
             await _(client)
 
-    assert isinstance(aiolocust.stats.request, MagicMock)  # for type hinting
-    r = aiolocust.stats.request.call_args.args[0]
-    assert r.name.endswith("/doesnt_exist")
+    assert len(requests) == 1
+    r = requests[0]
     assert isinstance(r.error, ClientResponseError)
 
 
-async def test_assert(httpserver: HTTPServer, mocker: MockerFixture):
-    mocker.patch("aiolocust.stats.request")
-
+async def test_assert(httpserver: HTTPServer):
     async def _(client: LocustClientSession):
         async with client.post(httpserver.url_for("/doesnt_exist")) as resp:
             assert resp.status == 200, "Intentionally failed assert"
@@ -128,43 +128,36 @@ async def test_assert(httpserver: HTTPServer, mocker: MockerFixture):
         async with LocustClientSession() as client:
             await _(client)
 
-    assert isinstance(aiolocust.stats.request, MagicMock)  # for type hinting
-    r = aiolocust.stats.request.call_args.args[0]
-    assert isinstance(r.error, AssertionError)  # assertion error overwrites the HTTP 500 error
+    assert len(requests) == 1
+    assert isinstance(requests[0].error, AssertionError)  # assertion error overwrites the HTTP 500 error
 
 
-async def test_handler(httpserver: HTTPServer, mocker: MockerFixture):
+async def test_handler(httpserver: HTTPServer):
     httpserver.expect_request("/").respond_with_data("")
-    mocker.patch("aiolocust.stats.request")
 
     async def _(client: LocustClientSession):
-        assert isinstance(aiolocust.stats.request, MagicMock)  # for type hinting
-
         async with client.get(httpserver.url_for("/")) as resp:
             pass
-        aiolocust.stats.request.assert_called_once()
-        r = aiolocust.stats.request.call_args.args[0]
-        assert isinstance(r, Request)  # mainly for type hinting, so we only do this once
-        assert r.error is None
+        assert len(requests) == 1
+        assert requests[0].error is None
 
         async with client.get(httpserver.url_for("/doesnt_exist")) as resp:
             pass
-        r = aiolocust.stats.request.call_args.args[0]
-        assert r.error.status == 500  # type: ignore
+
+        assert requests[1].error.status == 500  # type: ignore
 
         # Explicitly mark the request as successful
         async with client.get(httpserver.url_for("/doesnt_exist")) as resp:
             resp.error = False
-        r = aiolocust.stats.request.call_args.args[0]
-        assert r.error is False
+
+        assert requests[2].error is False
 
         # Explicit error logs the request as failed, but flow continues
         async with client.get(httpserver.url_for("/")) as resp:
             text = await resp.text()
             if not text.startswith("Hello"):
                 resp.error = "Response did not start with 'Hello'"
-        r = aiolocust.stats.request.call_args.args[0]
-        assert r.error == "Response did not start with 'Hello'"
+        assert requests[3].error == "Response did not start with 'Hello'"
 
     async with LocustClientSession() as client:
         await _(client)
@@ -201,13 +194,13 @@ async def test_websocket(aiohttp_client: pytest_aiohttp.AiohttpClient):
     async def _(client: LocustClientSession):
         async with client.ws_connect(test_client.make_url("/ws")) as ws:
             await ws.send_str("foo")
-            aiolocust.stats.request(Request("send foo", 0, 0, None))
+            events.request.fire(Request("send foo", 0, 0, None))
             async for msg in ws:
                 if msg.type == WSMsgType.TEXT:
-                    aiolocust.stats.request(Request(f"recv {msg.data}", 0, 0, None))
+                    events.request.fire(Request(f"recv {msg.data}", 0, 0, None))
                     await ws.send_str("close")
                 elif msg.type == WSMsgType.ERROR:
-                    aiolocust.stats.request(Request(f"recv {msg.data}", 0, 0, Exception("error-response")))
+                    events.request.fire(Request(f"recv {msg.data}", 0, 0, Exception("error-response")))
                     break
 
     async with LocustClientSession() as client:

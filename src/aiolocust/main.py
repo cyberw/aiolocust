@@ -5,8 +5,6 @@ import logging
 import os
 import sys
 import traceback
-from dataclasses import dataclass
-from enum import StrEnum
 from importlib.metadata import version
 from pathlib import Path
 from typing import Annotated
@@ -14,13 +12,9 @@ from typing import Annotated
 import click
 import typer
 
-
-class LogLevel(StrEnum):
-    debug = "debug"
-    info = "info"
-    warning = "warning"
-    error = "error"
-
+import aiolocust
+from aiolocust.config import LogLevel
+from aiolocust.otel import configure_telemetry
 
 app = typer.Typer(add_completion=False)
 logger = logging.getLogger(__name__)
@@ -54,27 +48,6 @@ def version_callback(value: bool):
     if value:
         print(f"aiolocust {version('aiolocust')}")
         raise typer.Exit()
-
-
-@dataclass
-class Config:
-    # used for giving all modules access to command line arguments. Remember to keep this in sync with main() arguments.
-    filename: str = "locustfile.py"
-    users: int = 1
-    duration: int | None = None
-    rate: float | None = None
-    iterations: int | None = None
-    host: str | None = None
-    instrument: bool = False
-    log_level: LogLevel = LogLevel.info
-    config: dict | None = None
-    event_loops: int | None = None
-    html_report: Path | None = None
-    profile: str | None = None
-    _version: bool = False
-
-
-CONFIG = Config()
 
 
 @app.command(context_settings={"auto_envvar_prefix": "LOCUST"})
@@ -144,14 +117,13 @@ def main(
         show_envvar=False,
     ),
 ):
-    # propagate command line args to other modules via CONFIG object
+    # propagate command line args to other modules via config object
     for key, value in locals().items():
-        setattr(CONFIG, key, value)
-
-    from aiolocust.otel import setup_logging
+        setattr(aiolocust.config, key, value)
 
     log_level_id = getattr(logging, log_level.value.upper())
-    setup_logging(log_level_id)
+
+    configure_telemetry()
 
     # delayed imports so that logging is configured first
     from aiolocust import HttpUser, User
@@ -223,7 +195,6 @@ def main(
 
         AioHttpClientInstrumentor().instrument()
 
-    # Return our two-tuple
     def is_user_class(item) -> bool:
         """
         Check if a variable is a runnable (non-abstract) User class
@@ -251,7 +222,6 @@ def main(
             config=config,
             event_loops=event_loops,
             html_report=html_report,
-            on_start=getattr(module, "on_start", None),
         )
         r.run_test()
     else:

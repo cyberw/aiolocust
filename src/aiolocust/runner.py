@@ -8,16 +8,16 @@ import sys
 import threading
 import time
 import warnings
-from collections.abc import Awaitable, Callable
 from datetime import datetime
 from pathlib import Path
 
 from aiohttp import ClientOSError
-from opentelemetry import _logs, metrics
+from opentelemetry import _logs, metrics, trace
 from rich.console import Console
 
-from aiolocust import User, stats
+from aiolocust import User, events, stats
 from aiolocust.datatypes import SafeCounter, Stage
+from aiolocust.otel import configure_telemetry
 
 # uvloop is faster than the default pure-python asyncio event loop
 # so if it is installed, we're going to be using that one
@@ -66,15 +66,6 @@ original_sigint_handler = signal.getsignal(signal.SIGINT)
 original_sigterm_handler = signal.getsignal(signal.SIGTERM)
 
 
-def distribute_evenly(total, num_buckets) -> list[int]:
-    # Calculate the base amount for every bucket
-    base = total // num_buckets
-    # Calculate how many buckets need an extra +1
-    remainder = total % num_buckets
-    # Create the list: add 1 to the first 'remainder' buckets
-    return [base + 1 if i < remainder else base for i in range(num_buckets)]
-
-
 def desired_user_count(stages: list[Stage], elapsed: float) -> int | None:
     total_time = 0.0
     previous_user_count = 0
@@ -115,19 +106,20 @@ class Runner:
         config: dict | None = None,
         event_loops: int | None = None,
         html_report: Path | None = None,
-        on_start: Callable[[], Awaitable[None]] | None = None,
     ):
         signal.signal(signal.SIGINT, self.signal_handler)
         signal.signal(signal.SIGTERM, self.signal_handler)
         self.running = False
         self.start_time = 0
+        events.request.add_listener(stats.record_request)
+        configure_telemetry()
         self.sf = stats.StatsFormatter()
         self.console = Console()
         self.users = users
         self.host = host
         self.iteration_counter = SafeCounter(iterations)
+        self.tracer = trace.get_tracer("aiolocust")
         config = config or {}
-        self.on_start = on_start
 
         if "stages" in config:
             self.stages = [Stage(**item) for item in config["stages"]]
@@ -172,12 +164,22 @@ class Runner:
         self.running = False
         for user in self.running_users:
             user.running = False
+        # # wake up event loops
+        # for w in self.workers:
+        #     w.loop.call_soon_threadsafe(lambda: None)
         for fut in self.futures:
             _ = fut.result()
         logger.debug("Shutdown complete. Total iteration count: %d", self.iteration_counter.value)
         # flush otel
         metrics.get_meter_provider().shutdown()  # pyright: ignore[reportAttributeAccessIssue]
         _logs.get_logger_provider().shutdown()  # pyright: ignore[reportAttributeAccessIssue]
+
+        # metrics.get_meter_provider().force_flush(timeout_millis=1000)  # pyright: ignore[reportAttributeAccessIssue]
+        # logger.debug("Meter provider shut down")
+        # _logs.get_logger_provider().force_flush(timeout_millis=1000)  # pyright: ignore[reportAttributeAccessIssue]
+        # print("Logger provider shut down")
+        # trace.get_tracer_provider().shutdown()  # pyright: ignore[reportAttributeAccessIssue]
+        # logger.debug("Tracer provider shut down")
 
     async def user_loop(self, user_instance: User):
         async with user_instance.cm():
@@ -201,9 +203,9 @@ class Runner:
                     logger.exception(e)
 
     def signal_handler(self, _sig, _frame):
-        # stop immediately on repeat signal
-        signal.signal(signal.SIGINT, original_sigint_handler)
-        signal.signal(signal.SIGTERM, original_sigterm_handler)
+        if not self.running:
+            # probably repeat signal, just exit immediately
+            os._exit(1)
         self.shutdown("got SIGINT/CTRL-C")
 
     def run_test(self):
@@ -221,10 +223,9 @@ class Runner:
 
     async def run_test_async(self):
         self.running = True
-        if self.on_start:
-            await self.on_start()
-        workers = [LoopWorker() for _ in range(self.event_loops)]
-        for w in workers:
+        events.startup.fire()
+        self.workers = [LoopWorker() for _ in range(self.event_loops)]
+        for w in self.workers:
             w.start()
         logger.debug(f"Running with {self.event_loops} event loops")
         await asyncio.sleep(0.1)
@@ -246,7 +247,7 @@ class Runner:
             change = new_user_count - self.current_user_count
             if change > 0:
                 for i in range(change):
-                    worker = workers[(i + self.current_user_count) % self.event_loops]
+                    worker = self.workers[(i + self.current_user_count) % self.event_loops]
                     self.add_user(worker)
             elif change < 0:
                 for i in range(-change):
@@ -277,7 +278,7 @@ class Runner:
             self.html_report.parent.mkdir(parents=True, exist_ok=True)
             report_console.save_html(str(self.html_report), inline_styles=True)
 
-        for w in workers:
+        for w in self.workers:
             w.stop()
 
         return

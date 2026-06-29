@@ -1,12 +1,8 @@
 import asyncio
-import os
 
 import aiohttp
-import pytest
-from opentelemetry.instrumentation.aiohttp_client import AioHttpClientInstrumentor
 from utils import WINDOWS_DELAY, assert_search
 
-from aiolocust import otel
 from aiolocust.runner import Runner, Stage, desired_user_count
 from aiolocust.users.http import HttpUser, LocustClientSession
 
@@ -100,35 +96,6 @@ def test_w_otel(http_server, capteesys):  # noqa: ARG001
     assert "Error" in out
     assert_search(r"[234] .* assert 'foo' in 'OK'", out)
     assert_search(r"[234] .* 404,", out)
-    assert "bar" not in out
-
-
-@pytest.mark.skipif(
-    condition=not bool(os.environ.get("VSCODE_CLI")), reason="Only works when run individually, not sure why"
-)
-def test_w_instrumentation(http_server, capfd):  # noqa: ARG001
-    AioHttpClientInstrumentor().instrument()
-    os.environ["OTEL_TRACES_EXPORTER"] = "console"
-    otel.setup_trace_exporters()
-
-    class TestUser(HttpUser):
-        async def run(self):
-            await asyncio.sleep(1)
-            async with self.client.get("http://localhost:8081/", name="foo") as resp:
-                pass
-            async with self.client.get("http://localhost:8081/404", name="foo") as resp:
-                pass
-
-    Runner([TestUser], iterations=2).run_test()
-    out, err = capfd.readouterr()
-    assert err == ""
-    assert '"trace_id"' in out
-    assert '"name": "foo"' in out
-    assert '"name": "GET"' not in out
-    assert "Summary" in out
-    assert_search(r" foo[ ]+│[ ]+2 .* \(50.0%\)", out)
-    assert "Error" in out
-    assert_search(r"2 .* 404,", out)
     assert "bar" not in out
 
 

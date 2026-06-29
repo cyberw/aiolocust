@@ -40,6 +40,7 @@ async def run(user):
         pass
 """)
         result = runner.invoke(app, ["my_locustfile.py", "--iterations", "3", "-u", "2"])
+        print(result.output)
         assert "http://localhost:" in result.output
         assert "0 (0.0%)" in result.output
         assert result.exit_code == 0
@@ -50,19 +51,19 @@ def test_on_start():  # noqa: ARG001
     with runner.isolated_filesystem():
         with open("my_locustfile.py", "w") as f:
             f.write("""
-from aiolocust import HttpUser
-foo = None
+from aiolocust import HttpUser, events
 
-async def on_start():
-    global foo
-    foo = "bar"
+def on_start():
+    print("foo")
+
+events.startup.add_listener(on_start)
 
 class MyUser(HttpUser):
     async def run(self):
-        print(foo)
+        pass
 """)
         result = runner.invoke(app, ["my_locustfile.py", "--iterations", "1"])
-        assert "bar" in result.output
+        assert "foo" in result.output
         assert result.exit_code == 0
 
 
@@ -133,6 +134,7 @@ async def run(user):
                 '{ "stages": [{ "duration": 2, "target": 2 }] }',
             ],
         )
+        print(result.output)
         assert "http://localhost:" in result.output
         assert "0 (0.0%)" in result.output
         assert result.exit_code == 0

@@ -12,9 +12,8 @@ from opentelemetry import context, trace
 from opentelemetry.context import Context, Token  # type: ignore # Token exists, I promise
 from opentelemetry.trace import Span, StatusCode
 
-from aiolocust import User, stats
+from aiolocust import User, events
 from aiolocust.datatypes import Request
-from aiolocust.otel import tracer
 
 if TYPE_CHECKING:  # avoid circular import
     from aiolocust.runner import Runner
@@ -87,7 +86,7 @@ class LocustRequestContextManager(_RequestContextManager):
         self.name = name
 
     async def __aenter__(self) -> LocustResponse:
-        self.span = tracer.start_span(f"{self.method} {self.name}" if self.name else self.method)
+        self.span = trace.get_tracer("aiolocust").start_span(f"{self.method} {self.name}" if self.name else self.method)
         self.span.set_attribute("http.method", self.method)
         self.start_time = time.perf_counter()
         ctx = trace.set_span_in_context(self.span)
@@ -100,15 +99,15 @@ class LocustRequestContextManager(_RequestContextManager):
                 url = request_info.url
             else:
                 url = self.str_or_url
-            stats.request(Request(str(self.name or url), elapsed, elapsed, e))
+            events.request.fire(Request(str(self.name or url), elapsed, elapsed, e))
             raise
         except ClientResponseError as e:
             elapsed = self.ttlb = time.perf_counter() - self.start_time
-            stats.request(Request(str(self.name or self.str_or_url), elapsed, elapsed, e))
+            events.request.fire(Request(str(self.name or self.str_or_url), elapsed, elapsed, e))
             raise
         except TimeoutError as e:
             elapsed = self.ttlb = time.perf_counter() - self.start_time
-            stats.request(Request(str(self.name or self.str_or_url), elapsed, elapsed, e))
+            events.request.fire(Request(str(self.name or self.str_or_url), elapsed, elapsed, e))
             raise
         else:
             self.url = super()._resp.url
@@ -138,7 +137,7 @@ class LocustRequestContextManager(_RequestContextManager):
                 self.span.record_exception(Exception(self._resp.error))
         context.detach(self._token)
         self.span.end()
-        stats.request(
+        events.request.fire(
             Request(
                 str(self.name or self.url),
                 self.ttfb,
@@ -150,8 +149,8 @@ class LocustRequestContextManager(_RequestContextManager):
 
 class LocustClientSession(ClientSession):
     def __init__(self, runner: Runner | None = None, base_url=None, **kwargs):
-        super().__init__(base_url=base_url, response_class=LocustResponse, **kwargs)
         self.runner: Runner = runner  # pyright: ignore[reportAttributeAccessIssue] # always set outside of unit testing
+        super().__init__(base_url=base_url, response_class=LocustResponse, **kwargs)
 
     # explicitly declare this to get the correct return type
     async def __aenter__(self) -> LocustClientSession:
