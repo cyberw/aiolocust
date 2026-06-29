@@ -18,6 +18,7 @@ from rich.console import Console
 
 from aiolocust import User, _reset_events, stats
 from aiolocust.datatypes import SafeCounter, Stage
+from aiolocust.otel import configure_telemetry
 
 # uvloop is faster than the default pure-python asyncio event loop
 # so if it is installed, we're going to be using that one
@@ -123,6 +124,7 @@ class Runner:
         self.start_time = 0
         self.events = _reset_events()
         self.events.request.add_listener(stats.record_request)
+        configure_telemetry()
         self.sf = stats.StatsFormatter()
         self.console = Console()
         self.users = users

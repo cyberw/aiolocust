@@ -24,17 +24,18 @@ from opentelemetry.sdk.trace.export import BatchSpanProcessor, ConsoleSpanExport
 from rich.console import Console
 from rich.logging import RichHandler
 
-from aiolocust.datatypes import Config
+from aiolocust import get_config
 
 HISTOGRAM_BOUNDARIES = [0.001, 0.002, 0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1.0, 2.0, 5.0, 10.0, 20.0, 50.0]
 
 reader: InMemoryMetricReader = None  # type: ignore
 
 
-def configure_telemetry(config: Config):
+def configure_telemetry():
     global reader
     if reader:
         return
+    config = get_config()
     resource = Resource.create(
         {
             "service.name": "locust",

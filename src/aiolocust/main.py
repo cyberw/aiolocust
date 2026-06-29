@@ -123,7 +123,7 @@ def main(
 
     log_level_id = getattr(logging, log_level.value.upper())
 
-    configure_telemetry(_config)
+    configure_telemetry()
 
     # delayed imports so that logging is configured first
     from aiolocust import HttpUser, User
@@ -195,7 +195,6 @@ def main(
 
         AioHttpClientInstrumentor().instrument()
 
-    # Return our two-tuple
     def is_user_class(item) -> bool:
         """
         Check if a variable is a runnable (non-abstract) User class
