@@ -51,12 +51,14 @@ def test_on_start():  # noqa: ARG001
     with runner.isolated_filesystem():
         with open("my_locustfile.py", "w") as f:
             f.write("""
-from aiolocust import HttpUser
+from aiolocust import HttpUser, get_events
 foo = None
 
-async def on_start():
+def on_start():
     global foo
     foo = "bar"
+
+get_events().startup.add_listener(on_start)
 
 class MyUser(HttpUser):
     async def run(self):

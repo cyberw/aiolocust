@@ -8,7 +8,6 @@ import sys
 import threading
 import time
 import warnings
-from collections.abc import Awaitable, Callable
 from datetime import datetime
 from pathlib import Path
 
@@ -16,8 +15,9 @@ from aiohttp import ClientOSError
 from opentelemetry import _logs, metrics, trace
 from rich.console import Console
 
-from aiolocust import User, _reset_events, stats
+from aiolocust import User, get_events, stats
 from aiolocust.datatypes import SafeCounter, Stage
+from aiolocust.events import Events
 from aiolocust.otel import configure_telemetry
 
 # uvloop is faster than the default pure-python asyncio event loop
@@ -116,13 +116,13 @@ class Runner:
         config: dict | None = None,
         event_loops: int | None = None,
         html_report: Path | None = None,
-        on_start: Callable[[], Awaitable[None]] | None = None,
+        events: Events | None = None,
     ):
         signal.signal(signal.SIGINT, self.signal_handler)
         signal.signal(signal.SIGTERM, self.signal_handler)
         self.running = False
         self.start_time = 0
-        self.events = _reset_events()
+        self.events = events or get_events()
         self.events.request.add_listener(stats.record_request)
         configure_telemetry()
         self.sf = stats.StatsFormatter()
@@ -132,7 +132,6 @@ class Runner:
         self.iteration_counter = SafeCounter(iterations)
         self.tracer = trace.get_tracer("aiolocust")
         config = config or {}
-        self.on_start = on_start
 
         if "stages" in config:
             self.stages = [Stage(**item) for item in config["stages"]]
@@ -236,8 +235,7 @@ class Runner:
 
     async def run_test_async(self):
         self.running = True
-        if self.on_start:
-            await self.on_start()
+        self.events.startup.fire()
         self.workers = [LoopWorker() for _ in range(self.event_loops)]
         for w in self.workers:
             w.start()
