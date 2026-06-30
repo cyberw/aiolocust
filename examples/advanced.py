@@ -1,9 +1,3 @@
-#!/usr/bin/env aiolocust
-# The above line, in combination with marking the file as executable (chmod +x),
-# makes it runnable (on unix-like systems) using just: ./advanced.py
-# You can still pass regular parameters like --duration etc
-
-
 from aiolocust import HttpUser, Runner
 
 
