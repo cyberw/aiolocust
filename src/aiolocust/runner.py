@@ -207,7 +207,7 @@ class Runner:
         self.shutdown("got SIGINT/CTRL-C")
 
     def run_test(self):
-        asyncio.run(self.run_test_async())
+        asyncio.run(self.run_test_async(), loop_factory=new_event_loop)
 
     def add_user(self, worker: LoopWorker):
         user = self.users[0](self)
