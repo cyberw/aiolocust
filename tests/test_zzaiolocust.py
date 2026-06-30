@@ -253,12 +253,12 @@ async def run(user):
             stderr=asyncio.subprocess.PIPE,
             env={
                 "OTEL_METRICS_EXPORTER": "otlp",
-                "OTEL_EXPORTER_OTLP_ENDPOINT": "https://collector.observability.test.svenskaspel.se",
+                "OTEL_EXPORTER_OTLP_ENDPOINT": "http://www.locust.cloud:22",  # invalid endpoint to simulate connection issues
                 **os.environ,
             },
         )
         try:
-            await asyncio.sleep(1)
+            await asyncio.sleep(2)
             if os.name == "nt":
                 proc.send_signal(signal.CTRL_C_EVENT)
             else:
