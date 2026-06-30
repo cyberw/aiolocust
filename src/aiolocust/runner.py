@@ -132,6 +132,7 @@ class Runner:
                 Stage(ramp_up_time, user_count),
                 Stage(duration - ramp_up_time if duration else 99999999, user_count),
             ]
+            logger.debug(f"Stages: {self.stages}")
         self.target_user_count = max((stage.target for stage in self.stages), default=0)
         logger.info(f"Starting test (target user count: {self.target_user_count})")
 
