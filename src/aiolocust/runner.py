@@ -240,7 +240,7 @@ class Runner:
             elapsed = time.time() - self.start_time
             new_user_count = desired_user_count(self.stages, elapsed)
             if new_user_count is None:
-                self.shutdown("duration elapsed")
+                self.shutdown(f"target duration elapsed after {elapsed:.2f}s")
                 break
             change = new_user_count - self.current_user_count
             if change > 0:
