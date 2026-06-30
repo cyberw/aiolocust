@@ -64,7 +64,7 @@ def setup_logging(level: int, logger_provider: LoggerProvider):
     # avoid double-handling logs emitted by the OTEL handler itself
     # otel_handler.addFilter(lambda record: record.name != "opentelemetry.sdk._logs.export.LoggingHandler")
     logs_exporters = {e.strip().lower() for e in os.getenv("OTEL_LOGS_EXPORTER", "otlp").split(",") if e.strip()}
-    import_error = False
+    package_missing_for_protocol: str | None = None
     for exporter in logs_exporters:
         if exporter == "otlp":
             protocol = (
@@ -83,7 +83,7 @@ def setup_logging(level: int, logger_provider: LoggerProvider):
                     )
                     continue
             except ImportError:
-                import_error = True
+                package_missing_for_protocol = protocol
                 continue
             otlp_exporter = OTLPLogExporter()
             logger_provider.add_log_record_processor(BatchLogRecordProcessor(otlp_exporter))
@@ -115,11 +115,11 @@ def setup_logging(level: int, logger_provider: LoggerProvider):
             level=level,
             format="%(message)s",
         )
-    if import_error:
+    if package_missing_for_protocol:
         level = logging.INFO if os.getenv("OTEL_LOGS_EXPORTER", "") else logging.DEBUG
         logger.log(
             level,
-            f"OTLP exporter for '{protocol}' is not available. The required package is: opentelemetry-exporter-otlp-proto-{'grpc' if protocol == 'grpc' else 'http'}",
+            f"OTLP exporter for '{package_missing_for_protocol}' is not available. The required package is: opentelemetry-exporter-otlp-proto-{'grpc' if package_missing_for_protocol == 'grpc' else 'http'}",
         )
 
 
