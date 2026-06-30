@@ -149,7 +149,7 @@ async def run(user):
             assert "exception" not in err.lower()
             assert await proc.wait() == 0
             # this also tests that otel initialization didn't happen before log level setup
-            assert "setup_meter_provider: OpenTelemetry otlp exporter" in err
+            assert "OTLP exporter for 'http/protobuf' is not available" in err
 
 
 async def test_host_param(http_server):  # noqa: ARG001

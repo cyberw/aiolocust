@@ -29,6 +29,7 @@ from aiolocust import config
 HISTOGRAM_BOUNDARIES = [0.001, 0.002, 0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1.0, 2.0, 5.0, 10.0, 20.0, 50.0]
 
 reader: InMemoryMetricReader = None  # type: ignore
+logger = logging.getLogger(__name__)
 
 
 def configure_telemetry():
@@ -62,8 +63,8 @@ def setup_logging(level: int, logger_provider: LoggerProvider):
     otel_handler = LoggingHandler(level=level, logger_provider=logger_provider)
     # avoid double-handling logs emitted by the OTEL handler itself
     # otel_handler.addFilter(lambda record: record.name != "opentelemetry.sdk._logs.export.LoggingHandler")
-
     logs_exporters = {e.strip().lower() for e in os.getenv("OTEL_LOGS_EXPORTER", "otlp").split(",") if e.strip()}
+    import_error = False
     for exporter in logs_exporters:
         if exporter == "otlp":
             protocol = (
@@ -82,16 +83,8 @@ def setup_logging(level: int, logger_provider: LoggerProvider):
                     )
                     continue
             except ImportError:
-                if (
-                    level == logging.INFO
-                    and os.getenv("OTEL_LOGS_EXPORTER", "")
-                    or os.getenv("OTEL_EXPORTER_OTLP_PROTOCOL", "")
-                ):
-                    print(
-                        f"setup_logging: OpenTelemetry otlp exporter for '{protocol}' is not available. Please install the required package: opentelemetry-exporter-otlp-proto-{'grpc' if protocol == 'grpc' else 'http'}",
-                    )
+                import_error = True
                 continue
-
             otlp_exporter = OTLPLogExporter()
             logger_provider.add_log_record_processor(BatchLogRecordProcessor(otlp_exporter))
         elif exporter == "console":
@@ -122,10 +115,15 @@ def setup_logging(level: int, logger_provider: LoggerProvider):
             level=level,
             format="%(message)s",
         )
+    if import_error:
+        level = logging.INFO if os.getenv("OTEL_LOGS_EXPORTER", "") else logging.DEBUG
+        logger.log(
+            level,
+            f"OTLP exporter for '{protocol}' is not available. The required package is: opentelemetry-exporter-otlp-proto-{'grpc' if protocol == 'grpc' else 'http'}",
+        )
 
 
 def setup_trace_exporters(tracer_provider: TracerProvider):
-    logger = logging.getLogger(__name__)
     traces_exporters = {e.strip().lower() for e in os.getenv("OTEL_TRACES_EXPORTER", "otlp").split(",") if e.strip()}
     for exporter in traces_exporters:
         if exporter == "otlp":
@@ -147,11 +145,6 @@ def setup_trace_exporters(tracer_provider: TracerProvider):
                     )
                     continue
             except ImportError:
-                level = logging.INFO if os.getenv("OTEL_TRACES_EXPORTER", "") else logging.DEBUG
-                logger.log(
-                    level,
-                    f"setup_trace_exporters: OpenTelemetry otlp exporter for '{protocol}' is not available. Please install the required package: opentelemetry-exporter-otlp-proto-{'grpc' if protocol == 'grpc' else 'http'}",
-                )
                 continue
 
             tracer_provider.add_span_processor(BatchSpanProcessor(OTLPSpanExporter()))
@@ -185,7 +178,6 @@ def setup_meter_provider(metric_readers: list[MetricReader], resource):
 def get_metric_exporters() -> list[MetricReader]:
     metric_readers: list[MetricReader] = []
     metrics_exporters = {e.strip().lower() for e in os.getenv("OTEL_METRICS_EXPORTER", "otlp").split(",") if e.strip()}
-    logger = logging.getLogger(__name__)
     for exporter in metrics_exporters:
         if exporter == "otlp":
             protocol = (
@@ -210,10 +202,6 @@ def get_metric_exporters() -> list[MetricReader]:
                     )
                     continue
             except ImportError:
-                logger.log(
-                    logging.INFO if os.getenv("OTEL_METRICS_EXPORTER", "") else logging.DEBUG,
-                    f"setup_meter_provider: OpenTelemetry otlp exporter for '{protocol}' is not available. Please install the required package: opentelemetry-exporter-otlp-proto-{'grpc' if protocol == 'grpc' else 'http'}",
-                )
                 continue
             metric_reader = PeriodicExportingMetricReader(OTLPMetricExporter())
             metric_readers.append(metric_reader)
