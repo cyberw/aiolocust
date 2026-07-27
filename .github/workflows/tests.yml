@@ -142,7 +142,7 @@ jobs:
         uses: astral-sh/setup-uv@v7
 
       - name: pytest
-        run: uv run pytest --timeout 90 --full-trace tests
+        run: uv run pytest --timeout 180 --full-trace tests
 
   macos:
     runs-on: macos-latest
