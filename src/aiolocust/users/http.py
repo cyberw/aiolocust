@@ -79,6 +79,7 @@ class LocustRequestContextManager(_RequestContextManager):
         # and it is only used for connection errors where the exception doesn't contain URL
         self.str_or_url = coro._coro.cr_frame.f_locals["str_or_url"]  # type: ignore
         self.method = coro._coro.cr_frame.f_locals["method"]  # type: ignore
+        self._base_url = coro._coro.cr_frame.f_locals["self"]._base_url  # type: ignore
         self._resp: LocustResponse  # type: ignore
         self._token: Token[Context]
         self.span: Span
@@ -139,7 +140,7 @@ class LocustRequestContextManager(_RequestContextManager):
         self.span.end()
         events.request.fire(
             Request(
-                str(self.name or self.url),
+                self.name or str(self.url).removeprefix(str(self._base_url)),
                 self.ttfb,
                 self.ttlb,
                 self._resp.error,
