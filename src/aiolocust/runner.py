@@ -205,6 +205,7 @@ class Runner:
         if not self.running:
             # probably repeat signal, just exit immediately
             os._exit(1)
+        print()
         self.shutdown("got SIGINT/CTRL-C")
 
     def run_test(self):
