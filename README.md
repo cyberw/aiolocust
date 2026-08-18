@@ -11,10 +11,11 @@ It has a ton of [advantages over its predecessor](#simple-and-consistent-syntax)
 
 ## Installation
 
-We recommend using [uv](https://docs.astral.sh/uv/getting-started/installation/)
+aiolocust requires a freethreading Python build and, if not already used as default, needs to be specified during installation. E.g. the 3.14t build.
+We recommend using [uv](https://docs.astral.sh/uv/getting-started/installation/) for the installation.
 
 ```text
-uv tool install aiolocust
+uv tool install --python 3.14t aiolocust
 aiolocust
 ```
 
@@ -40,7 +41,7 @@ See [more examples](examples/), or keep reading to learn how to create one based
 ## Run a test
 
 ```text
-❯ aiolocust --duration 30 --users 100
+aiolocust --duration 30 --users 100
  Name                   ┃  Count ┃ Failures ┃    Avg ┃    Max ┃       Rate
 ━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━╇━━━━━━━━━━╇━━━━━━━━╇━━━━━━━━╇━━━━━━━━━━━━
  http://example.com/    │ 120779 │ 0 (0.0%) │  1.6ms │ 22.6ms │ 60372.44/s
@@ -70,11 +71,12 @@ aiolocust --duration 30 --users 100 --html-report report.html
 
 If you don't want to code your locustfile from scratch, you can use [mitmproxy](https://docs.mitmproxy.org/stable/) and our custom script to easily generate locustfiles from live traffic:
 
-### Install mitmproxy & trust its certificate authority
+### Install mitmproxy & trust its certificate authority (macOS)
+Note: these steps makes the mitmproxy's CA trusted __system wide__.
 
 ```bash
 brew install --cask mitmproxy
-mitmproxy   # Run it once to generate /.mitmproxy (quit by pressing 'q')
+mitmproxy   # Run it once to generate ~/.mitmproxy (quit by pressing 'q')
 sudo security add-trusted-cert -d -p ssl -p basic -k /Library/Keychains/System.keychain ~/.mitmproxy/mitmproxy-ca-cert.pem
 ```
 
@@ -118,7 +120,7 @@ aiolocust is built to be smaller in scope, but still capture the learnings from 
 
 Tests are expressed in modern, explicitly asynchronous code, instead of relying on gevent monkey patching, and implicit concurrency.
 
-It has fewer "gotcha's" and better type hinting, that should make it easier for humans as well as AIs to understand and write tests.
+It has fewer "gotchas" and better type hinting, that should make it easier for humans as well as AIs to understand and write tests.
 
 We also plan to further emphasize the "It's just Python"-approach. For example, if you want to take precise control of the ramp up and ramp down of a test, you shouldn't need to read the documentation, you should only need to know how to write code. We'll still provide the option of using prebuilt features too of course, but we'll make an effort not to box users in, which was sometimes the case with Locust.
 
@@ -142,7 +144,7 @@ OTEL_METRIC_EXPORT_INTERVAL=1000 OTEL_EXPORTER_OTLP_TRACES_ENDPOINT="https://ing
 
 ## High performance
 
-aiolocust is more performant than "regular" Locust because it has a smaller footprint/complexity, but it's two main gains come from:
+aiolocust is more performant than "regular" Locust because it has a smaller footprint/complexity, but its two main strengths come from:
 
 ### 1. [asyncio](https://docs.python.org/3/library/asyncio.html) + [aiohttp](https://docs.aiohttp.org/en/stable/)
 
@@ -154,7 +156,7 @@ This means that you don't need to launch one Locust process per CPU core. And ev
 
 Users/threads can also communicate easily with each other, as they are in the same process, unlike in the old Locust implementation where you were forced to use ZeroMQ messaging between master and worker processes and worker-to-worker communication was nearly impossible.
 
-## Things this doesn't have compared do Locust (at least not yet)
+## Things this doesn't have compared to Locust (at least not yet)
 
 * A WebUI
 * Support for distributed tests (although with OTEL you can aggregate independent concurrent test runs in a single dashboard)
