@@ -68,12 +68,13 @@ aiolocust --duration 30 --users 100 --html-report report.html
 
 ## Record a locustfile from browser session or other app
 
-If you don't want to code your locustfile from scratch, you can use [mitmproxy](https://docs.mitmproxy.org/stable/api/events.html) and our custom script to easily generate locustfiles from live traffic:
+If you don't want to code your locustfile from scratch, you can use [mitmproxy](https://docs.mitmproxy.org/stable/) and our custom script to easily generate locustfiles from live traffic:
 
 ### Install mitmproxy & trust its certificate authority
 
-```text
+```bash
 brew install --cask mitmproxy
+mitmproxy   # Run it once to generate /.mitmproxy (quit by pressing 'q')
 sudo security add-trusted-cert -d -p ssl -p basic -k /Library/Keychains/System.keychain ~/.mitmproxy/mitmproxy-ca-cert.pem
 ```
 
