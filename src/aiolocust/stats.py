@@ -55,7 +55,6 @@ def record_request(req: Request) -> None:
 class StatsFormatter:
     def __init__(self):
         self.start_time = time.time()
-        self.last_time = self.start_time
         self.aggregate: dict[str, RequestEntry] = defaultdict(RequestEntry)
         # clear reader, in case this is not the first Stats object
         _ = otel.reader.get_metrics_data()
@@ -83,33 +82,21 @@ class StatsFormatter:
 
         return entries
 
-    def _get_rows(self, final_summary) -> list[list[str]]:
+    def _get_rows(self) -> list[list[str]]:
         table: list[list[str]] = []
-        summary_table: list[list[str]] = []
         now = time.time()
 
         entries = self._get_entries()
-        total = RequestEntry()
-
         for url, re in entries.items():
             self.aggregate[url] += re
-            total += re
-            table.append(self.make_row(url, re, self.last_time, now))
-        table.append(self.make_row("Total", total, self.last_time, now))
 
-        self.last_time = now
-
-        if not final_summary:
-            return table
-
-        summary_total = RequestEntry()
-
+        total = RequestEntry()
         for url, re in self.aggregate.items():
-            summary_total += re
-            summary_table.append(self.make_row(url, re, self.start_time, now))
-        summary_table.append(self.make_row("Total", summary_total, self.start_time, now))
+            total += re
+            table.append(self.make_row(url, re, self.start_time, now))
+        table.append(self.make_row("Total", total, self.start_time, now))
 
-        return summary_table
+        return table
 
     def get_table(self, final_summary=False):
         table = Table(show_edge=False)
@@ -120,7 +107,7 @@ class StatsFormatter:
         table.add_column("Max", justify="right")
         table.add_column("Rate", justify="right")
 
-        for row in self._get_rows(final_summary):
+        for row in self._get_rows():
             table.add_row(*row)
 
         if final_summary:
