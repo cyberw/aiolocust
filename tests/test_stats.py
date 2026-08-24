@@ -1,11 +1,18 @@
 import asyncio
 import io
+import pytest
 
 from rich.console import Console
 from utils import assert_search
 
 from aiolocust.datatypes import Request
 from aiolocust.stats import StatsFormatter, record_request
+from aiolocust.otel import configure_telemetry
+
+
+@pytest.fixture(scope="module", autouse=True)
+def configure_test_telemetry():
+    configure_telemetry()
 
 
 async def test_get_table():
@@ -39,6 +46,41 @@ async def test_get_table():
     assert_search(r"foo .* [23].\d{2}/s", output)
     assert_search(r"Total .* [67].\d{2}/s", output)
     assert "1500.0ms" in output
+
+
+async def test_cumulative_printout():
+    f = io.StringIO()
+    console = Console(file=f)
+    sf = StatsFormatter()
+    
+    record_request(Request("foo", 1, 1, None))
+    record_request(Request("foo", 2, 2, None))
+    record_request(Request("bar", 3, 3, None))
+    record_request(Request("baz", 4, 4, True))
+    await asyncio.sleep(0.5)
+    console.print(sf.get_table(True))
+    output = f.getvalue()
+    print(output)
+    assert_search(r"foo .* 2", output)
+    assert_search(r"bar .* 1 ", output)
+    assert_search(r"baz .* 1 ", output)
+    assert_search(r"Total .* 4 ", output)
+    
+    f.seek(0)
+    f.truncate(0)
+
+    record_request(Request("foo", 1, 1, None))
+    record_request(Request("foo", 2, 2, None))
+    record_request(Request("bar", 3, 3, None))
+    record_request(Request("baz", 4, 4, False))
+    await asyncio.sleep(0.5)
+    console.print(sf.get_table(True))
+    output = f.getvalue()
+    print(output)
+    assert_search(r"foo .* 4", output)
+    assert_search(r"bar .* 2 ", output)
+    assert_search(r"baz .* 2 ", output)
+    assert_search(r"Total .* 8 ", output)
 
 
 async def test_error_pct_summary():
