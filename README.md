@@ -156,7 +156,7 @@ This means that you don't need to launch one Locust process per CPU core. And ev
 
 Users/threads can also communicate easily with each other, as they are in the same process, unlike in the old Locust implementation where you were forced to use ZeroMQ messaging between master and worker processes and worker-to-worker communication was nearly impossible.
 
-## Things this doesn't have compared to Locust (at least not yet)
+## Things aiolocust doesn't have compared to Locust (at least not yet)
 
 * A WebUI
 * Support for distributed tests (although with OTEL you can aggregate independent concurrent test runs in a single dashboard)
