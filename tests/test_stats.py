@@ -1,11 +1,18 @@
 import asyncio
 import io
 
+import pytest
 from rich.console import Console
 from utils import assert_search
 
 from aiolocust.datatypes import Request
+from aiolocust.otel import configure_telemetry
 from aiolocust.stats import StatsFormatter, record_request
+
+
+@pytest.fixture(scope="module", autouse=True)
+def configure_test_telemetry():
+    configure_telemetry()
 
 
 async def test_get_table():
@@ -39,6 +46,52 @@ async def test_get_table():
     assert_search(r"foo .* [23].\d{2}/s", output)
     assert_search(r"Total .* [67].\d{2}/s", output)
     assert "1500.0ms" in output
+
+
+async def test_cumulative_printout(mocker):
+    f = io.StringIO()
+    console = Console(file=f)
+    clock = mocker.patch("aiolocust.stats.time.time", return_value=0.0)
+    sf = StatsFormatter()
+
+    record_request(Request("foo", 1, 1, None))
+    record_request(Request("foo", 2, 2, None))
+    record_request(Request("bar", 3, 3, None))
+    record_request(Request("baz", 4, 4, True))
+    clock.return_value = 2
+    console.print(sf.get_table())
+    output = f.getvalue()
+    print(output)
+    assert_search(r"foo .* 2 .* 1.00/s .* 1.00/s", output)
+    assert_search(r"bar .* 1 .* 0.50/s .* 0.50/s", output)
+    assert_search(r"baz .* 1 .* 0.50/s .* 0.50/s", output)
+    assert_search(r"Total .* 4 .* 2.00/s .* 2.00/s", output)
+
+    f.seek(0)
+    f.truncate(0)
+    record_request(Request("foo", 1, 1, None))
+    record_request(Request("bar", 2, 2, None))
+    record_request(Request("baz", 3, 3, None))
+    clock.return_value = 4
+    console.print(sf.get_table())
+    output = f.getvalue()
+    print(output)
+    assert_search(r"foo .* 3 .* 0.75/s .* 0.50/s", output)
+    assert_search(r"bar .* 2 .* 0.50/s .* 0.50/s", output)
+    assert_search(r"baz .* 2 .* 0.50/s .* 0.50/s", output)
+    assert_search(r"Total .* 7 .* 1.75/s .* 1.50/s", output)
+
+    f.seek(0)
+    f.truncate(0)
+    record_request(Request("foo", 1, 1, None))
+    record_request(Request("foo", 2, 2, None))
+    record_request(Request("bar", 3, 3, None))
+    clock.return_value = 5
+    console.print(sf.get_table(True))
+    output = f.getvalue()
+    print(output)
+    assert "Current rate" not in output
+    assert_search(r"Total .* 10 .* 2.00/s $", output)
 
 
 async def test_error_pct_summary():

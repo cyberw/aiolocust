@@ -85,31 +85,31 @@ class StatsFormatter:
 
     def _get_rows(self, final_summary) -> list[list[str]]:
         table: list[list[str]] = []
-        summary_table: list[list[str]] = []
         now = time.time()
 
-        entries = self._get_entries()
-        total = RequestEntry()
-
-        for url, re in entries.items():
+        current_entries = self._get_entries()
+        for url, re in current_entries.items():
             self.aggregate[url] += re
-            total += re
-            table.append(self.make_row(url, re, self.last_time, now))
-        table.append(self.make_row("Total", total, self.last_time, now))
+
+        cumulative_total = RequestEntry()
+        current_total = RequestEntry()
+
+        for current_entry in current_entries.values():
+            current_total += current_entry
+
+        for url, cumulative_entry in self.aggregate.items():
+            cumulative_total += cumulative_entry
+            current_entry = current_entries.get(url, RequestEntry()) if not final_summary else None
+            table.append(self.make_row(url, self.start_time, self.last_time, now, cumulative_entry, current_entry))
+
+        if not final_summary:
+            table.append(self.make_row("Total", self.start_time, self.last_time, now, cumulative_total, current_total))
+        else:
+            table.append(self.make_row("Total", self.start_time, self.last_time, now, cumulative_total, None))
 
         self.last_time = now
 
-        if not final_summary:
-            return table
-
-        summary_total = RequestEntry()
-
-        for url, re in self.aggregate.items():
-            summary_total += re
-            summary_table.append(self.make_row(url, re, self.start_time, now))
-        summary_table.append(self.make_row("Total", summary_total, self.start_time, now))
-
-        return summary_table
+        return table
 
     def get_table(self, final_summary=False):
         table = Table(show_edge=False)
@@ -119,6 +119,9 @@ class StatsFormatter:
         table.add_column("Avg", justify="right")
         table.add_column("Max", justify="right")
         table.add_column("Rate", justify="right")
+
+        if not final_summary:
+            table.add_column("Current rate", justify="right")
 
         for row in self._get_rows(final_summary):
             table.add_row(*row)
@@ -139,12 +142,17 @@ class StatsFormatter:
         return error_table
 
     @staticmethod
-    def make_row(name: str, re: RequestEntry, start, end) -> list[str]:
-        return [
+    def make_row(name: str, start, last, end, cumul_e: RequestEntry, curr_e: RequestEntry | None = None) -> list[str]:
+        row = [
             name,
-            str(re.count),
-            f"{re.errorcount} ({re.error_percentage:2.1f}%)",
-            f"{re.avg_ttlb_ms:4.1f}ms",
-            f"{re.max_ttlb_ms:4.1f}ms",
-            f"{re.rate(start, end):.2f}/s",
+            str(cumul_e.count),
+            f"{cumul_e.errorcount} ({cumul_e.error_percentage:2.1f}%)",
+            f"{cumul_e.avg_ttlb_ms:4.1f}ms",
+            f"{cumul_e.max_ttlb_ms:4.1f}ms",
+            f"{cumul_e.rate(start, end):.2f}/s",
         ]
+
+        if curr_e is not None:
+            row.append(f"{curr_e.rate(last, end):.2f}/s")
+
+        return row
