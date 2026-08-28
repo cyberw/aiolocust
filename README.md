@@ -94,7 +94,7 @@ mitmdump -s $(uv tool dir)/mitmproxy/lib/python3.14/site-packages/aiolocust/mitm
 Using curl:
 
 ```text
-curl -x http://localhost:8080 -k https://www.google.com
+CURL_CA_BUNDLE=~/.mitmproxy/mitmproxy-ca-cert.pem HTTPS_PROXY=http://localhost:8080 curl https://www.google.com
 ```
 
 Using Chrome:
