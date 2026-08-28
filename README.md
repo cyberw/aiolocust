@@ -27,6 +27,7 @@ There are also some [alternative ways to install](#alternative-ways-to-install).
 import asyncio
 from aiolocust import HttpUser
 
+
 async def run(user: HttpUser):
     async with user.client.get("http://example.com/") as resp:
         pass
@@ -75,17 +76,17 @@ If you don't want to code your locustfile from scratch, you can use [mitmproxy](
 Note: these steps makes the mitmproxy's CA trusted __system wide__.
 
 ```bash
-brew install --cask mitmproxy
+uv tool install -p 3.14+gil --with aiolocust mitmproxy # mitmproxy dependencies don't like freethreading atm
 mitmproxy   # Run it once to generate ~/.mitmproxy (quit by pressing 'q')
 sudo security add-trusted-cert -d -p ssl -p basic -k /Library/Keychains/System.keychain ~/.mitmproxy/mitmproxy-ca-cert.pem
 ```
 
 ### Start the proxy
 
-This (at the moment) requires a checked out copy of this repo or at least a copy of [mitmproxy_addon.py](src/aiolocust/mitmproxy_addon.py):
+See [mitmproxy_addon.py](src/aiolocust/mitmproxy_addon.py) for details.
 
 ```text
-mitmdump -s src/aiolocust/mitmproxy_addon.py
+mitmdump -s $(uv tool dir)/mitmproxy/lib/python3.14/site-packages/aiolocust/mitmproxy_addon.py
 ```
 
 ### Use the proxy from your browser or app
