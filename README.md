@@ -78,7 +78,6 @@ Note: these steps makes the mitmproxy's CA trusted __system wide__.
 ```bash
 uv tool install -p 3.14+gil --with aiolocust mitmproxy # mitmproxy dependencies don't like freethreading atm
 mitmproxy   # Run it once to generate ~/.mitmproxy (quit by pressing 'q')
-sudo security add-trusted-cert -d -p ssl -p basic -k /Library/Keychains/System.keychain ~/.mitmproxy/mitmproxy-ca-cert.pem
 ```
 
 ### Start the proxy
@@ -98,6 +97,14 @@ CURL_CA_BUNDLE=~/.mitmproxy/mitmproxy-ca-cert.pem HTTPS_PROXY=http://localhost:8
 ```
 
 Using Chrome:
+
+Install certificates at system level:
+
+```text
+sudo security add-trusted-cert -d -p ssl -p basic -k /Library/Keychains/System.keychain ~/.mitmproxy/mitmproxy-ca-cert.pem
+```
+
+Record session:
 
 ```text
 open -na "Google Chrome" --args --proxy-server="http://127.0.0.1:8080" --incognito --user-data-dir="/tmp/chrome-proxy-session" --no-first-run --no-default-browser-check --disable-component-update --disable-extensions --new-window --proxy-bypass-list="<-loopback>" http://localhost/some-url
