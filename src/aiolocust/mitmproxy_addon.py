@@ -1,4 +1,5 @@
 # Used together with mitmproxy to generate a locustfile based on live traffic
+# mitmdump -s mitmproxy_addon.py
 
 import os
 from datetime import datetime
